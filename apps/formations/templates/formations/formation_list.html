@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Formations - ATELIER TAILOR{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/clients.css' %}">
+<style>
+    .formation-header {
+        background: linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .formation-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 200%;
+        background: rgba(255,255,255,0.1);
+        transform: rotate(30deg);
+        pointer-events: none;
+    }
+    
+    .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border-left: 4px solid;
+        text-align: center;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+    }
+    
+    .stat-card.planifiee { border-color: #4299e1; }
+    .stat-card.encours { border-color: #ed8936; }
+    .stat-card.terminee { border-color: #48bb78; }
+    .stat-card.annulee { border-color: #f56565; }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin: 0 auto 1rem;
+        color: white;
+    }
+    
+    .stat-icon.planifiee { background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); }
+    .stat-icon.encours { background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); }
+    .stat-icon.terminee { background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); }
+    .stat-icon.annulee { background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%); }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #2d3748;
+        line-height: 1;
+        margin-bottom: 0.25rem;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: #718096;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .formation-card {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        height: 100%;
+        border: 1px solid #e2e8f0;
+        position: relative;
+    }
+    
+    .formation-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        border-color: #4299e1;
+    }
+    
+    .formation-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        z-index: 2;
+    }
+    
+    .badge-planifiee { background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); color: white; }
+    .badge-encours { background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); color: white; }
+    .badge-terminee { background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; }
+    .badge-annulee { background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%); color: white; }
+    
+    .formation-image {
+        height: 160px;
+        width: 100%;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .formation-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+    
+    .formation-card:hover .formation-image img {
+        transform: scale(1.05);
+    }
+    
+    .formation-image-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(transparent, rgba(0,0,0,0.7));
+        padding: 1rem;
+        color: white;
+    }
+    
+    .formation-type {
+        display: inline-block;
+        padding: 0.3rem 0.7rem;
+        background: rgba(255,255,255,0.2);
+        backdrop-filter: blur(5px);
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .formation-content {
+        padding: 1.5rem;
+    }
+    
+    .formation-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 0.5rem;
+        line-height: 1.3;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .formation-instructor {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 1rem;
+        color: #718096;
+        font-size: 0.9rem;
+    }
+    
+    .instructor-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+    
+    .formation-dates {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #718096;
+        font-size: 0.85rem;
+        margin-bottom: 1rem;
+    }
+    
+    .formation-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 1rem;
+        border-top: 1px solid #e2e8f0;
+    }
+    
+    .formation-participants {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        color: #718096;
+        font-size: 0.85rem;
+    }
+    
+    .participants-avatars {
+        display: flex;
+        align-items: center;
+    }
+    
+    .participant-avatar {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: 2px solid white;
+        background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: bold;
+        margin-left: -8px;
+    }
+    
+    .participant-avatar:first-child {
+        margin-left: 0;
+    }
+    
+    .participant-avatar.more {
+        background: #718096;
+        font-size: 0.6rem;
+    }
+    
+    .formation-price {
+        font-weight: 600;
+        color: #48bb78;
+        font-size: 1rem;
+    }
+    
+    .filters-toolbar {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .view-toggle {
+        display: flex;
+        gap: 0.5rem;
+        background: #f7fafc;
+        border-radius: 10px;
+        padding: 0.25rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .toggle-btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        background: none;
+        border-radius: 8px;
+        font-weight: 500;
+        color: #718096;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        flex: 1;
+        text-align: center;
+    }
+    
+    .toggle-btn.active {
+        background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+        color: white;
+        box-shadow: 0 3px 8px rgba(66, 153, 225, 0.3);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    
+    .empty-state-icon {
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        color: #a0aec0;
+        font-size: 2.5rem;
+    }
+    
+    .table-formations {
+        --bs-table-bg: transparent;
+        --bs-table-striped-bg: rgba(66, 153, 225, 0.05);
+        --bs-table-hover-bg: rgba(66, 153, 225, 0.1);
+    }
+    
+    .table-formations th {
+        border-bottom: 2px solid #4299e1;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+        color: #2d3748;
+    }
+    
+    .formation-row:hover {
+        background: linear-gradient(135deg, rgba(66, 153, 225, 0.05) 0%, rgba(49, 130, 206, 0.05) 100%);
+        cursor: pointer;
+    }
+    
+    .calendar-view {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .calendar-day {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+    }
+    
+    .calendar-day h5 {
+        color: #4299e1;
+        border-bottom: 2px solid #4299e1;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .quick-actions {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        z-index: 1000;
+    }
+    
+    .fab-btn {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+        color: white;
+        border: none;
+        box-shadow: 0 4px 15px rgba(66, 153, 225, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .fab-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 20px rgba(66, 153, 225, 0.5);
+    }
+    
+    @media (max-width: 768px) {
+        .stats-cards {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .view-toggle {
+            flex-wrap: wrap;
+        }
+        
+        .toggle-btn {
+            flex: 1 0 calc(50% - 0.5rem);
+        }
+        
+        .quick-actions {
+            bottom: 1rem;
+            right: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item active">Formations</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block page_title %}
+<div class="formation-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h2 mb-2">
+                <i class="fas fa-graduation-cap me-2"></i>Gestion des Formations
+            </h1>
+            <p class="mb-0 opacity-75">
+                Organisez et suivez les formations de l'atelier
+            </p>
+        </div>
+        <div>
+            <a href="{% url 'formations:formation_create' %}" class="btn btn-light btn-lg">
+                <i class="fas fa-plus-circle me-2"></i>Nouvelle formation
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Statistiques -->
+<div class="stats-cards">
+    <div class="stat-card planifiee">
+        <div class="stat-icon planifiee">
+            <i class="fas fa-calendar-check"></i>
+        </div>
+        <div class="stat-value">{{ formations_planifiees.count }}</div>
+        <div class="stat-label">Planifiées</div>
+    </div>
+    
+    <div class="stat-card encours">
+        <div class="stat-icon encours">
+            <i class="fas fa-play-circle"></i>
+        </div>
+        <div class="stat-value">{{ formations_encours.count }}</div>
+        <div class="stat-label">En cours</div>
+    </div>
+    
+    <div class="stat-card terminee">
+        <div class="stat-icon terminee">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-value">{{ formations_terminees.count }}</div>
+        <div class="stat-label">Terminées</div>
+    </div>
+    
+    <div class="stat-card annulee">
+        <div class="stat-icon annulee">
+            <i class="fas fa-times-circle"></i>
+        </div>
+        <div class="stat-value">{{ formations_annulees.count }}</div>
+        <div class="stat-label">Annulées</div>
+    </div>
+</div>
+
+<!-- Filtres et recherche -->
+<div class="filters-toolbar">
+    <div class="row g-3 align-items-center">
+        <div class="col-md-5">
+            <div class="input-group">
+                <span class="input-group-text bg-light border-end-0">
+                    <i class="fas fa-search text-muted"></i>
+                </span>
+                <input type="text" class="form-control border-start-0" id="searchInput" 
+                       placeholder="Rechercher une formation..." onkeyup="filterFormations()">
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <select class="form-select" id="statutFilter" onchange="filterFormations()">
+                <option value="">Tous les statuts</option>
+                <option value="planifiee">Planifiée</option>
+                <option value="encours">En cours</option>
+                <option value="terminee">Terminée</option>
+                <option value="annulee">Annulée</option>
+            </select>
+        </div>
+        
+        <div class="col-md-3">
+            <select class="form-select" id="typeFilter" onchange="filterFormations()">
+                <option value="">Tous les types</option>
+                <option value="technique">Technique</option>
+                <option value="securite">Sécurité</option>
+                <option value="gestion">Gestion</option>
+                <option value="softskills">Soft skills</option>
+            </select>
+        </div>
+        
+        <div class="col-md-1">
+            <button class="btn btn-outline-secondary w-100" onclick="clearFilters()" title="Effacer les filtres">
+                <i class="fas fa-filter-circle-xmark"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Boutons de vue -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="view-toggle">
+        <button class="toggle-btn active" onclick="switchView('grid')">
+            <i class="fas fa-th-large me-2"></i>Grille
+        </button>
+        <button class="toggle-btn" onclick="switchView('table')">
+            <i class="fas fa-table me-2"></i>Tableau
+        </button>
+        <button class="toggle-btn" onclick="switchView('calendar')">
+            <i class="fas fa-calendar-alt me-2"></i>Calendrier
+        </button>
+    </div>
+    
+    <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-outline-primary" onclick="exportToExcel()">
+            <i class="fas fa-file-excel me-2"></i>Excel
+        </button>
+        <button class="btn btn-outline-primary" onclick="printList()">
+            <i class="fas fa-print me-2"></i>Imprimer
+        </button>
+    </div>
+</div>
+
+<!-- Vue Grille -->
+<div id="gridView">
+    {% if formations %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for formation in formations %}
+        <div class="col">
+            <div class="formation-card" data-formation-id="{{ formation.id }}">
+                <div class="formation-badge badge-{{ formation.statut }}">
+                    {{ formation.get_statut_display }}
+                </div>
+                
+                <div class="formation-image">
+                    {% if formation.image_couverture %}
+                    <img src="{{ formation.image_couverture.url }}" alt="{{ formation.titre }}">
+                    {% else %}
+                    <div style="background: linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%); height: 100%;"></div>
+                    {% endif %}
+                    <div class="formation-image-overlay">
+                        <span class="formation-type">{{ formation.get_type_formation_display }}</span>
+                    </div>
+                </div>
+                
+                <div class="formation-content">
+                    <h3 class="formation-title">{{ formation.titre }}</h3>
+                    
+                    <div class="formation-instructor">
+                        <div class="instructor-avatar">
+                            {{ formation.formateur.prenom|first|upper }}{{ formation.formateur.nom|first|upper }}
+                        </div>
+                        <span>{{ formation.formateur.prenom }} {{ formation.formateur.nom }}</span>
+                    </div>
+                    
+                    <div class="formation-dates">
+                        <i class="fas fa-calendar-alt"></i>
+                        {{ formation.date_debut|date:"d/m/Y" }} - {{ formation.date_fin|date:"d/m/Y" }}
+                    </div>
+                    
+                    <div class="formation-meta">
+                        <div class="formation-participants">
+                            <div class="participants-avatars">
+                                {% for participant in formation.participants.all|slice:":3" %}
+                                <div class="participant-avatar" title="{{ participant.prenom }} {{ participant.nom }}">
+                                    {{ participant.prenom|first|upper }}{{ participant.nom|first|upper }}
+                                </div>
+                                {% endfor %}
+                                {% if formation.participants.count > 3 %}
+                                <div class="participant-avatar more" title="+{{ formation.participants.count|add:"-3" }} autres">
+                                    +{{ formation.participants.count|add:"-3" }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <span>{{ formation.participants.count }} participant{{ formation.participants.count|pluralize:"s" }}</span>
+                        </div>
+                        
+                        {% if formation.prix_par_personne %}
+                        <div class="formation-price">
+                            {{ formation.prix_par_personne|floatformat:0 }} FCFA
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="p-3 border-top bg-light">
+                    <div class="d-flex justify-content-center gap-2">
+                        <a href="{% url 'formations:formation_detail' formation.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye me-1"></i>Voir
+                        </a>
+                        <a href="{% url 'formations:formation_update' formation.id %}" class="btn btn-sm btn-outline-warning">
+                            <i class="fas fa-edit me-1"></i>Modifier
+                        </a>
+                        <a href="{% url 'formations:formation_participants' formation.id %}" class="btn btn-sm btn-outline-success">
+                            <i class="fas fa-user-plus me-1"></i>Inscrire
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <i class="fas fa-graduation-cap"></i>
+        </div>
+        <h4 class="text-muted mb-3">Aucune formation enregistrée</h4>
+        <p class="text-muted mb-4">Commencez par créer votre première formation</p>
+        <a href="{% url 'formations:formation_create' %}" class="btn btn-primary btn-lg">
+            <i class="fas fa-plus-circle me-2"></i>Créer une formation
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Vue Tableau -->
+<div id="tableView" style="display: none;">
+    {% if formations %}
+    <div class="table-responsive">
+        <table class="table table-hover table-formations">
+            <thead>
+                <tr>
+                    <th>Formation</th>
+                    <th>Dates</th>
+                    <th>Formateur</th>
+                    <th>Participants</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for formation in formations %}
+                <tr class="formation-row" data-formation-id="{{ formation.id }}">
+                    <td>
+                        <div class="d-flex align-items-center">
+                            {% if formation.image_couverture %}
+                            <div class="me-3">
+                                <img src="{{ formation.image_couverture.url }}" alt="{{ formation.titre }}" 
+                                     class="rounded" width="50" height="50" style="object-fit: cover;">
+                            </div>
+                            {% endif %}
+                            <div>
+                                <div class="fw-bold">{{ formation.titre }}</div>
+                                <div class="small text-muted">{{ formation.get_type_formation_display }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="small">
+                            <div>Début: <strong>{{ formation.date_debut|date:"d/m/Y" }}</strong></div>
+                            <div>Fin: <strong>{{ formation.date_fin|date:"d/m/Y" }}</strong></div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="instructor-avatar" style="width: 28px; height: 28px; font-size: 0.7rem;">
+                                {{ formation.formateur.prenom|first|upper }}{{ formation.formateur.nom|first|upper }}
+                            </div>
+                            <div>
+                                <div class="small">{{ formation.formateur.prenom }} {{ formation.formateur.nom }}</div>
+                                <div class="xsmall text-muted">{{ formation.formateur.email|default:"-" }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="participants-avatars">
+                                {% for participant in formation.participants.all|slice:":2" %}
+                                <div class="participant-avatar" style="width: 20px; height: 20px; font-size: 0.6rem;">
+                                    {{ participant.prenom|first|upper }}{{ participant.nom|first|upper }}
+                                </div>
+                                {% endfor %}
+                                {% if formation.participants.count > 2 %}
+                                <div class="participant-avatar more" style="width: 20px; height: 20px; font-size: 0.5rem;">
+                                    +{{ formation.participants.count|add:"-2" }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <span class="small">{{ formation.participants.count }}/{{ formation.nombre_places|default:"∞" }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge badge-{{ formation.statut }}">
+                            {{ formation.get_statut_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            <a href="{% url 'formations:formation_detail' formation.id %}" class="btn btn-sm btn-outline-primary" title="Voir">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'formations:formation_update' formation.id %}" class="btn btn-sm btn-outline-warning" title="Modifier">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'formations:formation_delete' formation.id %}" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <i class="fas fa-graduation-cap"></i>
+        </div>
+        <h4 class="text-muted mb-3">Aucune formation enregistrée</h4>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Vue Calendrier -->
+<div id="calendarView" style="display: none;">
+    {% if formations %}
+    <div class="calendar-view">
+        {% regroup formations by date_debut|date:"F Y" as month_list %}
+        {% for month in month_list %}
+        <div class="calendar-day">
+            <h5>{{ month.grouper }}</h5>
+            {% for formation in month.list %}
+            <div class="mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
+                <div class="d-flex justify-content-between align-items-start mb-1">
+                    <div class="fw-bold">{{ formation.titre|truncatechars:30 }}</div>
+                    <span class="badge badge-{{ formation.statut }}">{{ formation.get_statut_display|slice:":1" }}</span>
+                </div>
+                <div class="small text-muted mb-2">
+                    <i class="fas fa-calendar-alt me-1"></i>
+                    {{ formation.date_debut|date:"d/m" }} - {{ formation.date_fin|date:"d/m" }}
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="small">{{ formation.participants.count }} participants</span>
+                    <a href="{% url 'formations:formation_detail' formation.id %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <i class="fas fa-calendar-alt"></i>
+        </div>
+        <h4 class="text-muted mb-3">Aucune formation planifiée</h4>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Bouton d'action flottant -->
+<div class="quick-actions">
+    <button class="fab-btn" data-bs-toggle="dropdown">
+        <i class="fas fa-plus"></i>
+    </button>
+    <div class="dropdown-menu dropdown-menu-end" style="min-width: 200px;">
+        <h6 class="dropdown-header">Actions rapides</h6>
+        <a class="dropdown-item" href="{% url 'formations:formation_create' %}">
+            <i class="fas fa-plus-circle me-2"></i>Nouvelle formation
+        </a>
+        <a class="dropdown-item" href="{% url 'formations:formation_bulk_create' %}">
+            <i class="fas fa-copy me-2"></i>Créer en série
+        </a>
+        <a class="dropdown-item" href="{% url 'formations:formation_template' %}">
+            <i class="fas fa-file-alt me-2"></i>À partir d'un modèle
+        </a>
+        <div class="dropdown-divider"></div>
+        <a class="dropdown-item" href="#" onclick="generateReport()">
+            <i class="fas fa-chart-bar me-2"></i>Générer rapport
+        </a>
+        <a class="dropdown-item" href="#" onclick="sendReminders()">
+            <i class="fas fa-bell me-2"></i>Envoyer rappels
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion du clic sur les cartes formations
+    const formationCards = document.querySelectorAll('.formation-card, .formation-row');
+    formationCards.forEach(card => {
+        card.addEventListener('click', function(e) {
+            if (e.target.tagName === 'A' || e.target.closest('a')) {
+                return;
+            }
+            const formationId = this.getAttribute('data-formation-id');
+            if (formationId) {
+                window.location.href = `/formations/${formationId}/`;
+            }
+        });
+    });
+    
+    // Restaurer la vue sauvegardée
+    const savedView = localStorage.getItem('formationView') || 'grid';
+    switchView(savedView);
+    
+    // Initialiser les tooltips
+    const tooltipTriggerList = document.querySelectorAll('[title]');
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+});
+
+function switchView(viewType) {
+    // Cacher toutes les vues
+    ['grid', 'table', 'calendar'].forEach(view => {
+        document.getElementById(view + 'View').style.display = 'none';
+    });
+    
+    // Mettre à jour les boutons actifs
+    document.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Afficher la vue sélectionnée
+    document.getElementById(viewType + 'View').style.display = 'block';
+    document.querySelector(`.toggle-btn[onclick="switchView('${viewType}')"]`).classList.add('active');
+    
+    // Sauvegarder la préférence
+    localStorage.setItem('formationView', viewType);
+}
+
+function filterFormations() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const statutFilter = document.getElementById('statutFilter').value;
+    const typeFilter = document.getElementById('typeFilter').value;
+    
+    const currentView = localStorage.getItem('formationView') || 'grid';
+    
+    if (currentView === 'grid') {
+        filterGridView(searchTerm, statutFilter, typeFilter);
+    } else if (currentView === 'table') {
+        filterTableView(searchTerm, statutFilter, typeFilter);
+    } else {
+        filterCalendarView(searchTerm, statutFilter, typeFilter);
+    }
+}
+
+function filterGridView(searchTerm, statutFilter, typeFilter) {
+    const formations = document.querySelectorAll('#gridView .col');
+    
+    formations.forEach(formation => {
+        const title = formation.querySelector('.formation-title')?.textContent.toLowerCase() || '';
+        const statut = formation.querySelector('.formation-badge')?.textContent.toLowerCase() || '';
+        const type = formation.querySelector('.formation-type')?.textContent.toLowerCase() || '';
+        
+        let show = true;
+        
+        if (searchTerm && !title.includes(searchTerm)) {
+            show = false;
+        }
+        
+        if (statutFilter && !statut.includes(statutFilter)) {
+            show = false;
+        }
+        
+        if (typeFilter && !type.includes(typeFilter)) {
+            show = false;
+        }
+        
+        formation.style.display = show ? '' : 'none';
+    });
+}
+
+function filterTableView(searchTerm, statutFilter, typeFilter) {
+    const rows = document.querySelectorAll('#tableView .formation-row');
+    
+    rows.forEach(row => {
+        const title = row.querySelector('.fw-bold')?.textContent.toLowerCase() || '';
+        const statut = row.querySelector('.badge')?.textContent.toLowerCase() || '';
+        const type = row.querySelector('.text-muted')?.textContent.toLowerCase() || '';
+        
+        let show = true;
+        
+        if (searchTerm && !title.includes(searchTerm)) {
+            show = false;
+        }
+        
+        if (statutFilter && !statut.includes(statutFilter)) {
+            show = false;
+        }
+        
+        if (typeFilter && !type.includes(typeFilter)) {
+            show = false;
+        }
+        
+        row.style.display = show ? '' : 'none';
+    });
+}
+
+function filterCalendarView(searchTerm, statutFilter, typeFilter) {
+    const days = document.querySelectorAll('#calendarView .calendar-day');
+    
+    days.forEach(day => {
+        let hasVisibleFormations = false;
+        const formations = day.querySelectorAll('.mb-3');
+        
+        formations.forEach(formation => {
+            const title = formation.querySelector('.fw-bold')?.textContent.toLowerCase() || '';
+            const statut = formation.querySelector('.badge')?.textContent.toLowerCase() || '';
+            
+            let show = true;
+            
+            if (searchTerm && !title.includes(searchTerm)) {
+                show = false;
+            }
+            
+            if (statutFilter && !statut.includes(statutFilter)) {
+                show = false;
+            }
+            
+            formation.style.display = show ? '' : 'none';
+            if (show) hasVisibleFormations = true;
+        });
+        
+        day.style.display = hasVisibleFormations ? '' : 'none';
+    });
+}
+
+function clearFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('statutFilter').selectedIndex = 0;
+    document.getElementById('typeFilter').selectedIndex = 0;
+    filterFormations();
+}
+
+function exportToExcel() {
+    // Simuler l'export Excel
+    const currentView = localStorage.getItem('formationView') || 'grid';
+    const btn = event.target.closest('button');
+    const originalHTML = btn.innerHTML;
+    
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Export...';
+    btn.disabled = true;
+    
+    setTimeout(() => {
+        alert('Export Excel démarré. Le fichier sera téléchargé automatiquement.');
+        btn.innerHTML = originalHTML;
+        btn.disabled = false;
+    }, 1000);
+}
+
+function printList() {
+    const currentView = localStorage.getItem('formationView') || 'grid';
+    const contentToPrint = document.getElementById(currentView + 'View');
+    
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Liste des Formations - ATELIER TAILOR</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; }
+                    h2 { color: #2b6cb0; border-bottom: 2px solid #2b6cb0; padding-bottom: 10px; }
+                    .formation-item { margin-bottom: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+                    .badge { padding: 3px 8px; border-radius: 3px; font-size: 12px; color: white; }
+                    .badge-planifiee { background-color: #4299e1; }
+                    .badge-encours { background-color: #ed8936; }
+                    .badge-terminee { background-color: #48bb78; }
+                    .badge-annulee { background-color: #f56565; }
+                    @media print {
+                        .no-print { display: none; }
+                    }
+                </style>
+            </head>
+            <body>
+                <h2><i class="fas fa-graduation-cap"></i> Liste des Formations - ATELIER TAILOR</h2>
+                <p>Imprimé le ${new Date().toLocaleDateString('fr-FR')}</p>
+                <div>
+                    ${contentToPrint.innerHTML}
+                </div>
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => printWindow.print(), 500);
+}
+
+function generateReport() {
+    alert('Génération du rapport en cours...');
+    // Ici, vous pourriez implémenter la génération de rapport
+}
+
+function sendReminders() {
+    if (confirm('Envoyer des rappels aux participants des formations à venir ?')) {
+        alert('Rappels envoyés avec succès !');
+        // Ici, vous pourriez implémenter l'envoi de rappels
+    }
+}
+
+// Recherche rapide avec la touche '/'
+document.addEventListener('keydown', function(e) {
+    if (e.key === '/' && !e.target.matches('input, textarea, select')) {
+        e.preventDefault();
+        document.getElementById('searchInput').focus();
+    }
+});
+</script>
+
+<!-- Bouton d'action flottant -->
+<div class="quick-actions">
+    <button class="fab-btn" data-bs-toggle="dropdown">
+        <i class="fas fa-plus"></i>
+    </button>
+    <div class="dropdown-menu dropdown-menu-end" style="min-width: 200px;">
+        <h6 class="dropdown-header">Actions rapides</h6>
+        <a class="dropdown-item" href="{% url 'formations:formation_create' %}">
+            <i class="fas fa-plus-circle me-2"></i>Nouvelle formation
+        </a>
+        <a class="dropdown-item" href="{% url 'formations:formation_bulk_create' %}">
+            <i class="fas fa-copy me-2"></i>Créer en série
+        </a>
+        <a class="dropdown-item" href="{% url 'formations:formation_template' %}">
+            <i class="fas fa-file-alt me-2"></i>À partir d'un modèle
+        </a>
+        <div class="dropdown-divider"></div>
+        <a class="dropdown-item" href="#" onclick="generateReport()">
+            <i class="fas fa-chart-bar me-2"></i>Générer rapport
+        </a>
+        <a class="dropdown-item" href="#" onclick="sendReminders()">
+            <i class="fas fa-bell me-2"></i>Envoyer rappels
+        </a>
+    </div>
+</div>
+
+<!-- Animation pour les cartes -->
+<style>
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .col {
+        animation: slideInUp 0.5s ease-out;
+        animation-fill-mode: both;
+    }
+    
+    .col:nth-child(1) { animation-delay: 0.1s; }
+    .col:nth-child(2) { animation-delay: 0.2s; }
+    .col:nth-child(3) { animation-delay: 0.3s; }
+    .col:nth-child(4) { animation-delay: 0.4s; }
+    .col:nth-child(5) { animation-delay: 0.5s; }
+    .col:nth-child(6) { animation-delay: 0.6s; }
+</style>
+{% endblock %}

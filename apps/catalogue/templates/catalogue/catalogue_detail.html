@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+{% load catalogue_filters %}
+
+{% load static %}
+
+{% block title %}{{ habit.nom }} - TAILOR{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/clients.css' %}">
+<style>
+    /* Styles spécifiques pour la page détail */
+    .product-gallery {
+        position: relative;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    .main-image {
+        width: 100%;
+        height: 400px;
+        object-fit: cover;
+        border-radius: 15px;
+        transition: transform 0.5s ease;
+    }
+    
+    .thumbnail-container {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+        overflow-x: auto;
+        padding-bottom: 10px;
+    }
+    
+    .thumbnail {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 8px;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+    }
+    
+    .thumbnail:hover,
+    .thumbnail.active {
+        border-color: #667eea;
+        transform: scale(1.05);
+    }
+    
+    .product-badge {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        z-index: 2;
+    }
+    
+    .price-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    }
+    
+    .price-amount {
+        font-size: 2.5rem;
+        font-weight: 800;
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+    
+    .price-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .specs-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .specs-list li {
+        padding: 15px 0;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .specs-list li:last-child {
+        border-bottom: none;
+    }
+    
+    .spec-label {
+        color: #6c757d;
+        font-weight: 500;
+    }
+    
+    .spec-value {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
+    .action-buttons {
+        position: sticky;
+        bottom: 0;
+        background: white;
+        padding: 1.5rem;
+        border-top: 1px solid #e9ecef;
+        box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
+        border-radius: 0 0 15px 15px;
+    }
+    
+    .reviews-section {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-top: 3rem;
+    }
+    
+    .review-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+        border-left: 4px solid #667eea;
+    }
+    
+    .rating-stars {
+        color: #ffc107;
+        font-size: 1.2rem;
+    }
+    
+    .progress-bar-custom {
+        height: 8px;
+        border-radius: 4px;
+        background-color: #e9ecef;
+        overflow: hidden;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 4px;
+    }
+    
+    .related-product-card {
+        border: none;
+        border-radius: 10px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    .related-product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    
+    .tab-content {
+        padding: 2rem 0;
+    }
+    
+    .nav-tabs .nav-link {
+        border: none;
+        color: #6c757d;
+        font-weight: 500;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px 8px 0 0;
+        margin-right: 5px;
+    }
+    
+    .nav-tabs .nav-link.active {
+        color: #667eea;
+        background-color: white;
+        border-bottom: 3px solid #667eea;
+    }
+    
+    .fabric-swatch {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: inline-block;
+        margin-right: 10px;
+        border: 2px solid #e9ecef;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .fabric-swatch:hover,
+    .fabric-swatch.active {
+        border-color: #667eea;
+        transform: scale(1.1);
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'catalogue:catalogue_list' %}">Catalogue</a></li>
+        {% if habit.categorie %}
+        <li class="breadcrumb-item"><a href="{% url 'catalogue:catalogue_list' %}?category={{ habit.categorie.slug }}">{{ habit.categorie.nom }}</a></li>
+        {% endif %}
+        <li class="breadcrumb-item active">{{ habit.nom|truncatechars:30 }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block page_title %}
+<div class="d-flex justify-content-between align-items-center">
+    <div>
+        <h1 class="h2 mb-1">
+            <i class="fas fa-tshirt text-primary me-2"></i>{{ habit.nom }}
+        </h1>
+        <div class="d-flex align-items-center gap-3">
+            <span class="badge bg-light text-dark">
+                <i class="fas fa-tag me-1"></i>{{ habit.categorie.nom }}
+            </span>
+            <span class="text-muted small">
+                <i class="fas fa-hashtag me-1"></i>Réf: {{ habit.reference }}
+            </span>
+            <span class="text-muted small">
+                <i class="fas fa-shopping-cart me-1"></i>{{ habit.commandes_count }} commande{{ habit.commandes_count|pluralize }}
+            </span>
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <a href="#" class="btn btn-outline-warning">
+            <i class="fas fa-edit me-2"></i>Modifier
+        </a>
+        <a href="#" class="btn btn-outline-danger">
+            <i class="fas fa-trash me-2"></i>Supprimer
+        </a>
+        <a href="#" class="btn btn-outline-primary">
+            <i class="fas fa-copy me-2"></i>Dupliquer
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Galerie d'images -->
+    <div class="col-lg-6 mb-4">
+        <div class="product-gallery">
+            <div class="product-badge">
+                {% if habit.is_new %}
+                <span class="badge bg-success">Nouveau</span>
+                {% endif %}
+                {% if habit.promotion %}
+                <span class="badge bg-danger">Promo -{{ habit.promotion }}%</span>
+                {% endif %}
+                {% if habit.exclusif %}
+                <span class="badge bg-warning">Exclusif</span>
+                {% endif %}
+            </div>
+            
+            {% if habit.image %}
+            <img id="mainImage" src="{{ habit.image.url }}" class="main-image" alt="{{ type_habit.nom }}">
+            {% else %}
+            <div class="main-image bg-light d-flex align-items-center justify-content-center">
+                <i class="fas fa-tshirt fa-5x text-muted"></i>
+            </div>
+            {% endif %}
+            
+            <!-- Miniatures -->
+            <div class="thumbnail-container">
+                {% if habit.image %}
+                <img src="{{ habit.image.url }}" class="thumbnail active" onclick="changeImage(this.src)" alt="{{ type_habit.nom }}">
+                {% endif %}
+                {% for image in habit.images.all %}
+                <img src="{{ image.image.url }}" class="thumbnail" onclick="changeImage(this.src)" alt="{{ type_habit.nom }}">
+                {% endfor %}
+                {% for i in "123" %}
+                {% if not habit.image and forloop.first %}
+                <div class="thumbnail bg-light d-flex align-items-center justify-content-center">
+                    <i class="fas fa-tshirt text-muted"></i>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Statistiques rapides -->
+        <div class="row mt-4">
+            <div class="col-6">
+                <div class="card border-0 bg-light text-center py-3">
+                    <div class="h4 mb-1 text-primary">{{ habit.moyenne_notes|floatformat:1 }}</div>
+                    <div class="small text-muted">Note moyenne</div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="card border-0 bg-light text-center py-3">
+                    <div class="h4 mb-1 text-success">{{ habit.taux_satisfaction }}%</div>
+                    <div class="small text-muted">Satisfaction</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Informations produit -->
+    <div class="col-lg-6">
+        <!-- Prix et commande -->
+        <div class="price-card">
+            <div class="price-amount">
+                {% if habit.promotion %}
+                <div class="d-flex align-items-center justify-content-center">
+                    <span class="text-decoration-line-through me-3" style="font-size: 1.5rem;">
+                        {{ habit.prix_standard }} FCFA
+                    </span>
+                    <span>{{ habit.get_promotion_price|floatformat:0 }} FCFA</span>
+                </div>
+                {% else %}
+                {{ habit.prix_standard }} FCFA
+                {% endif %}
+            </div>
+            <div class="price-label">Prix standard</div>
+            {% if habit.promotion %}
+            <div class="mt-2">
+                <span class="badge bg-light text-dark">
+                    Économisez {{ habit.get_economie|floatformat:0 }} FCFA
+                </span>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Caractéristiques -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Caractéristiques</h5>
+            </div>
+            <div class="card-body">
+                <ul class="specs-list">
+                    <li>
+                        <span class="spec-label"><i class="fas fa-clock me-2"></i>Délai de réalisation</span>
+                        <span class="spec-value">{{ habit.delai_realisation }} jours</span>
+                    </li>
+                    <li>
+                        <span class="spec-label"><i class="fas fa-cog me-2"></i>Niveau de difficulté</span>
+                        <span class="spec-value">
+                            {% if habit.niveau_difficulte == 1 %}
+                            <span class="badge bg-success">Facile</span>
+                            {% elif habit.niveau_difficulte == 2 %}
+                            <span class="badge bg-warning">Moyen</span>
+                            {% elif habit.niveau_difficulte == 3 %}
+                            <span class="badge bg-danger">Avancé</span>
+                            {% endif %}
+                        </span>
+                    </li>
+                    <li>
+                        <span class="spec-label"><i class="fas fa-ruler me-2"></i>Type de coupe</span>
+                        <span class="spec-value">{{ habit.type_coupe|default:"Standard" }}</span>
+                    </li>
+                    <li>
+                        <span class="spec-label"><i class="fas fa-palette me-2"></i>Couleurs disponibles</span>
+                        <span class="spec-value">
+                            {% for couleur in habit.couleurs_disponibles.all %}
+                            <span class="fabric-swatch" style="background-color: {{ couleur.code }};" title="{{ couleur.nom }}"></span>
+                            {% empty %}
+                            Toutes couleurs
+                            {% endfor %}
+                        </span>
+                    </li>
+                    <li>
+                        <span class="spec-label"><i class="fas fa-weight me-2"></i>Matières recommandées</span>
+                        <span class="spec-value">
+                            {% for matiere in habit.matieres_recommandees.all %}
+                            <span class="badge bg-light text-dark me-1">{{ matiere.nom }}</span>
+                            {% endfor %}
+                        </span>
+                    </li>
+                    <li>
+                        <span class="spec-label"><i class="fas fa-calendar-alt me-2"></i>Créé le</span>
+                        <span class="spec-value">{{ habit.date_creation|date:"d/m/Y" }}</span>
+                    </li>
+                    <li>
+                        <span class="spec-label"><i class="fas fa-user-tie me-2"></i>Créé par</span>
+                        
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Description détaillée -->
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-align-left me-2"></i>Description</h5>
+            </div>
+            <div class="card-body">
+                {% if habit.description %}
+                <div class="description-content">
+                    {{ habit.description|linebreaks }}
+                </div>
+                {% else %}
+                <p class="text-muted fst-italic">Aucune description disponible.</p>
+                {% endif %}
+                
+                {% if habit.instructions_specifiques %}
+                <div class="mt-4">
+                    <h6><i class="fas fa-clipboard-list me-2"></i>Instructions spécifiques</h6>
+                    <div class="alert alert-info">
+                        {{ habit.instructions_specifiques|linebreaks }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Onglets détaillés -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-0">
+                <ul class="nav nav-tabs" id="productTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="details-tab" data-bs-toggle="tab" data-bs-target="#details">
+                            <i class="fas fa-info-circle me-2"></i>Détails techniques
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="materials-tab" data-bs-toggle="tab" data-bs-target="#materials">
+                            <i class="fas fa-cut me-2"></i>Patron & Matières
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history">
+                            <i class="fas fa-history me-2"></i>Historique
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews">
+                            <i class="fas fa-star me-2"></i>Avis clients
+                            <span class="badge bg-primary ms-2">{{ habit.avis.count }}</span>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="productTabsContent">
+                    <!-- Onglet Détails techniques -->
+                    <div class="tab-pane fade show active" id="details" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-ruler-combined me-2"></i>Mesures standards</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <tbody>
+                                            <tr><td>Tour de poitrine</td><td>{{ habit.mesure_standard_tour_poitrine|default:"-" }} cm</td></tr>
+                                            <tr><td>Tour de taille</td><td>{{ habit.mesure_standard_tour_taille|default:"-" }} cm</td></tr>
+                                            <tr><td>Longueur totale</td><td>{{ habit.mesure_standard_longueur|default:"-" }} cm</td></tr>
+                                            <tr><td>Largeur épaules</td><td>{{ habit.mesure_standard_largeur_epaules|default:"-" }} cm</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-calculator me-2"></i>Coûts estimés</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <tbody>
+                                            <tr><td>Main d'œuvre</td><td>{{ habit.cout_main_oeuvre|default:"-" }} FCFA</td></tr>
+                                            <tr><td>Matières premières</td><td>{{ habit.cout_matieres|default:"-" }} FCFA</td></tr>
+                                            <tr><td>Marge</td><td>{{ habit.marge|default:"-" }}%</td></tr>
+                                            <tr><td>Prix de revient</td><td>{{ habit.prix_revient|default:"-" }} FCFA</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if habit.notes_techniques %}
+                        <div class="mt-4">
+                            <h6><i class="fas fa-clipboard-check me-2"></i>Notes techniques</h6>
+                            <div class="bg-light p-3 rounded">
+                                {{ habit.notes_techniques|linebreaks }}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Onglet Patron & Matières -->
+                    <div class="tab-pane fade" id="materials" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-cut me-2"></i>Informations patron</h6>
+                                {% if habit.patron %}
+                                <div class="alert alert-success">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    Patron disponible (réf: {{ habit.patron.reference }})
+                                    <div class="mt-2">
+                                        <a href="{{ habit.patron.fichier.url }}" class="btn btn-sm btn-outline-primary" download>
+                                            <i class="fas fa-download me-1"></i>Télécharger
+                                        </a>
+                                        <a href="{% url 'catalogue:patron_detail' habit.patron.pk %}" class="btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-external-link-alt me-1"></i>Voir détail
+                                        </a>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    Aucun patron associé
+                                </div>
+                                {% endif %}
+                                
+                                <h6 class="mt-4"><i class="fas fa-swatchbook me-2"></i>Tissus compatibles</h6>
+                                <div class="row g-2">
+                                    {% for tissu in habit.tissus_compatibles.all %}
+                                    <div class="col-4">
+                                        <div class="card border h-100">
+                                            <div class="card-body text-center p-2">
+                                                <div class="fabric-sample mb-2" style="background-color: {{ tissu.couleur }}; height: 40px; border-radius: 5px;"></div>
+                                                <div class="small">{{ tissu.nom }}</div>
+                                                <div class="text-muted xsmall">{{ tissu.matiere.nom }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% empty %}
+                                    <div class="col-12">
+                                        <p class="text-muted fst-italic">Aucun tissu spécifié</p>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-list-check me-2"></i>Liste des fournitures</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Fourniture</th>
+                                                <th>Quantité</th>
+                                                <th>Unité</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for fourniture in habit.fournitures.all %}
+                                            <tr>
+                                                <td>{{ fourniture.nom }}</td>
+                                                <td>{{ fourniture.quantite }}</td>
+                                                <td>{{ fourniture.unite }}</td>
+                                            </tr>
+                                            {% empty %}
+                                            <tr>
+                                                <td colspan="3" class="text-center text-muted fst-italic">
+                                                    Aucune fourniture spécifiée
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <h6 class="mt-4"><i class="fas fa-clock me-2"></i>Temps estimés</h6>
+                                <div class="progress" style="height: 25px;">
+                                    <div class="progress-bar bg-success" style="width: 25%;">Coupe 25%</div>
+                                    <div class="progress-bar bg-info" style="width: 40%;">Assemblage 40%</div>
+                                    <div class="progress-bar bg-warning" style="width: 25%;">Finition 25%</div>
+                                    <div class="progress-bar bg-primary" style="width: 10%;">Contrôle 10%</div>
+                                </div>
+                                <div class="small text-muted text-center mt-2">
+                                    Total : {{ habit.temps_total_estime }} heures
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Onglet Historique -->
+                    <div class="tab-pane fade" id="history" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-chart-line me-2"></i>Statistiques de vente</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <tbody>
+                                            <tr>
+                                                <td>Total commandes</td>
+                                                <td class="text-end fw-bold">{{ habit.total_commandes }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Moyenne mensuelle</td>
+                                                <td class="text-end">{{ habit.moyenne_mensuelle|floatformat:1 }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Meilleur mois</td>
+                                                <td class="text-end">{{ habit.meilleur_mois_nombre }} ({{ habit.meilleur_mois }})</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Chiffre d'affaires</td>
+                                                <td class="text-end fw-bold text-success">{{ habit.chiffre_affaires|floatformat:0 }} FCFA</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-history me-2"></i>Historique des modifications</h6>
+                                <div class="timeline simple">
+                                    {% for modification in habit.modifications.all|slice:":5" %}
+                                    <div class="timeline-item">
+                                        <div class="timeline-marker"></div>
+                                        <div class="timeline-content">
+                                            <div class="small text-muted">{{ modification.date|date:"d/m/Y H:i" }}</div>
+                                            <div class="fw-bold">{{ modification.description }}</div>
+                                            <div class="small">Par {{ modification.utilisateur.get_full_name|default:modification.utilisateur.username }}</div>
+                                        </div>
+                                    </div>
+                                    {% empty %}
+                                    <p class="text-muted fst-italic">Aucune modification récente</p>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h6><i class="fas fa-calendar-alt me-2"></i>Évolution du prix</h6>
+                            <div class="bg-light p-3 rounded">
+                                <canvas id="priceHistoryChart" height="100"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Onglet Avis clients -->
+                    <div class="tab-pane fade" id="reviews" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="text-center mb-4">
+                                    <div class="display-1 fw-bold text-primary">{{ habit.moyenne_notes|floatformat:1 }}</div>
+                                    <div class="rating-stars mb-2">
+                                        {% for i in "12345" %}
+                                        {% if forloop.counter <= habit.moyenne_notes %}
+                                        <i class="fas fa-star"></i>
+                                        {% elif forloop.counter|add:"-0.5" <= habit.moyenne_notes %}
+                                        <i class="fas fa-star-half-alt"></i>
+                                        {% else %}
+                                        <i class="far fa-star"></i>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                    <div class="text-muted">Basé sur {{ habit.avis.count }} avis</div>
+                                </div>
+                                
+                                <!-- Répartition des notes -->
+                                <h6>Répartition des notes</h6>
+                                {% for note in "54321" %}
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="small me-2">{{ note }} étoiles</div>
+                                    <div class="progress-bar-custom flex-grow-1"></div>
+                                    </div>
+                                    <div class="small ms-2" style="min-width: 40px;">
+                                        {% with count=habit.get_note_count|get_item:note %}
+                                        {{ count }}
+                                        {% endwith %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="col-md-8">
+                                {% if habit.avis.all %}
+                                <div class="review-card">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <div>
+                                            <h6 class="mb-1">Dernier avis</h6>
+                                            <div class="rating-stars">
+                                                {% for i in "12345" %}
+                                                {% if forloop.counter <= habit.dernier_avis.note %}
+                                                <i class="fas fa-star"></i>
+                                                {% else %}
+                                                <i class="far fa-star"></i>
+                                                {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        <div class="text-muted small">{{ habit.dernier_avis.date|date:"d/m/Y" }}</div>
+                                    </div>
+                                    <p class="mb-2">{{ habit.dernier_avis.commentaire }}</p>
+                                    <div class="small text-muted">
+                                        Par {{ habit.dernier_avis.client.prenom }} {{ habit.dernier_avis.client.nom }}
+                                    </div>
+                                </div>
+                                
+                                <h6 class="mt-4">Tous les avis</h6>
+                                {% for avis in habit.avis.all|slice:":3" %}
+                                <div class="review-card">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div>
+                                            <div class="fw-bold">{{ avis.client.prenom }} {{ avis.client.nom }}</div>
+                                            <div class="rating-stars small">
+                                                {% for i in "12345" %}
+                                                {% if forloop.counter <= avis.note %}
+                                                <i class="fas fa-star"></i>
+                                                {% else %}
+                                                <i class="far fa-star"></i>
+                                                {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        <div class="text-muted small">{{ avis.date|date:"d/m/Y" }}</div>
+                                    </div>
+                                    <p class="mb-0">{{ avis.commentaire }}</p>
+                                </div>
+                                {% endfor %}
+                                
+                                {% if habit.avis.count > 3 %}
+                                <div class="text-center mt-3">
+                                    <a href="{% url 'catalogue:avis_list' habit.pk %}" class="btn btn-outline-primary">
+                                        Voir tous les avis ({{ habit.avis.count }})
+                                    </a>
+                                </div>
+                                {% endif %}
+                                {% else %}
+                                <div class="text-center py-5">
+                                    <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                                    <h5 class="text-muted">Aucun avis pour le moment</h5>
+                                    <p class="text-muted">Soyez le premier à donner votre avis !</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Produits similaires -->
+{% if produits_similaires %}
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-random me-2"></i>Produits similaires</h5>
+                <a href="{% url 'catalogue:catalogue_list' %}?category={{ habit.categorie.slug }}" class="btn btn-sm btn-outline-primary">
+                    Voir toute la catégorie
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    {% for produit in produits_similaires %}
+                    <div class="col-xl-2 col-lg-3 col-md-4 col-6">
+                        <div class="related-product-card card">
+                            <a href="{% url 'catalogue:catalogue_detail' produit.pk %}">
+                                {% if produit.image %}
+                                <img src="{{ produit.image.url }}" class="card-img-top" alt="{{ produit.nom }}" style="height: 150px; object-fit: cover;">
+                                {% else %}
+                                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 150px;">
+                                    <i class="fas fa-tshirt fa-2x text-muted"></i>
+                                </div>
+                                {% endif %}
+                            </a>
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <a href="{% url 'catalogue:catalogue_detail' produit.pk %}" class="text-decoration-none">
+                                        {{ produit.nom|truncatechars:25 }}
+                                    </a>
+                                </h6>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold">{{ produit.prix_standard }} FCFA</span>
+                                    <small class="text-muted">
+                                        <i class="fas fa-star text-warning"></i>
+                                        {{ produit.moyenne_notes|floatformat:1 }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Boutons d'action -->
+<div class="action-buttons">
+    <div class="row align-items-center">
+        <div class="col-md-6 mb-3 mb-md-0">
+            <a href="{% url 'catalogue:catalogue_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Retour au catalogue
+            </a>
+            <a href="#" class="btn btn-outline-primary" target="_blank">
+                <i class="fas fa-print me-2"></i>Imprimer la fiche
+            </a>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <a href="{% url 'commandes:commande_create' %}?habit={{ habit.pk }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-cart-plus me-2"></i>Créer une commande
+            </a>
+            <button class="btn btn-success btn-lg" data-bs-toggle="modal" data-bs-target="#addToFavoritesModal">
+                <i class="fas fa-heart me-2"></i>Ajouter aux favoris
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour ajouter aux favoris -->
+<div class="modal fade" id="addToFavoritesModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-heart me-2"></i>Ajouter aux favoris</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-heart fa-3x text-danger mb-3"></i>
+                <h5>{{ habit.nom }}</h5>
+                <p class="text-muted">Sera ajouté à vos favoris pour un accès rapide.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" onclick="addToFavorites()">
+                    <i class="fas fa-heart me-2"></i>Ajouter
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Changement d'image dans la galerie
+    function changeImage(src) {
+        document.getElementById('mainImage').src = src;
+        
+        // Mettre à jour les miniatures actives
+        document.querySelectorAll('.thumbnail').forEach(thumb => {
+            thumb.classList.remove('active');
+        });
+        event.target.classList.add('active');
+    }
+    
+    // Initialiser les miniatures
+    const thumbnails = document.querySelectorAll('.thumbnail');
+    thumbnails.forEach(thumb => {
+        thumb.addEventListener('click', function() {
+            changeImage(this.src);
+        });
+    });
+    
+    // Graphique d'évolution du prix
+    const priceChartCanvas = document.getElementById('priceHistoryChart');
+    if (priceChartCanvas) {
+        const ctx = priceChartCanvas.getContext('2d');
+        
+        // Données factices (à remplacer par des données réelles)
+        const data = {
+            labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun'],
+            datasets: [{
+                label: 'Prix (FCFA)',
+                data: [25000, 25500, 26000, 25000, 24500, 24000],
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        };
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: data,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString() + ' FCFA';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Gestion des onglets avec sauvegarde de l'état
+    const tabButtons = document.querySelectorAll('[data-bs-toggle="tab"]');
+    tabButtons.forEach(button => {
+        button.addEventListener('shown.bs.tab', function (e) {
+            localStorage.setItem('activeTab', e.target.getAttribute('id'));
+        });
+    });
+    
+    // Restaurer l'onglet actif
+    const activeTab = localStorage.getItem('activeTab') || 'details-tab';
+    const tabElement = document.getElementById(activeTab);
+    if (tabElement) {
+        new bootstrap.Tab(tabElement).show();
+    }
+    
+    // Calcul du prix avec promotion
+    function calculatePromotionPrice() {
+        const basePrice = {{ habit.prix_standard }};
+        const discount = {{ habit.promotion|default:0 }};
+        
+        if (discount > 0) {
+            const finalPrice = basePrice * (1 - discount / 100);
+            const savings = basePrice - finalPrice;
+            
+            document.getElementById('promotionPrice').textContent = finalPrice.toLocaleString() + ' FCFA';
+            document.getElementById('savings').textContent = savings.toLocaleString() + ' FCFA';
+        }
+    }
+    
+    calculatePromotionPrice();
+    
+    // Animation pour les étoiles de notation
+    const stars = document.querySelectorAll('.rating-stars .fa-star');
+    stars.forEach(star => {
+        star.addEventListener('mouseenter', function() {
+            this.classList.add('animate__animated', 'animate__pulse');
+        });
+        
+        star.addEventListener('animationend', function() {
+            this.classList.remove('animate__animated', 'animate__pulse');
+        });
+    });
+});
+
+// Ajouter aux favoris
+function addToFavorites() {
+    const habitId = {{ habit.pk }};
+    
+    fetch(`/api/catalogue/${habitId}/add-to-favorites/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addToFavoritesModal'));
+            if (modal) modal.hide();
+            showToast('Ajouté aux favoris avec succès !', 'success');
+        } else {
+            showToast('Erreur lors de l\'ajout aux favoris', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        showToast('Erreur réseau', 'error');
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+
+// Imprimer la fiche produit
+function printProductSheet() {
+    window.print();
+}
+
+// Partager le produit
+function shareProduct() {
+    if (navigator.share) {
+        navigator.share({
+            title: '{{ habit.nom }} - TAILOR',
+            text: 'Découvrez {{ habit.nom }} sur notre catalogue',
+            url: window.location.href
+        });
+    } else {
+        // Fallback pour les navigateurs qui ne supportent pas l'API Share
+        navigator.clipboard.writeText(window.location.href);
+        showToast('Lien copié dans le presse-papier !', 'info');
+    }
+}
+
+// Afficher un toast
+function showToast(message, type = 'info') {
+    const toast = new bootstrap.Toast(document.getElementById('toast'));
+    const toastBody = document.querySelector('.toast-body');
+    const toastElement = document.getElementById('toast');
+    
+    toastBody.textContent = message;
+    toastElement.className = `toast align-items-center text-white bg-${type} border-0`;
+    toast.show();
+}
+
+// Helper pour récupérer le cookie CSRF
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Zoom sur l'image
+function zoomImage() {
+    const mainImage = document.getElementById('mainImage');
+    mainImage.classList.toggle('zoom-active');
+    
+    if (mainImage.classList.contains('zoom-active')) {
+        mainImage.style.cursor = 'zoom-out';
+        mainImage.style.transform = 'scale(1.5)';
+        mainImage.style.transition = 'transform 0.3s ease';
+    } else {
+        mainImage.style.cursor = 'zoom-in';
+        mainImage.style.transform = 'scale(1)';
+    }
+}
+
+// Initialiser le zoom
+document.getElementById('mainImage').addEventListener('click', zoomImage);
+</script>
+
+<!-- Animation CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+
+<!-- Toast container -->
+<div class="toast-container position-fixed top-0 end-0 p-3">
+    <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<!-- Styles additionnels pour l'impression -->
+<style>
+@media print {
+    .action-buttons, .btn, .nav-tabs, .breadcrumb, .product-badge {
+        display: none !important;
+    }
+    
+    .price-card {
+        background: white !important;
+        color: black !important;
+        box-shadow: none !important;
+        border: 2px solid #333 !important;
+    }
+    
+    .card {
+        border: 1px solid #333 !important;
+        box-shadow: none !important;
+    }
+    
+    a {
+        text-decoration: none !important;
+        color: black !important;
+    }
+    
+    .thumbnail-container, .related-product-card {
+        display: none !important;
+    }
+}
+</style>
+{% endblock %}

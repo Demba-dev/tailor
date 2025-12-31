@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+
+{% extends "base.html" %}
+{% load mesure_filters %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Modifier les mesures{% else %}Nouvelles mesures{% endif %} - TAILOR{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/clients.css' %}">
+<style>
+    /* Styles spécifiques pour le formulaire de mesures */
+    .measurement-group {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid #667eea;
+    }
+    
+    .measurement-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+    }
+    
+    .measure-input-group {
+        position: relative;
+    }
+    
+    .measure-input-group .form-control {
+        padding-right: 3.5rem;
+        text-align: right;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    .measure-unit {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #667eea;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .visual-guide {
+        width: 100%;
+        height: 120px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .body-silhouette {
+        width: 80px;
+        height: 100px;
+        background: #667eea;
+        border-radius: 40px;
+        position: relative;
+    }
+    
+    .measurement-point {
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        background: #ff6b6b;
+        border-radius: 50%;
+        border: 2px solid white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .history-comparison {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .comparison-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #f8f9fa;
+    }
+    
+    .comparison-item:last-child {
+        border-bottom: none;
+    }
+    
+    .comparison-diff {
+        font-weight: 600;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+    }
+    
+    .diff-positive { background: #d1fae5; color: #065f46; }
+    .diff-negative { background: #fee2e2; color: #991b1b; }
+    .diff-neutral { background: #f3f4f6; color: #4b5563; }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'mesures:mesure_list' %}">Mesures</a></li>
+        {% if form.instance.pk and form.instance.client %}
+        <li class="breadcrumb-item"><a href="{% url 'clients:client_detail' form.instance.client.id %}">{{ form.instance.client.prenom }} {{ form.instance.client.nom }}</a></li>
+        {% endif %}
+        <li class="breadcrumb-item active">
+            {% if form.instance.pk %}Modifier{% else %}Nouvelles mesures{% endif %}
+        </li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block page_title %}
+<div class="d-flex justify-content-between align-items-center">
+    <div>
+        <h1 class="h2 mb-1">
+            {% if form.instance.pk %}
+            <i class="fas fa-ruler-combined text-primary me-2"></i>Modifier les mesures
+            {% else %}
+            <i class="fas fa-plus-circle text-success me-2"></i>Nouvelles mesures
+            {% endif %}
+        </h1>
+        <p class="text-muted mb-0">
+            {% if form.instance.pk %}
+            Mettez à jour les mesures de {{ form.instance.client.prenom }} {{ form.instance.client.nom }}
+            {% else %}
+            Enregistrez de nouvelles mesures pour un client
+            {% endif %}
+        </p>
+    </div>
+    {% if form.instance.pk and form.instance.client %}
+    <div class="d-flex align-items-center gap-3">
+        <div class="text-end">
+            <div class="fw-bold">{{ form.instance.client.prenom }} {{ form.instance.client.nom }}</div>
+            <div class="small text-muted">{{ form.instance.client.telephone }}</div>
+        </div>
+        <div class="avatar-lg">
+            <div class="avatar-circle bg-primary text-white">
+                {{ form.instance.client.prenom|first|upper }}{{ form.instance.client.nom|first|upper }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Formulaire principal -->
+    <div class="col-lg-8">
+        <div class="card shadow-lg border-0 mb-4">
+            <div class="card-body p-4">
+                <form method="post" id="measurementForm" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- Client selection -->
+                    <div class="form-section mb-4">
+                        <h5 class="section-title">
+                            <i class="fas fa-user-circle"></i>
+                            Informations client
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label for="{{ form.client.id_for_label }}" class="form-label required">
+                                    <i class="fas fa-user me-1"></i>Client
+                                </label>
+                                <div class="input-group">
+                                    {{ form.client }}
+                                    {% if not form.instance.pk %}
+                                    <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#clientModal">
+                                        <i class="fas fa-plus"></i> Nouveau
+                                    </button>
+                                    {% endif %}
+                                </div>
+                                <div class="invalid-feedback">
+                                    Veuillez sélectionner un client.
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.type_habit.id_for_label }}" class="form-label required">
+                                    <i class="fas fa-tshirt me-1"></i>Type d'habit
+                                </label>
+                                {{ form.type_habit }}
+                            </div>
+                        </div>
+                        {% if form.instance.client %}
+                        <div class="alert alert-info d-flex align-items-center">
+                            <i class="fas fa-info-circle fa-2x me-3"></i>
+                            <div>
+                                <strong>Client :</strong> {{ form.instance.client.prenom }} {{ form.instance.client.nom }}
+                                <div class="small">
+                                    <span class="me-3"><i class="fas fa-venus-mars me-1"></i>{{ form.instance.client.get_genre_display }}</span>
+                                    {% if form.instance.client.date_naissance %}
+                                    <span><i class="fas fa-birthday-cake me-1"></i>{{ form.instance.client.get_age }} ans</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Instructions visuelles -->
+                    <div class="form-section mb-4">
+                        <h5 class="section-title">
+                            <i class="fas fa-graduation-cap"></i>
+                            Guide de prise de mesures
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="visual-guide">
+                                    <div class="body-silhouette">
+                                        <div class="measurement-point" style="top: 15%; left: 50%; transform: translateX(-50%);" data-tooltip="Tour de poitrine"></div>
+                                        <div class="measurement-point" style="top: 35%; left: 50%; transform: translateX(-50%);" data-tooltip="Tour de taille"></div>
+                                        <div class="measurement-point" style="top: 55%; left: 50%; transform: translateX(-50%);" data-tooltip="Tour de hanches"></div>
+                                        <div class="measurement-point" style="top: 20%; left: 20%;" data-tooltip="Longueur d'épaule"></div>
+                                        <div class="measurement-point" style="top: 60%; left: 20%;" data-tooltip="Longueur de bras"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="alert alert-warning">
+                                    <h6><i class="fas fa-lightbulb me-2"></i>Conseils importants</h6>
+                                    <ul class="small mb-0">
+                                        <li>Mesurer le client en sous-vêtements</li>
+                                        <li>Utiliser un mètre ruban souple</li>
+                                        <li>Ne pas serrer le mètre</li>
+                                        <li>Noter les mesures en centimètres</li>
+                                        <li>Vérifier la symétrie</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Mesures principales -->
+                    <div class="form-section mb-4">
+                        <h5 class="section-title">
+                            <i class="fas fa-ruler"></i>
+                            Mesures principales
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.tour_poitrine.id_for_label }}" class="form-label">
+                                    <div class="d-flex align-items-center">
+                                        <div class="measurement-icon me-2">
+                                            <i class="fas fa-arrows-alt-h"></i>
+                                        </div>
+                                        Tour de poitrine
+                                    </div>
+                                </label>
+                                <div class="measure-input-group">
+                                    {{ form.tour_poitrine }}
+                                    <span class="measure-unit">cm</span>
+                                </div>
+                                <div class="form-text small">
+                                    Mesurer au niveau le plus large
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.tour_taille.id_for_label }}" class="form-label">
+                                    <div class="d-flex align-items-center">
+                                        <div class="measurement-icon me-2">
+                                            <i class="fas fa-arrows-alt-h"></i>
+                                        </div>
+                                        Tour de taille
+                                    </div>
+                                </label>
+                                <div class="measure-input-group">
+                                    {{ form.tour_taille }}
+                                    <span class="measure-unit">cm</span>
+                                </div>
+                                <div class="form-text small">
+                                    Au niveau du nombril
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.tour_hanches.id_for_label }}" class="form-label">
+                                    <div class="d-flex align-items-center">
+                                        <div class="measurement-icon me-2">
+                                            <i class="fas fa-arrows-alt-h"></i>
+                                        </div>
+                                        Tour de hanches
+                                    </div>
+                                </label>
+                                <div class="measure-input-group">
+                                    {{ form.tour_hanche }}
+                                    <span class="measure-unit">cm</span>
+                                </div>
+                                <div class="form-text small">
+                                    Niveau le plus large des hanches
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Mesures de longueur -->
+                    <div class="form-section mb-4">
+                        <h5 class="section-title">
+                            <i class="fas fa-ruler-vertical"></i>
+                            Mesures de longueur
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.longueur_bras.id_for_label }}" class="form-label">
+                                    <div class="d-flex align-items-center">
+                                        <div class="measurement-icon me-2" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);">
+                                            <i class="fas fa-arrows-alt-v"></i>
+                                        </div>
+                                        Longueur bras
+                                    </div>
+                                </label>
+                                <div class="measure-input-group">
+                                    {{ form.longueur_bras }}
+                                    <span class="measure-unit">cm</span>
+                                </div>
+                                <div class="form-text small">
+                                    Épaule → poignet
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.longueur_pantalon.id_for_label }}" class="form-label">
+                                    <div class="d-flex align-items-center">
+                                        <div class="measurement-icon me-2" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);">
+                                            <i class="fas fa-arrows-alt-v"></i>
+                                        </div>
+                                        Longueur pantalon
+                                    </div>
+                                </label>
+                                <div class="measure-input-group">
+                                    {{ form.longueur_pantalon }}
+                                    <span class="measure-unit">cm</span>
+                                </div>
+                                <div class="form-text small">
+                                    Taille → cheville
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.hauteur_taille.id_for_label }}" class="form-label">
+                                    <div class="d-flex align-items-center">
+                                        <div class="measurement-icon me-2" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);">
+                                            <i class="fas fa-arrows-alt-v"></i>
+                                        </div>
+                                        Hauteur taille
+                                    </div>
+                                </label>
+                                <div class="measure-input-group">
+                                    {{ form.hauteur_taille }}
+                                    <span class="measure-unit">cm</span>
+                                </div>
+                                <div class="form-text small">
+                                    Nuque → taille
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Mesures d'épaules -->
+                    <div class="form-section mb-4">
+                        <h5 class="section-title">
+                            <i class="fas fa-vector-square"></i>
+                            Mesures d'épaules
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.largeur_epaules.id_for_label }}" class="form-label">
+                                    Largeur d'épaules
+                                </label>
+                                <div class="measure-input-group">
+                                    {{ form.largeur_epaules }}
+                                    <span class="measure-unit">cm</span>
+                                </div>
+                                <div class="form-text small">
+                                    D'un bout d'épaule à l'autre
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.longueur_epaule.id_for_label }}" class="form-label">
+                                    Longueur d'épaule
+                                </label>
+                                <div class="measure-input-group">
+                                    {{ form.longueur_epaule }}
+                                    <span class="measure-unit">cm</span>
+                                </div>
+                                <div class="form-text small">
+                                    Base du cou → bout d'épaule
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Informations supplémentaires -->
+                    <div class="form-section mb-4">
+                        <h5 class="section-title">
+                            <i class="fas fa-sticky-note"></i>
+                            Informations complémentaires
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.date_prise.id_for_label }}" class="form-label required">
+                                    <i class="fas fa-calendar-alt me-1"></i>Date de prise
+                                </label>
+                                <div class="input-group">
+                                    {{ form.date_prise }}
+                                    <span class="input-group-text">
+                                        <i class="fas fa-calendar"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.mesureur.id_for_label }}" class="form-label">
+                                    <i class="fas fa-user-tie me-1"></i>Mesureur
+                                </label>
+                                {{ form.mesureur }}
+                            </div>
+                            
+                            <div class="col-12 mb-3">
+                                <label for="{{ form.observations.id_for_label }}" class="form-label">
+                                    <i class="fas fa-comment-dots me-1"></i>Observations
+                                </label>
+                                {{ form.note}}
+                                <div class="form-text">
+                                    Notes importantes : asymétrie, posture particulière, préférences...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Boutons d'action -->
+                    <div class="d-flex justify-content-between align-items-center pt-4 border-top">
+                        <div>
+                            <a href="{% url 'mesures:mesure_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Retour à la liste
+                            </a>
+                        </div>
+                        <div class="btn-group">
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="fas fa-save me-2"></i>
+                                {% if form.instance.pk %}Mettre à jour{% else %}Enregistrer les mesures{% endif %}
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" onclick="printMeasurements()">
+                                <i class="fas fa-print me-2"></i>Imprimer
+                            </button>
+                            {% if not form.instance.pk %}
+                            <button type="submit" name="save_and_add_another" class="btn btn-success">
+                                <i class="fas fa-plus-circle me-2"></i>Enregistrer et ajouter
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Colonne latérale : historique et outils -->
+    <div class="col-lg-4">
+        <!-- Historique des mesures -->
+        {% if form.instance.client and previous_measurements %}
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="fas fa-history me-2"></i>Historique des mesures</h6>
+            </div>
+            <div class="card-body">
+                <div class="history-comparison">
+                    {% for prev in previous_measurements|slice:":3" %}
+                    <div class="comparison-item">
+                        <div>
+                            <div class="small text-muted">{{ prev.date_prise|date:"d/m/Y" }}</div>
+                            <div class="fw-bold">{{ prev.type_habit.nom }}</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold">{{ prev.tour_taille|default:"-" }} cm</div>
+                            {% if form.instance.tour_taille and prev.tour_taille %}
+                            {% with diff=form.instance.tour_taille|subtract:prev.tour_taille %}
+                            <div class="comparison-diff {% if diff > 0 %}diff-positive{% elif diff < 0 %}diff-negative{% else %}diff-neutral{% endif %}">
+                                {% if diff > 0 %}+{% endif %}{{ diff|floatformat:1 }} cm
+                            </div>
+                            {% endwith %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% if previous_measurements|length > 3 %}
+                <div class="text-center mt-3">
+                    <a href="{% url 'mesures:mesure_list' %}?client={{ form.instance.client.id }}" 
+                       class="btn btn-sm btn-outline-primary">
+                        Voir tout l'historique
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Calculateur de taille -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="fas fa-calculator me-2"></i>Calculateur de taille</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label small">Basé sur le tour de poitrine</label>
+                    <div class="input-group input-group-sm">
+                        <input type="number" class="form-control" id="chestInput" placeholder="Tour poitrine (cm)">
+                        <button class="btn btn-outline-primary" type="button" onclick="calculateSize()">
+                            Calculer
+                        </button>
+                    </div>
+                </div>
+                <div id="sizeResult" class="d-none">
+                    <div class="alert alert-info mb-0">
+                        <div class="fw-bold mb-1">Taille estimée : <span id="estimatedSize">M</span></div>
+                        <div class="small">
+                            <span id="sizeRange">95-100 cm</span>
+                            <div class="mt-2">
+                                <i class="fas fa-info-circle me-1"></i>
+                                <span id="sizeNote">Taille standard européenne</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <div class="small text-muted">Échelles de taille :</div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Taille</th>
+                                    <th>Poitrine (cm)</th>
+                                    <th>Taille (cm)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>XS</td><td>81-86</td><td>66-71</td></tr>
+                                <tr><td>S</td><td>87-92</td><td>72-77</td></tr>
+                                <tr class="table-primary"><td>M</td><td>93-98</td><td>78-83</td></tr>
+                                <tr><td>L</td><td>99-104</td><td>84-89</td></tr>
+                                <tr><td>XL</td><td>105-110</td><td>90-95</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Outils de vérification -->
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="fas fa-check-circle me-2"></i>Vérification des mesures</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="small">Proportions</span>
+                        <span class="badge bg-success" id="proportionBadge">OK</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-success" style="width: 85%"></div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="small">Cohérence historique</span>
+                        <span class="badge bg-warning" id="consistencyBadge">À vérifier</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-warning" style="width: 60%"></div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="small">Complétude</span>
+                        <span class="badge bg-danger" id="completenessBadge">Incomplet</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-danger" style="width: 30%"></div>
+                    </div>
+                </div>
+                <button class="btn btn-sm btn-outline-primary w-100" onclick="verifyMeasurements()">
+                    <i class="fas fa-sync-alt me-1"></i>Vérifier maintenant
+                </button>
+            </div>
+        </div>
+        
+        <!-- Aide rapide -->
+        <div class="card shadow-sm border-0 mt-4">
+            <div class="card-body bg-light">
+                <h6 class="mb-2"><i class="fas fa-question-circle text-primary me-2"></i>Aide rapide</h6>
+                <div class="accordion" id="helpAccordion">
+                    <div class="accordion-item border-0">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed bg-transparent shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#helpOne">
+                                Comment mesurer correctement ?
+                            </button>
+                        </h2>
+                        <div id="helpOne" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                            <div class="accordion-body small">
+                                Le client doit être debout, détendu, en sous-vêtements. Le mètre doit être parallèle au sol sans serrer.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item border-0">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed bg-transparent shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#helpTwo">
+                                Quand reprendre les mesures ?
+                            </button>
+                        </h2>
+                        <div id="helpTwo" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                            <div class="accordion-body small">
+                                Tous les 6 mois, ou après une variation de poids de plus de 3 kg.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour nouveau client -->
+<div class="modal fade" id="clientModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>Ajouter un nouveau client</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted">Pour ajouter un nouveau client, veuillez d'abord le créer depuis la page des clients.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                <a href="{% url 'clients:client_create' %}" class="btn btn-primary">
+                    <i class="fas fa-external-link-alt me-2"></i>Aller aux clients
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Validation du formulaire
+    const form = document.getElementById('measurementForm');
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+    
+    // Date picker
+    const dateField = document.getElementById('{{ form.date_prise.id_for_label }}');
+    if (dateField && !dateField.type === 'date') {
+        flatpickr(dateField, {
+            dateFormat: "d/m/Y",
+            locale: "fr",
+            defaultDate: "today",
+            disableMobile: "true"
+        });
+    }
+    
+    // Auto-remplir la date si vide
+    if (dateField && !dateField.value) {
+        dateField.value = new Date().toLocaleDateString('fr-FR');
+    }
+    
+    // Auto-remplir le mesureur avec l'utilisateur courant
+    const mesureurField = document.getElementById('{{ form.mesureur.id_for_label }}');
+    if (mesureurField && !mesureurField.value) {
+        // Récupérer l'utilisateur connecté (à adapter selon votre implémentation)
+        const currentUser = "{{ request.user.get_full_name|default:request.user.username }}";
+        if (currentUser) {
+            // Chercher l'option correspondante
+            const options = Array.from(mesureurField.options);
+            const matchingOption = options.find(opt => opt.text.includes(currentUser));
+            if (matchingOption) {
+                mesureurField.value = matchingOption.value;
+            }
+        }
+    }
+    
+    // Outils de vérification en temps réel
+    const measurementFields = document.querySelectorAll('.measure-input-group .form-control');
+    measurementFields.forEach(field => {
+        field.addEventListener('input', updateVerification);
+        field.addEventListener('blur', validateMeasurement);
+    });
+    
+    // Tooltips pour les points de mesure
+    const measurementPoints = document.querySelectorAll('.measurement-point');
+    measurementPoints.forEach(point => {
+        const tooltip = new bootstrap.Tooltip(point, {
+            title: point.getAttribute('data-tooltip'),
+            placement: 'top'
+        });
+    });
+    
+    // Calcul automatique des proportions
+    function updateVerification() {
+        const chest = parseFloat(document.getElementById('{{ form.tour_poitrine.id_for_label }}')?.value) || 0;
+        const waist = parseFloat(document.getElementById('{{ form.tour_taille.id_for_label }}')?.value) || 0;
+        const hips = parseFloat(document.getElementById('{{ form.tour_hanches.id_for_label }}')?.value) || 0;
+        
+        // Vérifier les proportions
+        if (chest > 0 && waist > 0 && hips > 0) {
+            const waistRatio = waist / chest;
+            const hipRatio = hips / chest;
+            
+            let proportionScore = 0;
+            if (waistRatio >= 0.7 && waistRatio <= 0.9) proportionScore += 50;
+            if (hipRatio >= 0.9 && hipRatio <= 1.1) proportionScore += 50;
+            
+            const proportionBadge = document.getElementById('proportionBadge');
+            const proportionBar = document.querySelector('.progress-bar.bg-success');
+            
+            if (proportionScore >= 80) {
+                proportionBadge.className = 'badge bg-success';
+                proportionBadge.textContent = 'Parfait';
+                proportionBar.style.width = '100%';
+            } else if (proportionScore >= 50) {
+                proportionBadge.className = 'badge bg-warning';
+                proportionBadge.textContent = 'Correct';
+                proportionBar.style.width = '70%';
+            } else {
+                proportionBadge.className = 'badge bg-danger';
+                proportionBadge.textContent = 'À vérifier';
+                proportionBar.style.width = '30%';
+            }
+        }
+        
+        // Vérifier la complétude
+        const filledFields = Array.from(measurementFields).filter(f => f.value.trim() !== '').length;
+        const totalFields = measurementFields.length;
+        const completenessPercentage = (filledFields / totalFields) * 100;
+        
+        const completenessBadge = document.getElementById('completenessBadge');
+        const completenessBar = document.querySelector('.progress-bar.bg-danger');
+        
+        completenessBar.style.width = `${completenessPercentage}%`;
+        
+        if (completenessPercentage >= 80) {
+            completenessBadge.className = 'badge bg-success';
+            completenessBadge.textContent = 'Complet';
+        } else if (completenessPercentage >= 50) {
+            completenessBadge.className = 'badge bg-warning';
+            completenessBadge.textContent = 'Partiel';
+        } else {
+            completenessBadge.className = 'badge bg-danger';
+            completenessBadge.textContent = 'Incomplet';
+        }
+    }
+    
+    // Validation des valeurs de mesure
+    function validateMeasurement(event) {
+        const field = event.target;
+        const value = parseFloat(field.value);
+        
+        if (isNaN(value) || value <= 0) {
+            field.classList.add('is-invalid');
+            field.classList.remove('is-valid');
+            return;
+        }
+        
+        // Vérifier les plages raisonnables selon le type de mesure
+        const fieldId = field.id;
+        let min = 30, max = 200; // Valeurs par défaut
+        
+        if (fieldId.includes('tour_')) {
+            min = 50; max = 180; // Tours
+        } else if (fieldId.includes('longueur') || fieldId.includes('hauteur')) {
+            min = 20; max = 120; // Longueurs
+        } else if (fieldId.includes('largeur')) {
+            min = 30; max = 70; // Largeurs
+        }
+        
+        if (value < min || value > max) {
+            field.classList.add('is-invalid');
+            field.classList.remove('is-valid');
+            field.nextElementSibling.textContent = `Valeur hors plage (${min}-${max} cm)`;
+        } else {
+            field.classList.remove('is-invalid');
+            field.classList.add('is-valid');
+        }
+    }
+    
+    // Initialiser la vérification
+    updateVerification();
+});
+
+// Fonction pour calculer la taille
+function calculateSize() {
+    const chestInput = document.getElementById('chestInput');
+    const chestValue = parseFloat(chestInput.value);
+    
+    if (!chestValue || chestValue < 50 || chestValue > 150) {
+        alert('Veuillez entrer une valeur de tour de poitrine valide (50-150 cm)');
+        return;
+    }
+    
+    let size, range, note;
+    
+    if (chestValue <= 86) {
+        size = 'XS'; range = '81-86 cm'; note = 'Très fine';
+    } else if (chestValue <= 92) {
+        size = 'S'; range = '87-92 cm'; note = 'Fine';
+    } else if (chestValue <= 98) {
+        size = 'M'; range = '93-98 cm'; note = 'Moyenne';
+    } else if (chestValue <= 104) {
+        size = 'L'; range = '99-104 cm'; note = 'Large';
+    } else {
+        size = 'XL'; range = '105-110 cm'; note = 'Très large';
+    }
+    
+    document.getElementById('estimatedSize').textContent = size;
+    document.getElementById('sizeRange').textContent = range;
+    document.getElementById('sizeNote').textContent = note;
+    document.getElementById('sizeResult').classList.remove('d-none');
+}
+
+// Fonction pour vérifier toutes les mesures
+function verifyMeasurements() {
+    const fields = document.querySelectorAll('.measure-input-group .form-control');
+    let errors = [];
+    
+    fields.forEach(field => {
+        const value = parseFloat(field.value);
+        if (!isNaN(value) && value > 0) {
+            const label = field.closest('.mb-3').querySelector('.form-label').textContent.trim();
+            
+            // Vérifications spécifiques
+            if (field.id.includes('tour_poitrine') && (value < 70 || value > 140)) {
+                errors.push(`${label}: Valeur inhabituelle (${value} cm)`);
+            }
+            if (field.id.includes('tour_taille') && (value < 60 || value > 130)) {
+                errors.push(`${label}: Valeur inhabituelle (${value} cm)`);
+            }
+        }
+    });
+    
+    const consistencyBadge = document.getElementById('consistencyBadge');
+    const consistencyBar = document.querySelector('.progress-bar.bg-warning');
+    
+    if (errors.length === 0) {
+        consistencyBadge.className = 'badge bg-success';
+        consistencyBadge.textContent = 'Coherent';
+        consistencyBar.style.width = '100%';
+        alert('✓ Toutes les mesures semblent cohérentes !');
+    } else {
+        consistencyBadge.className = 'badge bg-danger';
+        consistencyBadge.textContent = `${errors.length} erreurs`;
+        consistencyBar.style.width = '30%';
+        alert('⚠ Vérifications nécessaires :\n' + errors.join('\n'));
+    }
+}
+
+// Fonction pour imprimer les mesures
+function printMeasurements() {
+    const printContent = document.getElementById('measurementForm').innerHTML;
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Fiche de mesures - TAILOR</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                h2 { color: #333; border-bottom: 2px solid #667eea; padding-bottom: 10px; }
+                .measure-group { margin-bottom: 15px; }
+                .measure-label { font-weight: bold; color: #555; }
+                .measure-value { font-size: 1.1em; }
+                .header { text-align: center; margin-bottom: 30px; }
+                @media print {
+                    .no-print { display: none; }
+                    body { margin: 0; padding: 20px; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>FICHE DE MESURES</h1>
+                <p>TAILOR - Atelier de Couture</p>
+                <hr>
+            </div>
+            ${printContent}
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+}
+
+// Calcul automatique des différences
+function calculateDifferences() {
+    // Implémenter le calcul des différences avec les mesures précédentes
+}
+</script>
+
+<!-- Flatpickr pour les dates -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://npmcdn.com/flatpickr/dist/l10n/fr.js"></script>
+{% endblock %}

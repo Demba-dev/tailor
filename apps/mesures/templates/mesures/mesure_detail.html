@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Mesure de {{ mesure.client.prenom }} - TAILOR{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Mesures de {{ mesure.client.prenom }} {{ mesure.client.nom }}</h2>
+    <div class="card">
+        <div class="card-body">
+            <p><strong>Client :</strong> {{ mesure.client.prenom }} {{ mesure.client.nom }}</p>
+            <!-- Ajouter d'autres champs de mesure selon votre modèle -->
+            <a href="{% url 'mesures:mesure_update' mesure.pk %}" class="btn btn-primary">Modifier</a>
+            <a href="{% url 'mesures:mesure_list' %}" class="btn btn-secondary">Retour</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

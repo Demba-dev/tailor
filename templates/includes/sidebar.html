@@ -1,0 +1,758 @@
+{% load static %}
+<!-- Sidebar -->
+<div class="sidebar-wrapper">
+    <!-- Logo et infos atelier -->
+    <div class="sidebar-header">
+        <div class="logo-container">
+            <div class="logo-icon">
+                <i class="fas fa-scissors"></i>
+            </div>
+            <h3 class="logo-text">TAILOR</h3>
+            <p class="logo-subtitle">Atelier de Couture</p>
+        </div>
+        
+        <!-- Info rapide atelier -->
+        <div class="atelier-info">
+            <div class="info-row">
+                <span class="info-label">Statut</span>
+                <span class="status-badge status-open">
+                    <span class="status-dot"></span>
+                    Ouvert
+                </span>
+            </div>
+            <div class="info-row">
+                <i class="fas fa-clock"></i>
+                <span>09:00 - 18:00</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation principale -->
+    <nav class="sidebar-nav">
+        <ul class="nav-list">
+            <!-- Dashboard -->
+            <li class="nav-item">
+                <a href="{% url 'dashboard:index' %}" 
+                   class="nav-link {% if request.resolver_match.url_name == 'index' %}active{% endif %}">
+                    <span class="nav-icon">
+                        <i class="fas fa-tachometer-alt"></i>
+                    </span>
+                    <span class="nav-text">Tableau de bord</span>
+                    {% if commandes_urgentes %}
+                    <span class="nav-badge badge-danger">{{ commandes_urgentes }}</span>
+                    {% endif %}
+                </a>
+            </li>
+
+            <!-- Clients -->
+            <li class="nav-item">
+                <a href="{% url 'clients:client_list' %}" 
+                   class="nav-link {% if 'clients' in request.resolver_match.app_names %}active{% endif %}">
+                    <span class="nav-icon">
+                        <i class="fas fa-users"></i>
+                    </span>
+                    <span class="nav-text">Clients</span>
+                    {% if nouveaux_clients %}
+                    <span class="nav-badge badge-info">{{ nouveaux_clients }}</span>
+                    {% endif %}
+                </a>
+            </li>
+
+            <!-- Commandes -->
+            <li class="nav-item">
+                <a href="{% url 'commandes:commande_list' %}" 
+                   class="nav-link {% if 'commandes' in request.resolver_match.app_names %}active{% endif %}">
+                    <span class="nav-icon">
+                        <i class="fas fa-scroll"></i>
+                    </span>
+                    <span class="nav-text">Commandes</span>
+                    {% if commandes_encours %}
+                    <span class="nav-badge badge-warning">{{ commandes_encours }}</span>
+                    {% endif %}
+                </a>
+            </li>
+
+            <!-- Mesures -->
+            <li class="nav-item">
+                <a href="{% url 'mesures:mesure_list' %}" 
+                   class="nav-link {% if 'mesures' in request.resolver_match.app_names %}active{% endif %}">
+                    <span class="nav-icon">
+                        <i class="fas fa-ruler-combined"></i>
+                    </span>
+                    <span class="nav-text">Mesures</span>
+                </a>
+            </li>
+
+            <!-- Catalogue -->
+            <li class="nav-item dropdown-item">
+                <a href="#catalogueMenu" class="nav-link" data-bs-toggle="collapse">
+                    <span class="nav-icon">
+                        <i class="fas fa-tshirt"></i>
+                    </span>
+                    <span class="nav-text">Catalogue</span>
+                    <i class="fas fa-chevron-down dropdown-icon"></i>
+                </a>
+                <div class="collapse dropdown-menu" id="catalogueMenu">
+                    <a href="{% url 'catalogue:catalogue_list' %}" class="dropdown-link">
+                        <i class="fas fa-ring"></i> Habits
+                    </a>
+                    <a href="#" class="dropdown-link">
+                        <i class="fas fa-swatchbook"></i> Tissus
+                    </a>
+                </div>
+            </li>
+
+            <!-- Paiements -->
+            <li class="nav-item">
+                <a href="{% url 'paiements:paiement_list' %}" 
+                   class="nav-link {% if 'paiements' in request.resolver_match.app_names %}active{% endif %}">
+                    <span class="nav-icon">
+                        <i class="fas fa-euro-sign"></i>
+                    </span>
+                    <span class="nav-text">Paiements</span>
+                    {% if paiements_en_attente %}
+                    <span class="nav-badge badge-danger">{{ paiements_en_attente }}</span>
+                    {% endif %}
+                </a>
+            </li>
+
+            <!-- Personnel -->
+            <li class="nav-item">
+                <a href="{% url 'personnel:personnel_list' %}" 
+                   class="nav-link {% if 'personnel' in request.resolver_match.app_names %}active{% endif %}">
+                    <span class="nav-icon">
+                        <i class="fas fa-user-tie"></i>
+                    </span>
+                    <span class="nav-text">Personnel</span>
+                </a>
+            </li>
+
+            <!-- Formations -->
+            <li class="nav-item">
+                <a href="{% url 'formations:formation_list' %}" 
+                   class="nav-link {% if 'formations' in request.resolver_match.app_names %}active{% endif %}">
+                    <span class="nav-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </span>
+                    <span class="nav-text">Formations</span>
+                </a>
+            </li>
+        </ul>
+
+        <!-- Section rapide actions -->
+        <div class="quick-actions">
+            <h6 class="section-title">
+                <i class="fas fa-bolt"></i> Actions Rapides
+            </h6>
+            <div class="actions-grid">
+                <a href="{% url 'clients:client_create' %}" class="quick-btn quick-btn-primary">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Nouveau Client</span>
+                </a>
+                <a href="{% url 'commandes:commande_create' %}" class="quick-btn quick-btn-success">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Nouvelle Commande</span>
+                </a>
+                <a href="{% url 'paiements:paiement_create' %}" class="quick-btn quick-btn-warning">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>Encaissement</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Statistiques sidebar -->
+        <div class="sidebar-stats">
+            <h6 class="section-title">
+                <i class="fas fa-chart-line"></i> Aujourd'hui
+            </h6>
+            <div class="stats-grid">
+                <div class="stat-box stat-blue">
+                    <div class="stat-number">{{ commandes_aujourdhui }}</div>
+                    <div class="stat-label">Commandes</div>
+                </div>
+                <div class="stat-box stat-green">
+                    <div class="stat-number">{{ clients_aujourdhui }}</div>
+                    <div class="stat-label">Clients</div>
+                </div>
+                <div class="stat-box stat-cyan">
+                    <div class="stat-number">{{ ca_aujourdhui|floatformat:0 }}CFA</div>
+                    <div class="stat-label">CA</div>
+                </div>
+                <div class="stat-box stat-orange">
+                    <div class="stat-number">{{ retards }}</div>
+                    <div class="stat-label">Retards</div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Utilisateur connecté -->
+    <div class="sidebar-footer">
+        <div class="user-profile">
+            <div class="user-avatar">
+                <div class="avatar-initials">
+                    {% if user.first_name and user.last_name %}
+                        {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                    {% else %}
+                        {{ user.username|first|upper }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="user-info">
+                <div class="user-name">
+                    {% if user.first_name %}
+                        {{ user.first_name }} {{ user.last_name }}
+                    {% else %}
+                        {{ user.username }}
+                    {% endif %}
+                </div>
+                <div class="user-role">
+                    {% if user.is_superuser %}
+                        Administrateur
+                    {% elif user.groups.all %}
+                        {{ user.groups.all.0.name }}
+                    {% else %}
+                        Utilisateur
+                    {% endif %}
+                </div>
+            </div>
+            <div class="user-menu">
+                <div class="dropdown">
+                    <button class="btn-menu" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{% url 'admin:index' %}">
+                            <i class="fas fa-cog"></i> Administration
+                        </a></li>
+                        <li><a class="dropdown-item" href="#">
+                            <i class="fas fa-user-cog"></i> Mon profil
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="{% url 'admin:logout' %}">
+                            <i class="fas fa-sign-out-alt"></i> Déconnexion
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bouton de réduction sidebar -->
+    <div class="sidebar-toggle">
+        <button id="sidebarToggle" class="btn-toggle" 
+                data-bs-toggle="tooltip" title="Réduire/Agrandir le menu">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+    </div>
+</div>
+
+<style>
+/* Sidebar Modern Atelier Design */
+.sidebar-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+    border-right: 1px solid #e5e7eb;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    position: relative;
+    width: 280px;
+    transition: all 0.3s ease;
+}
+
+/* Header */
+.sidebar-header {
+    padding: 28px 20px 20px;
+    border-bottom: 1px solid #e5e7eb;
+    background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
+}
+
+.logo-container {
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.logo-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border-radius: 14px;
+    color: white;
+    font-size: 24px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 12px rgba(30, 41, 59, 0.2);
+    transition: all 0.2s ease;
+}
+
+.logo-icon:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(30, 41, 59, 0.3);
+}
+
+.logo-text {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 4px 0;
+    letter-spacing: 0.05em;
+    font-family: 'Georgia', serif;
+}
+
+.logo-subtitle {
+    font-size: 12px;
+    color: #64748b;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 500;
+}
+
+.atelier-info {
+    background: linear-gradient(135deg, #f0f9ff 0%, #f0fdf4 100%);
+    border: 1px solid #dbeafe;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-top: 12px;
+}
+
+.info-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #475569;
+    margin-bottom: 6px;
+}
+
+.info-row:last-child {
+    margin-bottom: 0;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #64748b;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: #dbeafe;
+    color: #0369a1;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.status-dot {
+    width: 6px;
+    height: 6px;
+    background: #10b981;
+    border-radius: 50%;
+    display: inline-block;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Navigation */
+.sidebar-nav {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 8px;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+.nav-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-item {
+    margin-bottom: 2px;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    color: #475569;
+    text-decoration: none;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+    position: relative;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.nav-link:hover {
+    background-color: #f1f5f9;
+    color: #1e293b;
+}
+
+.nav-link.active {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(30, 41, 59, 0.15);
+}
+
+.nav-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    font-size: 16px;
+}
+
+.nav-text {
+    flex: 1;
+}
+
+.nav-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 6px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    color: white;
+    margin-left: auto;
+}
+
+.badge-danger {
+    background-color: #ef4444;
+}
+
+.badge-info {
+    background-color: #3b82f6;
+}
+
+.badge-warning {
+    background-color: #f59e0b;
+}
+
+/* Dropdown */
+.dropdown-item {
+    position: relative;
+}
+
+.dropdown-icon {
+    font-size: 12px;
+    margin-left: auto;
+    transition: transform 0.3s ease;
+}
+
+.dropdown-item[aria-expanded="true"] .dropdown-icon {
+    transform: rotate(180deg);
+}
+
+.dropdown-menu {
+    background: #f8fafc;
+    border-left: 3px solid #e5e7eb;
+    margin-top: 4px;
+    border-radius: 8px;
+    overflow: hidden;
+    padding: 4px 0;
+}
+
+.dropdown-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px 10px 28px;
+    color: #64748b;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.dropdown-link:hover {
+    background-color: #e2e8f0;
+    color: #1e293b;
+    padding-left: 30px;
+}
+
+/* Quick Actions */
+.quick-actions {
+    padding: 16px 8px;
+    border-top: 1px solid #e5e7eb;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f9fafb;
+}
+
+.section-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: #94a3b8;
+    margin: 0 0 12px 14px;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.actions-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 8px;
+}
+
+.quick-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    color: white;
+}
+
+.quick-btn i {
+    font-size: 14px;
+}
+
+.quick-btn-primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.quick-btn-primary:hover {
+    transform: translateX(2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.quick-btn-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.quick-btn-success:hover {
+    transform: translateX(2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.quick-btn-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.quick-btn-warning:hover {
+    transform: translateX(2px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+/* Statistics */
+.sidebar-stats {
+    padding: 16px 8px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    padding: 0 8px;
+}
+
+.stat-box {
+    padding: 12px;
+    border-radius: 10px;
+    text-align: center;
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.2s ease;
+}
+
+.stat-box:hover {
+    transform: translateY(-2px);
+}
+
+.stat-blue {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.stat-green {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.stat-cyan {
+    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+}
+
+.stat-orange {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.stat-number {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.stat-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    opacity: 0.9;
+}
+
+/* Footer */
+.sidebar-footer {
+    padding: 16px;
+    border-top: 1px solid #e5e7eb;
+    background: #f9fafb;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.user-avatar {
+    flex-shrink: 0;
+}
+
+.avatar-initials {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    color: white;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(30, 41, 59, 0.15);
+}
+
+.user-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.user-name {
+    font-weight: 600;
+    font-size: 13px;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-role {
+    font-size: 11px;
+    color: #94a3b8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-menu {
+    flex-shrink: 0;
+}
+
+.btn-menu {
+    background: none;
+    border: none;
+    padding: 6px;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    border-radius: 6px;
+}
+
+.btn-menu:hover {
+    background-color: #e2e8f0;
+    color: #1e293b;
+}
+
+/* Toggle Button */
+.sidebar-toggle {
+    position: absolute;
+    bottom: 16px;
+    right: -12px;
+    z-index: 10;
+}
+
+.btn-toggle {
+    background: white;
+    border: 1px solid #e5e7eb;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #475569;
+    font-size: 12px;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-toggle:hover {
+    background: #1e293b;
+    color: white;
+    border-color: #1e293b;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .sidebar-wrapper {
+        width: 260px;
+    }
+}
+
+@media (max-width: 576px) {
+    .sidebar-wrapper {
+        position: absolute;
+        left: -280px;
+        height: 100%;
+        transition: left 0.3s ease;
+        z-index: 1000;
+    }
+
+    .sidebar-wrapper.show {
+        left: 0;
+    }
+}
+</style>

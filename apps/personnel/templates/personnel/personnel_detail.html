@@ -1,0 +1,576 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ personnel.prenom }} {{ personnel.nom }} - TAILOR{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/clients.css' %}">
+<style>
+    .detail-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+    }
+    
+    .detail-avatar {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        border: 5px solid white;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        font-weight: 800;
+        background: rgba(255,255,255,0.1);
+        flex-shrink: 0;
+    }
+    
+    .detail-header-content {
+        flex: 1;
+    }
+    
+    .detail-header h1 {
+        margin: 0 0 0.5rem 0;
+        font-size: 2rem;
+    }
+    
+    .detail-header-meta {
+        display: flex;
+        gap: 2rem;
+        margin-top: 1rem;
+    }
+    
+    .meta-item {
+        font-size: 0.95rem;
+    }
+    
+    .meta-label {
+        opacity: 0.9;
+    }
+    
+    .detail-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        border-left: 4px solid #667eea;
+    }
+    
+    .detail-card.contact {
+        border-left-color: #48bb78;
+    }
+    
+    .detail-card.contract {
+        border-left-color: #f6ad55;
+    }
+    
+    .detail-card.schedule {
+        border-left-color: #4299e1;
+    }
+    
+    .detail-card.benefits {
+        border-left-color: #ed64a6;
+    }
+    
+    .detail-card h5 {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    
+    .detail-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .detail-row:last-child {
+        margin-bottom: 0;
+    }
+    
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .detail-item-label {
+        font-weight: 500;
+        color: #666;
+        font-size: 0.9rem;
+        margin-bottom: 0.3rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .detail-item-value {
+        color: #333;
+        font-size: 1rem;
+    }
+    
+    .badge-role {
+        display: inline-block;
+        padding: 0.4rem 1rem;
+        border-radius: 20px;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+    
+    .badge-couturier {
+        background: #c3dafe;
+        color: #2c5282;
+    }
+    
+    .badge-apprenti {
+        background: #feebc8;
+        color: #7c2d12;
+    }
+    
+    .badge-contractuel {
+        background: #fed7d7;
+        color: #742a2a;
+    }
+    
+    .badge-commercial {
+        background: #c6f6d5;
+        color: #22543d;
+    }
+    
+    .badge-admin {
+        background: #bee3f8;
+        color: #2c5282;
+    }
+    
+    .status-actif {
+        color: #22863a;
+        background: #f0f8f4;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    .status-inactif {
+        color: #cb2431;
+        background: #ffeef0;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    .action-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 2px solid #f0f0f0;
+    }
+    
+    .btn-action {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+    
+    .btn-edit {
+        background: #667eea;
+        color: white;
+    }
+    
+    .btn-edit:hover {
+        background: #5568d3;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-schedule {
+        background: #4299e1;
+        color: white;
+    }
+    
+    .btn-schedule:hover {
+        background: #3182ce;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(66, 153, 225, 0.4);
+    }
+    
+    .btn-assign {
+        background: #48bb78;
+        color: white;
+    }
+    
+    .btn-assign:hover {
+        background: #38a169;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+    }
+    
+    .btn-delete {
+        background: #f56565;
+        color: white;
+    }
+    
+    .btn-delete:hover {
+        background: #e53e3e;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(245, 101, 101, 0.4);
+    }
+    
+    .formation-badge {
+        display: inline-block;
+        background: #edf2f7;
+        color: #2d3748;
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+        color: #999;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'personnel:personnel_list' %}">Personnel</a></li>
+        <li class="breadcrumb-item active">{{ personnel.prenom }} {{ personnel.nom }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block page_title %}
+<div class="detail-header">
+    <div class="detail-avatar">
+        {% if personnel.photo %}
+        <img src="{{ personnel.photo.url }}" alt="{{ personnel.prenom }} {{ personnel.nom }}" style="width: 100%; height: 100%; object-fit: cover;">
+        {% else %}
+        {{ personnel.prenom|first|upper }}{{ personnel.nom|first|upper }}
+        {% endif %}
+    </div>
+    <div class="detail-header-content">
+        <h1>{{ personnel.prenom }} {{ personnel.nom }}</h1>
+        <div class="detail-header-meta">
+            <div class="meta-item">
+                <span class="meta-label">Rôle</span>
+                <div style="margin-top: 0.3rem;">
+                    <span class="badge-role badge-{{ personnel.role }}">
+                        {{ personnel.get_role_display }}
+                    </span>
+                </div>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Statut</span>
+                <div style="margin-top: 0.3rem;">
+                    {% if personnel.is_active %}
+                    <span class="status-actif"><i class="fas fa-check-circle me-1"></i>Actif</span>
+                    {% else %}
+                    <span class="status-inactif"><i class="fas fa-times-circle me-1"></i>Inactif</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        
+        <!-- Informations personnelles -->
+        <div class="detail-card">
+            <h5><i class="fas fa-id-card me-2"></i>Informations personnelles</h5>
+            <div class="detail-row">
+                <div class="detail-item">
+                    <span class="detail-item-label">Email</span>
+                    <span class="detail-item-value">
+                        {% if personnel.email %}
+                        <a href="mailto:{{ personnel.email }}">{{ personnel.email }}</a>
+                        {% else %}
+                        <span class="text-muted">Non renseigné</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-item-label">Téléphone</span>
+                    <span class="detail-item-value">
+                        {% if personnel.telephone %}
+                        <a href="tel:{{ personnel.telephone }}">{{ personnel.telephone }}</a>
+                        {% else %}
+                        <span class="text-muted">Non renseigné</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-item-label">Genre</span>
+                    <span class="detail-item-value">{{ personnel.get_genre_display|default:"Non renseigné" }}</span>
+                </div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-item">
+                    <span class="detail-item-label">Date de naissance</span>
+                    <span class="detail-item-value">{{ personnel.date_naissance|date:"d/m/Y"|default:"Non renseignée" }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-item-label">Lieu de naissance</span>
+                    <span class="detail-item-value">{{ personnel.lieu_naissance|default:"Non renseigné" }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-item-label">Âge</span>
+                    <span class="detail-item-value">
+                        {% if personnel.date_naissance %}
+                        {{ personnel.date_naissance }} ans
+                        {% else %}
+                        Non calculable
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-item">
+                    <span class="detail-item-label">CNI</span>
+                    <span class="detail-item-value">{{ personnel.cni|default:"Non renseignée" }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-item-label">Numéro de sécurité sociale</span>
+                    <span class="detail-item-value">{{ personnel.numero_securite_sociale|default:"Non renseigné" }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Adresse -->
+        <div class="detail-card contact">
+            <h5><i class="fas fa-map-marker-alt me-2"></i>Adresse</h5>
+            <div class="detail-row">
+                <div class="detail-item">
+                    <span class="detail-item-label">Adresse</span>
+                    <span class="detail-item-value">{{ personnel.adresse|default:"Non renseignée" }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-item-label">Ville</span>
+                    <span class="detail-item-value">{{ personnel.ville|default:"Non renseignée" }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-item-label">Code postal</span>
+                    <span class="detail-item-value">{{ personnel.code_postal|default:"Non renseigné" }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Contrat -->
+        <div class="detail-card contract">
+            <h5><i class="fas fa-file-contract me-2"></i>Contrat</h5>
+            <div class="detail-row">
+                <div class="detail-item">
+                    <span class="detail-item-label">Type de contrat</span>
+                    <span class="detail-item-value">{{ personnel.type_contrat|default:"Non renseigné" }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-item-label">Date d'embauche</span>
+                    <span class="detail-item-value">{{ personnel.date_embauche|date:"d/m/Y"|default:"Non renseignée" }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-item-label">Date de fin de contrat</span>
+                    <span class="detail-item-value">{{ personnel.date_fin_contrat|date:"d/m/Y"|default:"Pas de fin prévue" }}</span>
+                </div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-item">
+                    <span class="detail-item-label">Salaire</span>
+                    <span class="detail-item-value">
+                        {% if personnel.salaire %}
+                        {{ personnel.salaire|floatformat:0 }} FCFA
+                        {% else %}
+                        Non renseigné
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-item-label">Prime fixe</span>
+                    <span class="detail-item-value">
+                        {% if personnel.prime_fixe %}
+                        {{ personnel.prime_fixe|floatformat:0 }} FCFA
+                        {% else %}
+                        Aucune
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-item-label">Périodicité</span>
+                    <span class="detail-item-value">{{ personnel.type_salaire|default:"Non renseignée" }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Horaires de travail -->
+        <div class="detail-card schedule">
+            <h5><i class="fas fa-clock me-2"></i>Horaires de travail</h5>
+            <div class="detail-row">
+                <div class="detail-item">
+                    <span class="detail-item-label">Jours de travail</span>
+                    <span class="detail-item-value">{{ personnel.jours_travail|default:"Non renseignés" }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-item-label">Heure de début</span>
+                    <span class="detail-item-value">
+                        {% if personnel.heure_debut %}
+                        {{ personnel.heure_debut|time:"H:i" }}
+                        {% else %}
+                        Non renseignée
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-item-label">Heure de fin</span>
+                    <span class="detail-item-value">
+                        {% if personnel.heure_fin %}
+                        {{ personnel.heure_fin|time:"H:i" }}
+                        {% else %}
+                        Non renseignée
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Congés et absences -->
+        <div class="detail-card benefits">
+            <h5><i class="fas fa-umbrella-beach me-2"></i>Congés et absences</h5>
+            <div class="detail-row">
+                <div class="detail-item">
+                    <span class="detail-item-label">Jours de congés restants</span>
+                    <span class="detail-item-value">{{ personnel.jours_conges_restants|default:"0" }} jours</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-item-label">Jours maladie pris</span>
+                    <span class="detail-item-value">{{ personnel.jours_maladies|default:"0" }} jours</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Compétences et formations -->
+        {% if personnel.formations_notes or personnel.specialites or personnel.notes_competences %}
+        <div class="detail-card">
+            <h5><i class="fas fa-graduation-cap me-2"></i>Formations et compétences</h5>
+            {% if personnel.formations_notes %}
+            <div class="detail-item mb-3">
+                <span class="detail-item-label">Formations</span>
+                <span class="detail-item-value">{{ personnel.formations_notes }}</span>
+            </div>
+            {% endif %}
+            {% if personnel.specialites %}
+            <div class="detail-item mb-3">
+                <span class="detail-item-label">Spécialités</span>
+                <span class="detail-item-value">{{ personnel.specialites }}</span>
+            </div>
+            {% endif %}
+            {% if personnel.notes_competences %}
+            <div class="detail-item">
+                <span class="detail-item-label">Notes de compétences</span>
+                <span class="detail-item-value">{{ personnel.notes_competences }}</span>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <!-- Notes -->
+        {% if personnel.note %}
+        <div class="detail-card">
+            <h5><i class="fas fa-sticky-note me-2"></i>Notes</h5>
+            <p>{{ personnel.note }}</p>
+        </div>
+        {% endif %}
+        
+        <!-- Boutons d'action -->
+        <div class="action-buttons">
+            <a href="{% url 'personnel:personnel_update' personnel.id %}" class="btn-action btn-edit">
+                <i class="fas fa-edit"></i>Modifier
+            </a>
+            <a href="{% url 'personnel:personnel_schedule' personnel.id %}" class="btn-action btn-schedule">
+                <i class="fas fa-calendar-alt"></i>Gérer le planning
+            </a>
+            <a href="{% url 'personnel:personnel_assign' personnel.id %}" class="btn-action btn-assign">
+                <i class="fas fa-book"></i>Assigner formation
+            </a>
+            <a href="{% url 'personnel:personnel_delete' personnel.id %}" class="btn-action btn-delete" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce personnel ?');">
+                <i class="fas fa-trash"></i>Supprimer
+            </a>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        
+        <!-- Formations assignées -->
+        {% if personnel.formations.all %}
+        <div class="detail-card">
+            <h5><i class="fas fa-list me-2"></i>Formations assignées</h5>
+            <div class="detail-row" style="grid-template-columns: 1fr;">
+                {% for formation in personnel.formations.all %}
+                <div class="formation-badge">
+                    <i class="fas fa-book-open me-1"></i>{{ formation.titre }}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="detail-card">
+            <h5><i class="fas fa-list me-2"></i>Formations assignées</h5>
+            <div class="empty-state">
+                <i class="fas fa-inbox" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                <p>Aucune formation assignée</p>
+                <a href="{% url 'personnel:personnel_assign' personnel.id %}" class="btn btn-sm btn-outline-primary mt-2">
+                    Assigner une formation
+                </a>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Profil -->
+        <div class="detail-card">
+            <h5><i class="fas fa-user-circle me-2"></i>Profil</h5>
+            <div class="detail-item mb-3">
+                <span class="detail-item-label">Statut d'emploi</span>
+                <span class="detail-item-value">{{ personnel.statut_emploi|default:"Non renseigné" }}</span>
+            </div>
+            <div class="detail-item mb-3">
+                <span class="detail-item-label">Niveau d'étude</span>
+                <span class="detail-item-value">{{ personnel.niveau_etude|default:"Non renseigné" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-item-label">Années d'expérience</span>
+                <span class="detail-item-value">{{ personnel.annees_experience|default:"Non renseignées" }}</span>
+            </div>
+        </div>
+        
+    </div>
+</div>
+{% endblock %}

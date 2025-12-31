@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}{% if form.instance.pk %}Modifier {{ form.instance.prenom }} {{ form.instance.nom }}{% else %}Nouveau Client{% endif %} - TAILOR{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/clients.css' %}">
+{% endblock %}
+
+{% block page_title %}
+    {% if form.instance.pk %}
+    <i class="fas fa-user-edit me-2 text-primary opacity-50"></i>Modifier le client
+    {% else %}
+    <i class="fas fa-user-plus me-2 text-primary opacity-50"></i>Nouveau client
+    {% endif %}
+{% endblock %}
+
+{% block page_subtitle %}
+    {% if form.instance.pk %}
+    Mise à jour des informations de {{ form.instance.prenom }} {{ form.instance.nom }}
+    {% else %}
+    Ajoutez un nouveau client à votre atelier de couture
+    {% endif %}
+{% endblock %}
+
+{% block page_actions %}
+    {% if form.instance.pk %}
+    <div class="avatar-sm">
+        <div class="avatar-circle">
+            {{ form.instance.prenom|first|upper }}{{ form.instance.nom|first|upper }}
+        </div>
+    </div>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card">
+            <div class="card-body p-4">
+                <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- Messages d'erreur globaux -->
+                    {% if form.errors %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <strong>Veuillez corriger les erreurs ci-dessous :</strong>
+                        <ul class="mb-0 mt-2 xsmall">
+                            {% for field in form %}
+                                {% for error in field.errors %}
+                                    <li>{{ field.label }}: {{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                            {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Section Informations Personnelles -->
+                    <div class="form-section mb-4">
+                        <h5 class="section-title">
+                            <i class="fas fa-id-card"></i>
+                            Informations personnelles
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.prenom.id_for_label }}" class="form-label required">
+                                    Prénom
+                                </label>
+                                {{ form.prenom|add_class:"form-control" }}
+                                <div class="invalid-feedback">Veuillez saisir un prénom valide.</div>
+                                {% if form.prenom.help_text %}
+                                <div class="form-text">{{ form.prenom.help_text }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.nom.id_for_label }}" class="form-label required">
+                                    Nom
+                                </label>
+                                {{ form.nom|add_class:"form-control" }}
+                                <div class="invalid-feedback">Veuillez saisir un nom valide.</div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.genre.id_for_label }}" class="form-label">
+                                    Genre
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="fas fa-venus-mars text-muted"></i>
+                                    </span>
+                                    {{ form.genre|add_class:"form-select border-start-0" }}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.date_naissance.id_for_label }}" class="form-label">
+                                    Date de naissance
+                                </label>
+                                <div class="input-group">
+                                    {{ form.date_naissance|add_class:"form-control border-end-0" }}
+                                    <span class="input-group-text bg-light border-start-0">
+                                        <i class="fas fa-calendar-alt text-muted"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.profession.id_for_label }}" class="form-label">
+                                    Profession
+                                </label>
+                                {{ form.profession|add_class:"form-control" }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Section Contact -->
+                    <div class="form-section mb-4">
+                        <h5 class="section-title">
+                            <i class="fas fa-address-book"></i>
+                            Informations de contact
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.telephone.id_for_label }}" class="form-label required">
+                                    Téléphone
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="fas fa-phone text-muted"></i>
+                                    </span>
+                                    {{ form.telephone|add_class:"form-control border-start-0" }}
+                                </div>
+                                <div class="invalid-feedback">Veuillez saisir un numéro de téléphone valide.</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.email.id_for_label }}" class="form-label">
+                                    Email
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="fas fa-envelope text-muted"></i>
+                                    </span>
+                                    {{ form.email|add_class:"form-control border-start-0" }}
+                                </div>
+                                <div class="invalid-feedback">Veuillez saisir une adresse email valide.</div>
+                            </div>
+                            
+                            <div class="col-12 mb-3">
+                                <label for="{{ form.adresse.id_for_label }}" class="form-label">
+                                    Adresse de livraison
+                                </label>
+                                {{ form.adresse|add_class:"form-control" }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Section Préférences -->
+                    <div class="form-section mb-4">
+                        <h5 class="section-title">
+                            <i class="fas fa-star"></i>
+                            Préférences et notes
+                        </h5>
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label for="{{ form.note.id_for_label }}" class="form-label">
+                                    Notes internes (Atelier)
+                                </label>
+                                {{ form.note|add_class:"form-control" }}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.source.id_for_label }}" class="form-label">
+                                    Origine du client
+                                </label>
+                                {{ form.source|add_class:"form-select" }}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    {{ form.is_active|add_class:"form-check-input" }}
+                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                        Client actif
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Section Photos/Archives -->
+                    <div class="form-section mb-4">
+                        <h5 class="section-title">
+                            <i class="fas fa-images"></i>
+                            Photo de profil
+                        </h5>
+                        <div class="row align-items-center">
+                            <div class="col-md-4 mb-3">
+                                <div class="text-center">
+                                    <div class="avatar-upload mb-3">
+                                        <div class="avatar-preview mx-auto" id="avatarPreview">
+                                            {% if form.instance.photo %}
+                                            <img src="{{ form.instance.photo.url }}" alt="Photo client" class="avatar-img" style="border-radius: 17px;">
+                                            {% else %}
+                                            <div class="avatar-placeholder">
+                                                <i class="fas fa-user fa-2x opacity-20"></i>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <label for="{{ form.photo.id_for_label }}" class="btn btn-outline-primary btn-sm mt-3">
+                                            <i class="fas fa-camera me-2"></i>Charger une photo
+                                        </label>
+                                        {{ form.photo|add_class:"photo-input-hidden" }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-8 mb-3">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Le saviez-vous ?</strong> Une photo permet d'identifier rapidement vos clients lors de leurs visites et de mieux mémoriser leurs styles habituels.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Boutons d'action -->
+                    <div class="d-flex justify-content-between align-items-center pt-4 border-top">
+                        <div>
+                            <a href="{% url 'clients:client_list' %}" class="btn btn-light border">
+                                <i class="fas fa-arrow-left me-2"></i>Retour
+                            </a>
+                        </div>
+                        <div class="d-flex gap-2">
+                            {% if form.instance.pk %}
+                            <a href="{% url 'clients:client_detail' form.instance.pk %}" class="btn btn-light border text-danger">
+                                <i class="fas fa-times me-2"></i>Annuler
+                            </a>
+                            {% endif %}
+                            
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="fas fa-save me-2"></i>
+                                {% if form.instance.pk %}Mettre à jour{% else %}Enregistrer le client{% endif %}
+                            </button>
+                            
+                            {% if not form.instance.pk %}
+                            <button type="submit" name="save_and_add_another" class="btn btn-secondary">
+                                <i class="fas fa-plus-circle me-2"></i>Enregistrer et nouveau
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Instructions d'aide -->
+        <div class="row g-4 mt-2">
+            <div class="col-md-4">
+                <div class="card h-100 border-0 bg-white shadow-sm p-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="avatar-sm" style="min-width: 40px;">
+                            <div class="avatar-circle bg-primary bg-opacity-10 text-primary">
+                                <i class="fas fa-user-check"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 fw-bold small">Profil Complet</h6>
+                            <p class="xsmall text-muted mb-0">Fidélisez vos clients</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 bg-white shadow-sm p-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="avatar-sm" style="min-width: 40px;">
+                            <div class="avatar-circle bg-success bg-opacity-10 text-success">
+                                <i class="fas fa-ruler"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 fw-bold small">Mesures Précises</h6>
+                            <p class="xsmall text-muted mb-0">À saisir après création</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 bg-white shadow-sm p-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="avatar-sm" style="min-width: 40px;">
+                            <div class="avatar-circle bg-info bg-opacity-10 text-info">
+                                <i class="fas fa-birthday-cake"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 fw-bold small">Cadeau & Anniv</h6>
+                            <p class="xsmall text-muted mb-0">Rappels automatiques</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Prévisualisation de la photo
+    const photoInput = document.getElementById('{{ form.photo.id_for_label }}');
+    const avatarPreview = document.getElementById('avatarPreview');
+    
+    if (photoInput && avatarPreview) {
+        photoInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    avatarPreview.innerHTML = `<img src="${e.target.result}" alt="Photo preview" class="avatar-img" style="border-radius: 17px;">`;
+                }
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+    }
+    
+    // Validation du formulaire
+    const form = document.querySelector('.needs-validation');
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+    
+    // Formatage automatique du téléphone
+    const telephoneField = document.getElementById('{{ form.telephone.id_for_label }}');
+    if (telephoneField) {
+        telephoneField.addEventListener('input', function() {
+            let value = this.value.replace(/\D/g, '');
+            if (value.length > 2) value = value.substring(0, 2) + ' ' + value.substring(2);
+            if (value.length > 5) value = value.substring(0, 5) + ' ' + value.substring(5);
+            if (value.length > 8) value = value.substring(0, 8) + ' ' + value.substring(8);
+            this.value = value;
+        });
+    }
+});
+</script>
+{% endblock %}

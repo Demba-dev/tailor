@@ -1,0 +1,427 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ client.prenom }} {{ client.nom }} - TAILOR{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/clients.css' %}">
+<style>
+    /* Styles spécifiques au détail client */
+    .client-profile-header {
+        position: relative;
+        padding-bottom: 0;
+    }
+    .client-stat-card {
+        transition: transform 0.2s ease;
+    }
+    .client-stat-card:hover {
+        transform: translateY(-5px);
+    }
+    .contact-list-item {
+        padding: 12px;
+        border-radius: 12px;
+        background: #f8fafc;
+        margin-bottom: 10px;
+        border: 1px solid transparent;
+        transition: all 0.2s ease;
+    }
+    .contact-list-item:hover {
+        background: white;
+        border-color: var(--atelier-blue);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+</style>
+{% endblock %}
+
+{% block page_title %}
+    <i class="fas fa-user-tie me-2 text-primary opacity-50"></i>Fiche Client
+{% endblock %}
+
+{% block page_subtitle %}
+    Consultez et gérez les informations de votre client
+{% endblock %}
+
+{% block page_actions %}
+<div class="dropdown">
+    <button class="btn btn-primary dropdown-toggle px-4" type="button" data-bs-toggle="dropdown">
+        <i class="fas fa-layer-group me-2"></i>Actions Rapides
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2" style="border-radius: 12px;">
+        <li><a class="dropdown-item py-2" href="{% url 'clients:client_update' client.id %}"><i class="fas fa-edit text-primary me-2"></i>Modifier le profil</a></li>
+        <li><a class="dropdown-item py-2" href="{% url 'commandes:commande_create' %}?client={{ client.id }}"><i class="fas fa-plus-circle text-success me-2"></i>Nouvelle commande</a></li>
+        <li><a class="dropdown-item py-2" href="{% url 'mesures:mesure_create' %}?client={{ client.id }}"><i class="fas fa-ruler-combined text-info me-2"></i>Prendre mesures</a></li>
+        <li><a class="dropdown-item py-2" href="{% url 'paiements:paiement_create' %}?client={{ client.id }}"><i class="fas fa-euro-sign text-warning me-2"></i>Encaisser paiement</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item py-2" href="#" data-bs-toggle="modal" data-bs-target="#sendMessageModal"><i class="fas fa-envelope text-info me-2"></i>Envoyer SMS/Email</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item py-2 text-danger" href="#" data-bs-toggle="modal" data-bs-target="#deleteClientModal"><i class="fas fa-trash me-2"></i>Supprimer la fiche</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Colonne Gauche : Profil & Contact -->
+    <div class="col-lg-4">
+        <!-- Carte Profil Premium -->
+        <div class="card mb-4 border-0 shadow-sm overflow-hidden">
+            <div class="card-body p-0">
+                <div class="text-center p-4 bg-light bg-opacity-50">
+                    <div class="avatar-lg mx-auto mb-3">
+                        {% if client.photo %}
+                        <img src="{{ client.photo.url }}" class="avatar-circle" style="border: 4px solid white; object-fit: cover;">
+                        {% else %}
+                        <div class="avatar-circle">
+                            {{ client.prenom|first|upper }}{{ client.nom|first|upper }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <h4 class="fw-bold mb-1" style="font-family: var(--font-heading);">{{ client.prenom }} {{ client.nom }}</h4>
+                    <div class="d-flex justify-content-center gap-2 mb-2">
+                        <span class="badge bg-{{ client.get_fidelite_color|default:'info' }} status-badge">
+                            <i class="fas fa-crown me-1"></i>{{ client.get_fidelite_niveau|default:"Standard" }}
+                        </span>
+                        <span class="badge bg-light text-dark status-badge border">
+                            ID: #CL{{ client.id|stringformat:"04d" }}
+                        </span>
+                    </div>
+                    <p class="text-muted small mb-0"><i class="fas fa-calendar-alt me-1"></i>Client depuis {{ client.created_at|date:"D M Y" }}</p>
+                </div>
+                
+                <div class="p-4">
+                    <h6 class="text-uppercase xsmall fw-bold text-muted letter-spacing-1 mb-3">Coordonnées</h6>
+                    
+                    <div class="contact-list-item d-flex align-items-center">
+                        <div class="avatar-sm me-3">
+                            <div class="avatar-circle bg-primary bg-opacity-10 text-primary" style="width: 34px; height: 34px; font-size: 14px;">
+                                <i class="fas fa-phone"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="xsmall text-muted">Téléphone</div>
+                            <div class="fw-bold small">{{ client.telephone }}</div>
+                        </div>
+                        <a href="tel:{{ client.telephone }}" class="ms-auto btn btn-sm btn-light border-0"><i class="fas fa-phone-alt"></i></a>
+                    </div>
+
+                    {% if client.email %}
+                    <div class="contact-list-item d-flex align-items-center">
+                        <div class="avatar-sm me-3">
+                            <div class="avatar-circle bg-success bg-opacity-10 text-success" style="width: 34px; height: 34px; font-size: 14px;">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                        </div>
+                        <div class="overflow-hidden">
+                            <div class="xsmall text-muted">Email</div>
+                            <div class="fw-bold small text-truncate">{{ client.email }}</div>
+                        </div>
+                        <a href="mailto:{{ client.email }}" class="ms-auto btn btn-sm btn-light border-0"><i class="fas fa-paper-plane"></i></a>
+                    </div>
+                    {% endif %}
+
+                    {% if client.adresse %}
+                    <div class="contact-list-item d-flex align-items-start">
+                        <div class="avatar-sm me-3">
+                            <div class="avatar-circle bg-info bg-opacity-10 text-info" style="width: 34px; height: 34px; font-size: 14px;">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="xsmall text-muted">Adresse</div>
+                            <div class="fw-bold small">{{ client.adresse|linebreaksbr }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistiques Financières -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3 border-0">
+                <h6 class="mb-0 fw-bold"><i class="fas fa-chart-pie me-2 text-primary"></i>Aperçu Financier</h6>
+            </div>
+            <div class="card-body pt-0">
+                <div class="row g-2 text-center">
+                    <div class="col-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="fw-bold text-primary fs-5">{{ client.get_ca_total|floatformat:0 }}CFA</div>
+                            <div class="xsmall text-muted text-uppercase">Total CA</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="fw-bold text-danger fs-5">{{ client.get_total_du|floatformat:0 }}CFA</div>
+                            <div class="xsmall text-muted text-uppercase">Dette</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes Internes -->
+        <div class="card border-0 shadow-sm bg-warning bg-opacity-10">
+            <div class="card-body">
+                <h6 class="fw-bold mb-3"><i class="fas fa-sticky-note me-2"></i>Notes de l'Atelier</h6>
+                <div class="xsmall text-dark-emphasis">
+                    {{ client.note|default:"Aucune instruction particulière pour ce client."|linebreaks }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Colonne Droite : Tabs & Listes -->
+    <div class="col-lg-8">
+        <!-- Navigation Onglets -->
+        <ul class="nav nav-tabs border-0 mb-3" id="clientTabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" id="commandes-tab" data-bs-toggle="tab" data-bs-target="#commandes">
+                    <i class="fas fa-scroll me-2"></i>Commandes
+                    <span class="badge bg-primary rounded-pill ms-2">{{ client.commandes.count }}</span>
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="mesures-tab" data-bs-toggle="tab" data-bs-target="#mesures">
+                    <i class="fas fa-ruler-combined me-2"></i>Mesures
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="paiements-tab" data-bs-toggle="tab" data-bs-target="#paiements">
+                    <i class="fas fa-wallet me-2"></i>Paiements
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="activites-tab" data-bs-toggle="tab" data-bs-target="#activites">
+                    <i class="fas fa-history me-2"></i>Historique
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="clientTabsContent">
+            <!-- Onglet Commandes -->
+            <div class="tab-pane fade show active" id="commandes">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        {% if client.commandes.all %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="bg-light bg-opacity-50">
+                                    <tr class="xsmall text-muted text-uppercase">
+                                        <th class="border-0">N° & Date</th>
+                                        <th class="border-0">Type d'habit</th>
+                                        <th class="border-0">Statut</th>
+                                        <th class="border-0">Montant</th>
+                                        <th class="border-0 text-end">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for commande in client.commandes.all|dictsortreversed:"date_commande" %}
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold text-primary">{{ commande.numero }}</div>
+                                            <div class="xsmall text-muted">{{ commande.date_commande|date:"d/m/Y" }}</div>
+                                        </td>
+                                        <td><span class="badge bg-light text-dark border">{{ commande.type_habit.nom }}</span></td>
+                                        <td>
+                                            <span class="badge bg-{{ commande.get_statut_color }} status-badge">
+                                                {{ commande.get_statut_display }}
+                                            </span>
+                                        </td>
+                                        <td class="fw-bold">{{ commande.get_montant_paye|floatformat:2 }}CFA</td>
+
+                                        <td class="text-end">
+                                            <a href="{% url 'commandes:commande_detail' commande.id %}" class="btn btn-sm btn-light border">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-5">
+                            <div class="avatar-lg mx-auto mb-3 opacity-25">
+                                <div class="avatar-circle bg-secondary text-white"><i class="fas fa-scroll"></i></div>
+                            </div>
+                            <h6 class="text-muted">Aucune commande pour le moment</h6>
+                            <a href="{% url 'commandes:commande_create' %}?client={{ client.id }}" class="btn btn-primary btn-sm mt-3">
+                                <i class="fas fa-plus me-2"></i>Lancer un projet
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Onglet Mesures -->
+            <div class="tab-pane fade" id="mesures">
+                <div class="row g-3">
+                    {% for mesure in client.mesures.all|dictsortreversed:"date_prise" %}
+                    <div class="col-md-6">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0 fw-bold">{{ mesure.type_habit.nom }}</h6>
+                                <span class="xsmall text-muted">{{ mesure.date_prise|date:"d/m/Y" }}</span>
+                            </div>
+                            <div class="card-body pt-0">
+                                <div class="row g-2">
+                                    {% for field in mesure.get_mesures_list %}
+                                    <div class="col-6">
+                                        <div class="p-2 bg-light rounded-2">
+                                            <div class="xsmall text-muted">{{ field.label }}</div>
+                                            <div class="fw-bold small">{{ field.value }} cm</div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12 text-center py-5">
+                        <div class="avatar-lg mx-auto mb-3 opacity-25">
+                            <div class="avatar-circle bg-secondary text-white"><i class="fas fa-ruler"></i></div>
+                        </div>
+                        <h6 class="text-muted">Les mesures n'ont pas encore été prises</h6>
+                        <a href="{% url 'mesures:mesure_create' %}?client={{ client.id }}" class="btn btn-info btn-sm mt-3 text-white">
+                            <i class="fas fa-plus me-2"></i>Prendre mesures
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Onglet Paiements -->
+            <div class="tab-pane fade" id="paiements">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        {% if client.paiements.all %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="bg-light bg-opacity-50">
+                                    <tr class="xsmall text-muted text-uppercase">
+                                        <th class="border-0">Date</th>
+                                        <th class="border-0">Commande</th>
+                                        <th class="border-0">Montant</th>
+                                        <th class="border-0">Mode</th>
+                                        <th class="border-0 text-end">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for paiement in client.paiements.all|dictsortreversed:"date_paiement" %}
+                                    <tr>
+                                        <td class="small">{{ paiement.date_paiement|date:"d/m/Y" }}</td>
+                                        <td class="small text-primary fw-bold">{{ paiement.commande.numero }}</td>
+                                        <td class="fw-bold">{{ paiement.montant|floatformat:2 }}CFA</td>
+                                        <td><span class="badge bg-light text-dark border">{{ paiement.get_mode_display }}</span></td>
+                                        <td class="text-end">
+                                            <a href="{% url 'paiements:paiement_detail' paiement.id %}" class="btn btn-sm btn-light border">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-5 text-muted">Aucun historique de paiement disponible.</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Onglet Historique -->
+            <div class="tab-pane fade" id="activites">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="timeline">
+                            {% for activite in client.get_activites %}
+                            <div class="timeline-item">
+                                <div class="timeline-marker">
+                                    <i class="fas fa-{{ activite.icon }}"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <div class="timeline-header">
+                                        <span class="fw-bold small">{{ activite.titre }}</span>
+                                        <span class="xsmall text-muted">{{ activite.date|date:"d/m/Y H:i" }}</span>
+                                    </div>
+                                    <div class="xsmall mt-1">{{ activite.description }}</div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="text-center py-5 text-muted">Aucune activité enregistrée.</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modale d'envoi de message -->
+<div class="modal fade" id="sendMessageModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header text-white">
+                <h5 class="modal-title fw-bold"><i class="fas fa-paper-plane me-2 text-warning"></i>Contacter le client</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-4 text-center">
+                    <div class="xsmall text-muted mb-1">Envoi à :</div>
+                    <div class="fw-bold">{{ client.prenom }} {{ client.nom }}</div>
+                    <div class="xsmall text-primary">{{ client.telephone }} / {{ client.email|default:"Pas d'email" }}</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Type de message</label>
+                    <select class="form-select border-0 bg-light">
+                        <option>SMS de courtoisie</option>
+                        <option>Rappel de commande prête</option>
+                        <option>Suivi de paiement</option>
+                        <option>Email personnalisé</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Message</label>
+                    <textarea class="form-control border-0 bg-light" rows="4" placeholder="Tapez votre message ici..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Fermer</button>
+                <button type="button" class="btn btn-primary px-4">Envoyer le message</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modale de suppression -->
+<div class="modal fade" id="deleteClientModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title fw-bold"><i class="fas fa-exclamation-triangle me-2"></i>Action Irréversible</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <div class="avatar-lg mx-auto mb-4">
+                    <div class="avatar-circle bg-danger bg-opacity-10 text-danger">
+                        <i class="fas fa-user-slash fa-2x"></i>
+                    </div>
+                </div>
+                <h5 class="fw-bold mb-3">Supprimer la fiche client ?</h5>
+                <p class="text-muted small">Vous êtes sur le point de supprimer définitivement <strong>{{ client.prenom }} {{ client.nom }}</strong> de votre base. Toutes ses commandes et mesures seront perdues.</p>
+            </div>
+            <div class="modal-footer border-0 pt-0 d-flex justify-content-center">
+                <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Annuler</button>
+                <form method="post" action="{% url 'clients:client_delete' client.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger px-4">Confirmer la suppression</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,416 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Créer plusieurs formations - ATELIER TAILOR{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/clients.css' %}">
+<style>
+    .bulk-header {
+        background: linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .bulk-header::before {
+        content: '';
+        position: absolute;
+        top: -10%;
+        right: -10%;
+        width: 120%;
+        height: 120%;
+        background: rgba(255,255,255,0.1);
+        transform: rotate(30deg);
+    }
+    
+    .header-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .header-content h1 {
+        margin: 0 0 0.5rem 0;
+        font-size: 2rem;
+    }
+    
+    .header-subtitle {
+        font-size: 1rem;
+        opacity: 0.95;
+    }
+    
+    .form-card {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    .card-title {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 1.1rem;
+    }
+    
+    .formations-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .formations-table thead {
+        background: #f7fafc;
+    }
+    
+    .formations-table th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: #2d3748;
+        border-bottom: 2px solid #e2e8f0;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .formations-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .formation-row {
+        transition: background 0.3s ease;
+    }
+    
+    .formation-row:hover {
+        background: rgba(66, 153, 225, 0.05);
+    }
+    
+    .row-number {
+        color: #a0aec0;
+        font-weight: 600;
+        width: 40px;
+        text-align: center;
+    }
+    
+    .form-input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+    }
+    
+    .form-input:focus {
+        outline: none;
+        border-color: #4299e1;
+        box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+    }
+    
+    .input-wrapper {
+        position: relative;
+    }
+    
+    .remove-row-btn {
+        background: #f56565;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+    }
+    
+    .remove-row-btn:hover {
+        background: #e53e3e;
+        transform: scale(1.05);
+    }
+    
+    .info-box {
+        background: linear-gradient(135deg, #edf2f7 0%, #f7fafc 100%);
+        border-left: 4px solid #4299e1;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    
+    .info-icon {
+        color: #4299e1;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+    
+    .info-content h5 {
+        margin: 0 0 0.5rem 0;
+        color: #2d3748;
+        font-weight: 600;
+    }
+    
+    .info-content p {
+        margin: 0;
+        color: #4a5568;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+    }
+    
+    .btn-action {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(66, 153, 225, 0.3);
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(66, 153, 225, 0.4);
+    }
+    
+    .btn-secondary {
+        background: white;
+        color: #4299e1;
+        border: 2px solid #4299e1;
+    }
+    
+    .btn-secondary:hover {
+        background: #f0f9ff;
+        transform: translateY(-2px);
+    }
+    
+    .btn-add-row {
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+    }
+    
+    .btn-add-row:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(72, 187, 120, 0.4);
+    }
+    
+    .counter {
+        display: inline-block;
+        background: #4299e1;
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-left: 0.5rem;
+    }
+    
+    @media (max-width: 768px) {
+        .formations-table {
+            font-size: 0.9rem;
+        }
+        
+        .formations-table th,
+        .formations-table td {
+            padding: 0.75rem;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .btn-action {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'formations:formation_list' %}">Formations</a></li>
+        <li class="breadcrumb-item active">Créer plusieurs formations</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="bulk-header">
+        <div class="header-content">
+            <h1><i class="fas fa-plus-circle me-2"></i>Créer plusieurs formations</h1>
+            <div class="header-subtitle">Ajoutez rapidement plusieurs formations en une seule opération</div>
+        </div>
+    </div>
+
+    <div class="form-card">
+        <div class="info-box">
+            <div class="info-icon"><i class="fas fa-lightbulb"></i></div>
+            <div class="info-content">
+                <h5>Comment ça marche ?</h5>
+                <p>Remplissez le formulaire ci-dessous avec les informations de vos formations. Vous pouvez ajouter autant de lignes que nécessaire. Les champs obligatoires sont le titre, la date de début et la date de fin.</p>
+            </div>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            
+            <h5 class="card-title">
+                <i class="fas fa-list"></i>Formations à créer
+                <span class="counter" id="formation-count">0</span>
+            </h5>
+
+            <div style="overflow-x: auto;">
+                <table class="formations-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;"></th>
+                            <th style="width: 25%;">Titre</th>
+                            <th style="width: 15%;">Date de début</th>
+                            <th style="width: 15%;">Date de fin</th>
+                            <th style="width: 10%;">Type</th>
+                            <th style="width: 10%;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="formations-tbody">
+                        <tr class="formation-row">
+                            <td class="row-number">1</td>
+                            <td>
+                                <input type="text" name="titre[]" class="form-input" placeholder="Ex: Formation couture avancée" required>
+                            </td>
+                            <td>
+                                <input type="date" name="date_debut[]" class="form-input" required>
+                            </td>
+                            <td>
+                                <input type="date" name="date_fin[]" class="form-input" required>
+                            </td>
+                            <td>
+                                <input type="text" name="type_formation[]" class="form-input" placeholder="Ex: Technique">
+                            </td>
+                            <td>
+                                <button type="button" class="remove-row-btn" onclick="removeRow(this)" style="display: none;">
+                                    <i class="fas fa-trash"></i> Supprimer
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                <button type="button" class="btn-action btn-add-row" onclick="addRow()">
+                    <i class="fas fa-plus"></i>Ajouter une formation
+                </button>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-action btn-primary">
+                    <i class="fas fa-save"></i>Créer les formations
+                </button>
+                <a href="{% url 'formations:formation_list' %}" class="btn-action btn-secondary">
+                    <i class="fas fa-arrow-left"></i>Annuler
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function addRow() {
+    const tbody = document.getElementById('formations-tbody');
+    const rowCount = tbody.querySelectorAll('tr').length + 1;
+    
+    const newRow = document.createElement('tr');
+    newRow.className = 'formation-row';
+    newRow.innerHTML = `
+        <td class="row-number">${rowCount}</td>
+        <td>
+            <input type="text" name="titre[]" class="form-input" placeholder="Ex: Formation couture avancée" required>
+        </td>
+        <td>
+            <input type="date" name="date_debut[]" class="form-input" required>
+        </td>
+        <td>
+            <input type="date" name="date_fin[]" class="form-input" required>
+        </td>
+        <td>
+            <input type="text" name="type_formation[]" class="form-input" placeholder="Ex: Technique">
+        </td>
+        <td>
+            <button type="button" class="remove-row-btn" onclick="removeRow(this)">
+                <i class="fas fa-trash"></i> Supprimer
+            </button>
+        </td>
+    `;
+    
+    tbody.appendChild(newRow);
+    updateCount();
+    updateRemoveButtons();
+}
+
+function removeRow(button) {
+    const row = button.closest('tr');
+    row.remove();
+    updateRowNumbers();
+    updateCount();
+    updateRemoveButtons();
+}
+
+function updateRowNumbers() {
+    const rows = document.querySelectorAll('.formation-row');
+    rows.forEach((row, index) => {
+        row.querySelector('.row-number').textContent = index + 1;
+    });
+}
+
+function updateCount() {
+    const count = document.querySelectorAll('.formation-row').length;
+    document.getElementById('formation-count').textContent = count;
+}
+
+function updateRemoveButtons() {
+    const rows = document.querySelectorAll('.formation-row');
+    rows.forEach(row => {
+        const btn = row.querySelector('.remove-row-btn');
+        btn.style.display = rows.length > 1 ? 'block' : 'none';
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    updateCount();
+    updateRemoveButtons();
+});
+</script>
+{% endblock %}

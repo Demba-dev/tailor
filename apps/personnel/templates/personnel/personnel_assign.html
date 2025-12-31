@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Assigner {{ personnel.prenom }} {{ personnel.nom }} à une formation - TAILOR{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/clients.css' %}">
+<style>
+    .assign-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .formation-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border-left: 4px solid #667eea;
+    }
+    
+    .formation-card:hover {
+        box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+        transform: translateY(-2px);
+    }
+    
+    .formation-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.5rem;
+    }
+    
+    .formation-dates {
+        font-size: 0.9rem;
+        color: #666;
+        margin-bottom: 1rem;
+    }
+    
+    .formation-date-item {
+        display: inline-block;
+        margin-right: 1rem;
+    }
+    
+    .formation-description {
+        color: #555;
+        font-size: 0.95rem;
+        margin-bottom: 1rem;
+        line-height: 1.5;
+    }
+    
+    .formation-status {
+        display: inline-block;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        margin-bottom: 1rem;
+    }
+    
+    .status-prevu {
+        background: #cfe9ff;
+        color: #0050b3;
+    }
+    
+    .status-terminee {
+        background: #d9f7d6;
+        color: #274e11;
+    }
+    
+    .status-annulee {
+        background: #ffccc7;
+        color: #5c0011;
+    }
+    
+    .formation-actions {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .assign-btn {
+        flex: 1;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'personnel:personnel_list' %}">Personnel</a></li>
+        <li class="breadcrumb-item active">Assigner à une formation</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block page_title %}
+<div class="assign-header">
+    <div class="text-center">
+        <h1 class="h2 mb-2">
+            <i class="fas fa-book me-2"></i>Assigner à une formation
+        </h1>
+        <p class="mb-0 opacity-75">
+            Sélectionnez une formation pour {{ personnel.prenom }} {{ personnel.nom }}
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        
+        <!-- Informations du personnel -->
+        <div class="card shadow-lg border-0 mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-user me-2"></i>Personnel</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Nom :</strong> {{ personnel.nom }}</p>
+                        <p><strong>Prénom :</strong> {{ personnel.prenom }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Rôle :</strong> <span class="badge bg-info">{{ personnel.get_role_display }}</span></p>
+                        <p><strong>Email :</strong> {{ personnel.email|default:"Non renseigné" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Formations disponibles -->
+        <div class="card shadow-lg border-0">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-list me-2"></i>Formations disponibles</h5>
+            </div>
+            <div class="card-body">
+                {% if formations %}
+                    {% for formation in formations %}
+                    <div class="formation-card">
+                        <div class="formation-title">
+                            <i class="fas fa-graduation-cap me-2"></i>{{ formation.titre }}
+                        </div>
+                        
+                        <div class="formation-dates">
+                            <span class="formation-date-item">
+                                <i class="fas fa-calendar-start me-1"></i>{{ formation.date_debut|date:"d/m/Y" }}
+                            </span>
+                            <span class="formation-date-item">
+                                <i class="fas fa-calendar-end me-1"></i>{{ formation.date_fin|date:"d/m/Y" }}
+                            </span>
+                        </div>
+                        
+                        {% if formation.description %}
+                        <div class="formation-description">
+                            {{ formation.description }}
+                        </div>
+                        {% endif %}
+                        
+                        <div>
+                            <span class="formation-status status-{{ formation.statut }}">
+                                {{ formation.get_statut_display }}
+                            </span>
+                        </div>
+                        
+                        {% if formation.instructeur %}
+                        <p class="text-muted mb-2">
+                            <small><i class="fas fa-chalkboard-user me-1"></i>Instructeur : {{ formation.instructeur.prenom }} {{ formation.instructeur.nom }}</small>
+                        </p>
+                        {% endif %}
+                        
+                        <p class="text-muted mb-3">
+                            <small><i class="fas fa-users me-1"></i>Participants : {{ formation.participants.count }}</small>
+                        </p>
+                        
+                        <div class="formation-actions">
+                            <form method="post" class="w-100">
+                                {% csrf_token %}
+                                <input type="hidden" name="formation_id" value="{{ formation.id }}">
+                                <button type="submit" class="btn btn-success btn-sm w-100 assign-btn">
+                                    <i class="fas fa-plus-circle me-1"></i>Assigner
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="alert alert-info" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Aucune formation disponible.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Actions de retour -->
+        <div class="mt-4">
+            <a href="{% url 'personnel:personnel_detail' personnel.id %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Retour au profil
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

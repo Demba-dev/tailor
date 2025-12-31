@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Tableau de bord - TAILOR{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-tachometer-alt me-2 text-primary opacity-50"></i>Tableau de bord
+{% endblock %}
+
+{% block page_subtitle %}
+Aperçu en temps réel de votre atelier de couture
+{% endblock %}
+
+{% block content %}
+<!-- Section KPIs Principaux -->
+<div class="row g-4 mb-4">
+    <!-- Commandes en cours -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 border-0 shadow-sm border-start border-primary border-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="avatar-sm">
+                        <div class="avatar-circle bg-primary bg-opacity-10 text-primary">
+                            <i class="fas fa-scroll"></i>
+                        </div>
+                    </div>
+                    <span class="badge bg-info status-badge">En cours</span>
+                </div>
+                <h3 class="fw-bold mb-1">{{ commandes_encours|default:"0" }}</h3>
+                <p class="text-muted small mb-0 text-uppercase fw-semibold letter-spacing-1">Commandes actives</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reste à payer -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 border-0 shadow-sm border-start border-primary border-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="avatar-sm">
+                        <div class="avatar-circle bg-primaborder-primary bg-opacity-10 text-primaborder-primary">
+                            <i class="fas fa-hand-holding-usd"></i>
+                        </div>
+                    </div>
+                    <span class="badge bg-primaborder-primary status-badge">À recouvrer</span>
+                </div>
+                <h3 class="fw-bold mb-1 text-primaborder-primary">{{ reste_total|default:"0" }}CFA</h3>
+                <p class="text-muted small mb-0 text-uppercase fw-semibold letter-spacing-1">Reste à payer</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clients Total -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 border-0 shadow-sm border-start border-success border-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="avatar-sm">
+                        <div class="avatar-circle bg-success bg-opacity-10 text-success">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                    <span class="badge bg-success status-badge text-white">Base active</span>
+                </div>
+                <h3 class="fw-bold mb-1">{{ total_clients|default:"0" }}</h3>
+                <p class="text-muted small mb-0 text-uppercase fw-semibold letter-spacing-1">Clients inscrits</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- CA Total (Paiements) -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 border-0 shadow-sm border-start border-info border-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="avatar-sm">
+                        <div class="avatar-circle bg-info bg-opacity-10 text-info">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                    </div>
+                    <span class="badge bg-info status-badge text-white">Chiffre d'Affaires</span>
+                </div>
+                <h3 class="fw-bold mb-1 text-primary">{{ total_paiements|default:"0" }}CFA</h3>
+                <p class="text-muted small mb-0 text-uppercase fw-semibold letter-spacing-1">Recettes totales</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section Secondaire -->
+<div class="row g-4 mb-4">
+    <!-- Performance & Ressources -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold" style="font-family: var(--font-heading);">
+                    <i class="fas fa-chart-line me-2 text-primary"></i>Activité de l'Atelier
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-4 text-center">
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 border rounded-3 bg-light bg-opacity-50">
+                            <div class="text-success mb-1 fw-bold fs-4">{{ commandes_terminees|default:"0" }}</div>
+                            <div class="xsmall text-muted text-uppercase fw-bold">Livrées</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 border rounded-3 bg-light bg-opacity-50">
+                            <div class="text-danger mb-1 fw-bold fs-4">{{ commandes_annulees|default:"0" }}</div>
+                            <div class="xsmall text-muted text-uppercase fw-bold">Annulées</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 border rounded-3 bg-light bg-opacity-50">
+                            <div class="text-primary mb-1 fw-bold fs-4">{{ total_personnel|default:"0" }}</div>
+                            <div class="xsmall text-muted text-uppercase fw-bold">Équipe</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 border rounded-3 bg-light bg-opacity-50">
+                            <div class="text-warning mb-1 fw-bold fs-4">{{ formations_a_venir|default:"0" }}</div>
+                            <div class="xsmall text-muted text-uppercase fw-bold">Formations</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Espace pour un futur graphique -->
+                <div class="mt-4 p-5 text-center border border-dashed rounded-3">
+                    <i class="fas fa-chart-area fa-3x text-muted opacity-25 mb-3"></i>
+                    <p class="text-muted">Graphique d'évolution des ventes bientôt disponible</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions Rapides & Infos -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold" style="font-family: var(--font-heading);">
+                    <i class="fas fa-bolt me-2 text-warning"></i>Pilotage
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'commandes:commande_create' %}" class="list-group-item list-group-item-action border-0 px-0 py-3">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-sm me-3">
+                                <div class="avatar-circle bg-primary text-white" style="width: 38px; height: 38px; font-size: 14px;">
+                                    <i class="fas fa-plus"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-bold small">Nouvelle Commande</h6>
+                                <p class="xsmall text-muted mb-0">Enregistrez un nouveau projet</p>
+                            </div>
+                            <i class="fas fa-chevron-right ms-auto xsmall text-muted"></i>
+                        </div>
+                    </a>
+                    <a href="{% url 'clients:client_create' %}" class="list-group-item list-group-item-action border-0 px-0 py-3">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-sm me-3">
+                                <div class="avatar-circle bg-success text-white" style="width: 38px; height: 38px; font-size: 14px;">
+                                    <i class="fas fa-user-plus"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-bold small">Ajouter un Client</h6>
+                                <p class="xsmall text-muted mb-0">Développez votre base</p>
+                            </div>
+                            <i class="fas fa-chevron-right ms-auto xsmall text-muted"></i>
+                        </div>
+                    </a>
+                    <a href="{% url 'paiements:paiement_list' %}" class="list-group-item list-group-item-action border-0 px-0 py-3">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-sm me-3">
+                                <div class="avatar-circle bg-warning text-white" style="width: 38px; height: 38px; font-size: 14px;">
+                                    <i class="fas fa-euro-sign"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-bold small">Suivi des Paiements</h6>
+                                <p class="xsmall text-muted mb-0">Consultez les encaissements</p>
+                            </div>
+                            <i class="fas fa-chevron-right ms-auto xsmall text-muted"></i>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="alert alert-info mt-3 xsmall mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    <strong>Astuce :</strong> Pensez à vérifier les mesures des clients avant de lancer une nouvelle commande.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .letter-spacing-1 { letter-spacing: 0.1em; }
+    .border-dashed { border-style: dashed !important; border-width: 2px !important; }
+    .avatar-sm { min-width: 40px; }
+</style>
+{% endblock %}

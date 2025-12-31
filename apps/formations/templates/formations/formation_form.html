@@ -1,0 +1,738 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} - ATELIER TAILOR{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/clients.css' %}">
+<style>
+    .formation-header {
+        background: linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .formation-header::before {
+        content: '';
+        position: absolute;
+        top: -10%;
+        right: -10%;
+        width: 120%;
+        height: 120%;
+        background: rgba(255,255,255,0.1);
+        transform: rotate(30deg);
+    }
+    
+    .formation-icon {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        border: 5px solid white;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        margin: 0 auto 1.5rem;
+        background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        color: white;
+    }
+    
+    .form-section-tabs {
+        display: flex;
+        gap: 5px;
+        margin-bottom: 2rem;
+        border-bottom: 2px solid #e2e8f0;
+        padding-bottom: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .form-tab {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        background: none;
+        font-weight: 500;
+        color: #718096;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.3s ease;
+        border-radius: 8px 8px 0 0;
+        white-space: nowrap;
+    }
+    
+    .form-tab:hover {
+        color: #4299e1;
+        background: rgba(66, 153, 225, 0.05);
+    }
+    
+    .form-tab.active {
+        color: #4299e1;
+        font-weight: 600;
+    }
+    
+    .form-tab.active::after {
+        content: '';
+        position: absolute;
+        bottom: -0.5rem;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: #4299e1;
+        border-radius: 3px;
+    }
+    
+    .tab-content {
+        display: none;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .form-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+        margin-bottom: 2rem;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    .card-header {
+        background: white;
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .card-body {
+        padding: 2rem;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #4299e1;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 500;
+        color: #4a5568;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .form-label.required::after {
+        content: '*';
+        color: #e53e3e;
+        margin-left: 4px;
+    }
+    
+    .form-control, .form-select, .form-textarea {
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 0.75rem;
+        transition: all 0.3s ease;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    .form-control:focus, .form-select:focus, .form-textarea:focus {
+        border-color: #4299e1;
+        box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+        outline: none;
+    }
+    
+    .form-textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
+    
+    .select2-container {
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+    
+    .participants-section {
+        background: #f7fafc;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    .participant-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0.75rem;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .participant-item:hover {
+        border-color: #4299e1;
+        background: #f0f9ff;
+    }
+    
+    .participant-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1rem;
+    }
+    
+    .duration-inputs {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+    }
+    
+    .form-actions {
+        background: #f7fafc;
+        padding: 1.5rem 2rem;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        box-sizing: border-box;
+        margin-top: 2rem;
+    }
+    
+    .error-message {
+        color: #e53e3e;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .form-helptext {
+        font-size: 0.875rem;
+        color: #718096;
+        margin-top: 0.25rem;
+        font-style: italic;
+    }
+    
+    .form-check {
+        padding: 0.5rem 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .form-check-input {
+        width: 1.2em;
+        height: 1.2em;
+        margin: 0;
+    }
+    
+    .form-check-label {
+        margin: 0;
+        font-weight: 500;
+        color: #4a5568;
+    }
+    
+    .badge-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+    }
+    
+    @media (max-width: 768px) {
+        .form-section-tabs {
+            overflow-x: auto;
+            flex-wrap: nowrap;
+        }
+        
+        .form-tab {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .form-actions .btn {
+            width: 100%;
+        }
+        
+        .formation-header {
+            padding: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'formations:formation_list' %}">Formations</a></li>
+        <li class="breadcrumb-item active">{{ title }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block page_title %}
+<div class="formation-header">
+    <div class="text-center">
+        <div class="formation-icon">
+            <i class="fas fa-graduation-cap"></i>
+        </div>
+        
+        <h1 class="h2 mb-2">
+            <i class="fas fa-graduation-cap me-2"></i>{{ title }}
+        </h1>
+        <p class="mb-0 opacity-75">
+            {% if form.instance.pk %}
+            Modifier la formation "{{ form.instance.titre }}"
+            {% else %}
+            Créer une nouvelle formation pour l'atelier
+            {% endif %}
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <form method="post" id="formationForm" enctype="multipart/form-data" class="needs-validation" novalidate>
+            {% csrf_token %}
+            
+            {% if form.errors %}
+            <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                <div class="d-flex">
+                    <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                    <div>
+                        <h5 class="alert-heading mb-2">Veuillez corriger les erreurs suivantes :</h5>
+                        <ul class="mb-0 ps-3">
+                            {% for field in form %}
+                                {% for error in field.errors %}
+                                    <li><strong>{{ field.label }} :</strong> {{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                            {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endif %}
+            
+            <div class="form-section-tabs">
+                <button type="button" class="form-tab active" data-tab="general">
+                    <i class="fas fa-info-circle me-2"></i>Informations
+                </button>
+                <button type="button" class="form-tab" data-tab="schedule">
+                    <i class="fas fa-calendar-alt me-2"></i>Dates & Horaires
+                </button>
+                <button type="button" class="form-tab" data-tab="participants">
+                    <i class="fas fa-users me-2"></i>Participants
+                </button>
+                <button type="button" class="form-tab" data-tab="content">
+                    <i class="fas fa-book me-2"></i>Contenu
+                </button>
+                <button type="button" class="form-tab" data-tab="documents">
+                    <i class="fas fa-file-alt me-2"></i>Documents
+                </button>
+            </div>
+            
+            <div id="general-tab" class="tab-content active">
+                <div class="form-card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informations générales</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    <label for="{{ form.titre.id_for_label }}" class="form-label required">
+                                        <i class="fas fa-heading me-1"></i>Titre de la formation
+                                    </label>
+                                    {{ form.titre }}
+                                    {% for error in form.titre.errors %}
+                                    <div class="error-message"><i class="fas fa-exclamation-circle"></i>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.type_formation.id_for_label }}" class="form-label required">
+                                        <i class="fas fa-tags me-1"></i>Type
+                                    </label>
+                                    {{ form.type_formation }}
+                                    {% for error in form.type_formation.errors %}
+                                    <div class="error-message"><i class="fas fa-exclamation-circle"></i>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.formateur.id_for_label }}" class="form-label required">
+                                        <i class="fas fa-chalkboard-teacher me-1"></i>Formateur
+                                    </label>
+                                    {{ form.formateur }}
+                                    {% for error in form.formateur.errors %}
+                                    <div class="error-message"><i class="fas fa-exclamation-circle"></i>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.lieu.id_for_label }}" class="form-label">
+                                        <i class="fas fa-map-marker-alt me-1"></i>Lieu
+                                    </label>
+                                    {{ form.lieu }}
+                                    {% for error in form.lieu.errors %}
+                                    <div class="error-message"><i class="fas fa-exclamation-circle"></i>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">
+                                <i class="fas fa-align-left me-1"></i>Description
+                            </label>
+                            {{ form.description }}
+                            {% for error in form.description.errors %}
+                            <div class="error-message"><i class="fas fa-exclamation-circle"></i>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="schedule-tab" class="tab-content">
+                <div class="form-card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Dates et Horaires</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.date_debut.id_for_label }}" class="form-label required">
+                                        <i class="fas fa-calendar-plus me-1"></i>Date de début
+                                    </label>
+                                    {{ form.date_debut }}
+                                    {% for error in form.date_debut.errors %}
+                                    <div class="error-message"><i class="fas fa-exclamation-circle"></i>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.date_fin.id_for_label }}" class="form-label required">
+                                        <i class="fas fa-calendar-minus me-1"></i>Date de fin
+                                    </label>
+                                    {{ form.date_fin }}
+                                    {% for error in form.date_fin.errors %}
+                                    <div class="error-message"><i class="fas fa-exclamation-circle"></i>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.heure_debut.id_for_label }}" class="form-label">
+                                        <i class="fas fa-clock me-1"></i>Heure de début
+                                    </label>
+                                    {{ form.heure_debut }}
+                                    {% for error in form.heure_debut.errors %}
+                                    <div class="error-message"><i class="fas fa-exclamation-circle"></i>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.heure_fin.id_for_label }}" class="form-label">
+                                        <i class="fas fa-clock me-1"></i>Heure de fin
+                                    </label>
+                                    {{ form.heure_fin }}
+                                    {% for error in form.heure_fin.errors %}
+                                    <div class="error-message"><i class="fas fa-exclamation-circle"></i>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="duration-inputs">
+                            <div class="form-group">
+                                <label for="{{ form.duree_heures.id_for_label }}" class="form-label">
+                                    <i class="fas fa-hourglass-half me-1"></i>Durée (heures)
+                                </label>
+                                {{ form.duree_heures }}
+                                {% for error in form.duree_heures.errors %}
+                                <div class="error-message"><i class="fas fa-exclamation-circle"></i>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="form-group">
+                                <label for="{{ form.duree_jours.id_for_label }}" class="form-label">
+                                    <i class="fas fa-calendar-day me-1"></i>Durée (jours)
+                                </label>
+                                {{ form.duree_jours }}
+                                {% for error in form.duree_jours.errors %}
+                                <div class="error-message"><i class="fas fa-exclamation-circle"></i>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="participants-tab" class="tab-content">
+                <div class="form-card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-users me-2"></i>Participants</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="{{ form.participants.id_for_label }}" class="form-label">
+                                <i class="fas fa-user-check me-1"></i>Sélectionner les participants
+                            </label>
+                            {{ form.participants }}
+                            {% for error in form.participants.errors %}
+                            <div class="error-message"><i class="fas fa-exclamation-circle"></i>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.nombre_places.id_for_label }}" class="form-label required">
+                                        <i class="fas fa-chair me-1"></i>Nombre de places
+                                    </label>
+                                    {{ form.nombre_places }}
+                                    {% for error in form.nombre_places.errors %}
+                                    <div class="error-message"><i class="fas fa-exclamation-circle"></i>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.prix_par_personne.id_for_label }}" class="form-label">
+                                        <i class="fas fa-euro-sign me-1"></i>Prix par personne
+                                    </label>
+                                    {{ form.prix_par_personne }}
+                                    {% for error in form.prix_par_personne.errors %}
+                                    <div class="error-message"><i class="fas fa-exclamation-circle"></i>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="content-tab" class="tab-content">
+                <div class="form-card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-book me-2"></i>Contenu & Configuration</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.materiel_requis.id_for_label }}" class="form-label">
+                                        <i class="fas fa-toolbox me-1"></i>Matériel requis
+                                    </label>
+                                    {{ form.materiel_requis }}
+                                    {% for error in form.materiel_requis.errors %}
+                                    <div class="error-message"><i class="fas fa-exclamation-circle"></i>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.objectifs.id_for_label }}" class="form-label">
+                                        <i class="fas fa-bullseye me-1"></i>Objectifs
+                                    </label>
+                                    {{ form.objectifs }}
+                                    {% for error in form.objectifs.errors %}
+                                    <div class="error-message"><i class="fas fa-exclamation-circle"></i>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.statut.id_for_label }}" class="form-label required">
+                                        <i class="fas fa-flag me-1"></i>Statut
+                                    </label>
+                                    {{ form.statut }}
+                                    {% for error in form.statut.errors %}
+                                    <div class="error-message"><i class="fas fa-exclamation-circle"></i>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    <label class="form-label"><i class="fas fa-sliders-h me-1"></i>Options</label>
+                                    <div class="d-flex flex-wrap gap-3">
+                                        <div class="form-check">
+                                            {{ form.certification_delivree }}
+                                            <label class="form-check-label" for="{{ form.certification_delivree.id_for_label }}">Certification</label>
+                                        </div>
+                                        <div class="form-check">
+                                            {{ form.repas_inclus }}
+                                            <label class="form-check-label" for="{{ form.repas_inclus.id_for_label }}">Repas inclus</label>
+                                        </div>
+                                        <div class="form-check">
+                                            {{ form.materiel_fourni }}
+                                            <label class="form-check-label" for="{{ form.materiel_fourni.id_for_label }}">Matériel fourni</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="documents-tab" class="tab-content">
+                <div class="form-card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Documents</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.support_pdf.id_for_label }}" class="form-label">
+                                        <i class="fas fa-file-pdf me-1"></i>Support de formation
+                                    </label>
+                                    {{ form.support_pdf }}
+                                    {% if form.instance.support_pdf %}
+                                    <div class="mt-2">
+                                        <a href="{{ form.instance.support_pdf.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye me-1"></i>Voir
+                                        </a>
+                                    </div>
+                                    {% endif %}
+                                    {% for error in form.support_pdf.errors %}
+                                    <div class="error-message"><i class="fas fa-exclamation-circle"></i>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.image_couverture.id_for_label }}" class="form-label">
+                                        <i class="fas fa-image me-1"></i>Image de couverture
+                                    </label>
+                                    {{ form.image_couverture }}
+                                    {% if form.instance.image_couverture %}
+                                    <div class="mt-2">
+                                        <img src="{{ form.instance.image_couverture.url }}" alt="Couverture" style="max-width: 150px; border-radius: 8px;">
+                                    </div>
+                                    {% endif %}
+                                    {% for error in form.image_couverture.errors %}
+                                    <div class="error-message"><i class="fas fa-exclamation-circle"></i>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <a href="{% url 'formations:formation_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Retour aux formations
+                </a>
+                <div>
+                    <button type="reset" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-redo me-1"></i>Réinitialiser
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>{% if form.instance.pk %}Modifier{% else %}Créer{% endif %} la formation
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tabs = document.querySelectorAll('.form-tab');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function(e) {
+            e.preventDefault();
+            const tabName = this.getAttribute('data-tab');
+            
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.form-tab').forEach(t => {
+                t.classList.remove('active');
+            });
+            
+            document.getElementById(tabName + '-tab').classList.add('active');
+            this.classList.add('active');
+        });
+    });
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Clients - TAILOR Atelier de Couture{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/clients.css' %}">
+<style>
+    /* Elevated Clients List Design */
+    :root {
+        --client-primary: #2c3e50;
+        --client-accent: #c19a6b;
+        --client-success: #27ae60;
+        --client-bg: #f8fafc;
+    }
+
+    .page-header {
+        background: white;
+        padding: 2rem;
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        margin-bottom: 2rem;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .stat-card-elevated {
+        background: white;
+        border: none;
+        border-radius: 16px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .stat-card-elevated:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+    }
+
+    .stat-icon-box {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+
+    .search-section {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 16px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        margin-bottom: 2rem;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .client-table-card {
+        background: white;
+        border-radius: 20px;
+        border: 1px solid rgba(0,0,0,0.05);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+        overflow: hidden;
+    }
+
+    .table thead th {
+        background: var(--client-bg);
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+        font-weight: 700;
+        color: #64748b;
+        padding: 1.25rem 1rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .client-avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+        background: linear-gradient(135deg, var(--client-primary) 0%, #34495e 100%);
+        color: white;
+        box-shadow: 0 4px 10px rgba(44, 62, 80, 0.15);
+    }
+
+    .client-name-link {
+        color: var(--client-primary);
+        font-weight: 600;
+        transition: color 0.2s;
+    }
+
+    .client-name-link:hover {
+        color: var(--client-accent);
+    }
+
+    .status-pill {
+        padding: 6px 12px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .status-pill-active {
+        background: #ecfdf5;
+        color: #065f46;
+    }
+
+    .status-pill-inactive {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        border: 1px solid #e2e8f0;
+        color: #64748b;
+        background: white;
+    }
+
+    .action-btn:hover {
+        background: var(--client-primary);
+        color: white;
+        border-color: var(--client-primary);
+        transform: scale(1.1);
+    }
+
+    .badge-soft {
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.7rem;
+    }
+
+    .badge-soft-info { background: #e0f2fe; color: #0369a1; }
+    .badge-soft-warning { background: #fef3c7; color: #92400e; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <!-- Header -->
+    <div class="page-header d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h3 fw-bold mb-1 text-dark">
+                <i class="fas fa-users-viewfinder me-2 text-accent" style="color: var(--client-accent);"></i>Annuaire Clients
+            </h1>
+            <p class="text-muted mb-0">Pilotez votre relation client et suivez les commandes en temps réel</p>
+        </div>
+        <a href="{% url 'clients:client_create' %}" class="btn btn-dark px-4 py-2 rounded-3 shadow-sm">
+            <i class="fas fa-plus-circle me-2"></i>Nouveau Client
+        </a>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card-elevated p-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-muted small fw-bold text-uppercase mb-1">Total Clients</p>
+                        <h3 class="fw-bold mb-0">{{ clients.count }}</h3>
+                    </div>
+                    <div class="stat-icon-box" style="background: #eef2ff; color: #4f46e5;">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card-elevated p-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-muted small fw-bold text-uppercase mb-1">Actifs ce mois</p>
+                        <h3 class="fw-bold mb-0">{{ clients_actifs_mois }}</h3>
+                    </div>
+                    <div class="stat-icon-box" style="background: #ecfdf5; color: #059669;">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card-elevated p-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-muted small fw-bold text-uppercase mb-1">Encours</p>
+                        <h3 class="fw-bold mb-0">{{ total_commandes_encours }}</h3>
+                    </div>
+                    <div class="stat-icon-box" style="background: #fffbeb; color: #d97706;">
+                        <i class="fas fa-spinner fa-spin-hover"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card-elevated p-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-muted small fw-bold text-uppercase mb-1">CA Moyen</p>
+                        <h3 class="fw-bold mb-0">{{ ca_moyen|floatformat:0 }}CFA</h3>
+                    </div>
+                    <div class="stat-icon-box" style="background: #f0f9ff; color: #0284c7;">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search & Filters -->
+    <div class="search-section">
+        <form method="get" class="row g-3 align-items-center">
+            <div class="col-lg-6 col-md-12">
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0"><i class="fas fa-search text-muted"></i></span>
+                    <input type="text" name="q" class="form-control border-start-0 ps-0" placeholder="Chercher un nom, téléphone, email..." value="{{ request.GET.q }}">
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <select name="status" class="form-select">
+                    <option value="">Tous les statuts</option>
+                    <option value="actif">Actifs uniquement</option>
+                    <option value="inactif">Inactifs</option>
+                </select>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <button type="submit" class="btn btn-primary w-100" style="background: var(--client-primary);">Rechercher</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table Section -->
+    <div class="client-table-card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th class="ps-4">Client</th>
+                        <th>Contact</th>
+                        <th>Commandes</th>
+                        <th>Dernier projet</th>
+                        <th>Total CA</th>
+                        <th>Statut</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for client in clients %}
+                    <tr class="align-middle">
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center">
+                                <div class="client-avatar me-3">
+                                    {{ client.prenom|first|upper }}{{ client.nom|first|upper }}
+                                </div>
+                                <div>
+                                    <a href="{% url 'clients:client_detail' client.id %}" class="client-name-link text-decoration-none">
+                                        {{ client.prenom }} {{ client.nom }}
+                                    </a>
+                                    <div class="small text-muted">ID #{{ client.id }} • {{ client.date_inscription|date:"M Y" }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="small fw-500 text-dark"><i class="fas fa-phone-alt me-2 text-muted"></i>{{ client.telephone }}</div>
+                            {% if client.email %}
+                            <div class="small text-muted"><i class="fas fa-envelope me-2 text-muted"></i>{{ client.email|truncatechars:20 }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1 flex-wrap">
+                                <span class="badge-soft badge-soft-info">{{ client.get_commandes_count }} au total</span>
+                                {% if client.get_commandes_encours > 0 %}
+                                <span class="badge-soft badge-soft-warning">{{ client.get_commandes_encours }} en cours</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            {% if client.get_derniere_commande %}
+                            <div class="small fw-500 text-dark">{{ client.get_derniere_commande.date_commande|date:"d/m/y" }}</div>
+                            <div class="small text-muted italic">{{ client.get_derniere_commande.type_habit.nom|truncatechars:15 }}</div>
+                            {% else %}
+                            <span class="text-muted small">Aucun projet</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="fw-bold text-dark">{{ client.get_ca_total|floatformat:2 }} CFA</span>
+                        </td>
+                        <td>
+                            {% if client.get_commandes_encours > 0 %}
+                            <span class="status-pill status-pill-active"><i class="fas fa-check-circle"></i> Actif</span>
+                            {% else %}
+                            <span class="status-pill status-pill-inactive"><i class="fas fa-clock"></i> Inactif</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end pe-4">
+                            <div class="d-flex justify-content-end gap-2">
+                                <a href="{% url 'clients:client_detail' client.id %}" class="action-btn" title="Voir fiche"><i class="fas fa-eye fa-sm"></i></a>
+                                <a href="{% url 'clients:client_update' client.id %}" class="action-btn" title="Modifier"><i class="fas fa-edit fa-sm"></i></a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <i class="fas fa-user-slash fa-3x text-light mb-3"></i>
+                            <p class="text-muted">Aucun client trouvé pour cette recherche.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

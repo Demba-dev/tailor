@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Gestion des Paiements - TAILOR{% endblock %}
+
+{% block extra_css %}
+
+<style>
+    /* Styles spécifiques pour la liste des paiements */
+    .financial-header {
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .financial-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 200%;
+        background: rgba(255,255,255,0.1);
+        transform: rotate(30deg);
+        pointer-events: none;
+    }
+    
+    .stat-card {
+        background: rgba(255,255,255,0.9);
+        border-radius: 10px;
+        padding: 1.5rem;
+        text-align: center;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        opacity: 0.9;
+    }
+    
+    .payment-filter {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        margin-bottom: 1.5rem;
+    }
+    
+    .filter-group {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+    }
+    
+    .filter-chip {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        background: #f8f9fa;
+        border: 2px solid #e9ecef;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .filter-chip:hover {
+        border-color: #48bb78;
+        background: rgba(72, 187, 120, 0.1);
+    }
+    
+    .filter-chip.active {
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+        border-color: #48bb78;
+    }
+    
+    .payment-card {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        height: 100%;
+    }
+    
+    .payment-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+    }
+    
+    .payment-header {
+        padding: 1.5rem;
+        position: relative;
+    }
+    
+    .payment-status {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+    }
+    
+    .payment-amount {
+        font-size: 2rem;
+        font-weight: 800;
+        color: white;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .payment-method {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: rgba(255,255,255,0.2);
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .payment-content {
+        padding: 1.5rem;
+        background: white;
+    }
+    
+    .payment-client {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 1rem;
+    }
+    
+    .client-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+    
+    .payment-order {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .payment-actions {
+        display: flex;
+        gap: 5px;
+        margin-top: 1rem;
+    }
+    
+    .payment-actions .btn {
+        flex: 1;
+        padding: 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    .timeline-view {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+    
+    .timeline-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+        border-left: 4px solid #48bb78;
+        transition: all 0.3s ease;
+    }
+    
+    .timeline-item:hover {
+        transform: translateX(5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .timeline-marker {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+        box-shadow: 0 4px 10px rgba(72, 187, 120, 0.3);
+    }
+    
+    .revenue-chart {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        margin-bottom: 1.5rem;
+    }
+    
+    .action-panel {
+        position: sticky;
+        top: 20px;
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        border: 1px solid #e9ecef;
+    }
+    
+    .empty-state {
+        padding: 3rem 1rem;
+        text-align: center;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 15px;
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        color: #adb5bd;
+        margin-bottom: 1.5rem;
+        opacity: 0.5;
+    }
+    
+    .view-toggle {
+        display: flex;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 1rem;
+    }
+    
+    .view-toggle-btn {
+        flex: 1;
+        padding: 0.5rem;
+        background: white;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+    }
+    
+    .view-toggle-btn:hover {
+        background: #f8f9fa;
+    }
+    
+    .view-toggle-btn.active {
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item active">Paiements</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block page_title %}
+<div class="financial-header">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h1 class="h2 mb-2">
+                <i class="fas fa-euro-sign me-2"></i>Gestion des Paiements
+            </h1>
+            <p class="mb-0 opacity-75">
+                Suivez et géz tous les paiements de votre atelier
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{% url 'paiements:paiement_create' %}" class="btn btn-light btn-lg">
+                <i class="fas fa-plus-circle me-2"></i>Nouveau paiement
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block page_actions %}
+<div class="d-flex align-items-center gap-3">
+    <div class="input-group" style="width: 300px;">
+        <span class="input-group-text bg-white border-end-0">
+            <i class="fas fa-search text-muted"></i>
+        </span>
+        <input type="text" class="form-control border-start-0" id="searchPayments" placeholder="Rechercher un paiement...">
+    </div>
+    <div class="dropdown">
+        <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            <i class="fas fa-download me-2"></i>Exporter
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="#"><i class="fas fa-file-excel text-success me-2"></i>Excel</a></li>
+            <li><a class="dropdown-item" href="#"><i class="fas fa-file-pdf text-danger me-2"></i>PDF</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#"><i class="fas fa-print me-2"></i>Imprimer</a></li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Statistiques -->
+    <div class="col-12">
+        <div class="row g-3 mb-4">
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-number text-primary">{{ total_paiements|floatformat:0 }}€</div>
+                    <div class="stat-label">Total perçu</div>
+                    <div class="small text-muted">
+                        <i class="fas fa-arrow-up text-success me-1"></i>
+                        {{ evolution_mensuelle|floatformat:1 }}% ce mois
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-number text-success">{{ paiements_du_mois|floatformat:0 }}€</div>
+                    <div class="stat-label">Ce mois</div>
+                    <div class="small text-muted">
+                        {{ paiements_mois_count }} paiement{{ paiements_mois_count|pluralize }}
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-number text-warning">{{ impayes|floatformat:0 }}€</div>
+                    <div class="stat-label">Impayés</div>
+                    <div class="small text-muted">
+                        {{ commandes_impayees }} commande{{ commandes_impayees|pluralize }} en attente
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-number text-info">{{ moyenne_paiement|floatformat:0 }}€</div>
+                    <div class="stat-label">Moyenne/paiement</div>
+                    <div class="small text-muted">
+                        {{ taux_paiement_complet }}% de paiements complets
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Colonne principale -->
+    <div class="col-lg-8">
+        <!-- Filtres -->
+        <div class="payment-filter">
+            <h6 class="mb-3"><i class="fas fa-filter me-2"></i>Filtres</h6>
+            
+            <div class="filter-group">
+                <span class="filter-chip" data-filter="all">
+                    <i class="fas fa-th-large me-1"></i>Tous
+                </span>
+                <span class="filter-chip" data-filter="today">
+                    <i class="fas fa-calendar-day me-1"></i>Aujourd'hui
+                </span>
+                <span class="filter-chip" data-filter="week">
+                    <i class="fas fa-calendar-week me-1"></i>Cette semaine
+                </span>
+                <span class="filter-chip" data-filter="month">
+                    <i class="fas fa-calendar-alt me-1"></i>Ce mois
+                </span>
+                <span class="filter-chip" data-filter="pending">
+                    <i class="fas fa-clock me-1"></i>En attente
+                </span>
+                <span class="filter-chip" data-filter="completed">
+                    <i class="fas fa-check-circle me-1"></i>Validés
+                </span>
+            </div>
+            
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label small">Mode de paiement</label>
+                    <select class="form-select form-select-sm" id="filterMethod">
+                        <option value="">Tous les modes</option>
+                        <option value="especes">Espèces</option>
+                        <option value="carte">Carte bancaire</option>
+                        <option value="cheque">Chèque</option>
+                        <option value="virement">Virement</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small">Montant minimum</label>
+                    <input type="number" class="form-control form-control-sm" id="filterMinAmount" placeholder="0€">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small">Tri par</label>
+                    <select class="form-select form-select-sm" id="filterSort">
+                        <option value="-date">Plus récents</option>
+                        <option value="date">Plus anciens</option>
+                        <option value="-montant">Montant décroissant</option>
+                        <option value="montant">Montant croissant</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Vue Grille (par défaut) -->
+        <div id="gridView">
+            <div class="view-toggle">
+                <button class="view-toggle-btn active" data-view="grid">
+                    <i class="fas fa-th-large"></i> Grille
+                </button>
+                <button class="view-toggle-btn" data-view="timeline">
+                    <i class="fas fa-stream"></i> Chronologie
+                </button>
+                <button class="view-toggle-btn" data-view="table">
+                    <i class="fas fa-table"></i> Tableau
+                </button>
+            </div>
+            
+            {% if paiements %}
+            <div class="row g-3">
+                {% for paiement in paiements %}
+                <div class="col-xl-4 col-lg-6 col-md-6">
+                    <div class="payment-card">
+                        <div class="payment-header" style="background: linear-gradient(135deg, {{ paiement.get_color }} 0%, {{ paiement.get_dark_color }} 100%);">
+                            <div class="payment-status">
+                                <span class="badge bg-{{ paiement.get_statut_color }}">
+                                    {{ paiement.get_statut_display }}
+                                </span>
+                            </div>
+                            
+                            <div class="payment-amount">
+                                {{ paiement.montant|floatformat:2 }}€
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="payment-method">
+                                    <i class="fas fa-{{ paiement.get_mode_icon }}"></i>
+                                    {{ paiement.get_mode_display }}
+                                </div>
+                                <div class="text-white small">
+                                    {{ paiement.date_paiement|date:"d/m/Y" }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="payment-content">
+                            <!-- Client -->
+                            <div class="payment-client">
+                                <div class="client-avatar">
+                                    {{ paiement.commande.client.prenom|first|upper }}{{ paiement.commande.client.nom|first|upper }}
+                                </div>
+                                <div>
+                                    <div class="fw-bold">{{ paiement.commande.client.prenom }} {{ paiement.commande.client.nom }}</div>
+                                    <div class="small text-muted">{{ paiement.commande.client.telephone }}</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Commande -->
+                            <div class="payment-order">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-bold">{{ paiement.commande.numero }}</span>
+                                    <span class="badge bg-light text-dark">
+                                        {{ paiement.commande.get_statut_display }}
+                                    </span>
+                                </div>
+                                <div class="small text-muted mb-2">{{ paiement.commande.habit.nom }}</div>
+                                <div class="d-flex justify-content-between small">
+                                    <span>Total : {{ paiement.commande.prix_final|floatformat:2 }}€</span>
+                                    <span class="text-success">Payé : {{ paiement.commande.get_montant_paye|floatformat:2 }}€</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Informations -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <div class="small text-muted">Référence</div>
+                                    <div class="fw-bold">#PAY-{{ paiement.id|stringformat:"04d" }}</div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="small text-muted">Heure</div>
+                                    <div class="fw-bold">{{ paiement.date_paiement }}</div>
+                                </div>
+                            </div>
+                            
+                            {% if paiement.notes %}
+                            <div class="small text-muted mb-2">Note : {{ paiement.notes|truncatechars:60 }}</div>
+                            {% endif %}
+                            
+                            <!-- Actions -->
+                            <div class="payment-actions">
+                                <a href="{% url 'paiements:paiement_detail' paiement.id %}" 
+                                   class="btn btn-outline-primary" title="Voir détails">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'paiements:paiement_update' paiement.id %}" 
+                                   class="btn btn-outline-warning" title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'paiements:paiement_print' paiement.id %}" 
+                                   class="btn btn-outline-info" title="Imprimer" target="_blank">
+                                    <i class="fas fa-print"></i>
+                                </a>
+                                <a href="{% url 'paiements:paiement_delete' paiement.id %}" 
+                                   class="btn btn-outline-danger" title="Supprimer">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="fas fa-euro-sign"></i>
+                </div>
+                <h4 class="text-muted mb-3">Aucun paiement trouvé</h4>
+                <p class="text-muted mb-4">
+                    Commencez par enregistrer vos premiers paiements.
+                </p>
+                <a href="{% url 'paiements:paiement_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle me-2"></i>Enregistrer un paiement
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Vue Chronologie -->
+        <div id="timelineView" class="d-none">
+            <div class="view-toggle">
+                <button class="view-toggle-btn" data-view="grid">
+                    <i class="fas fa-th-large"></i> Grille
+                </button>
+                <button class="view-toggle-btn active" data-view="timeline">
+                    <i class="fas fa-stream"></i> Chronologie
+                </button>
+                <button class="view-toggle-btn" data-view="table">
+                    <i class="fas fa-table"></i> Tableau
+                </button>
+            </div>
+            
+            {% if paiements %}
+            <div class="timeline-view">
+                {% for paiement in paiements %}
+                <div class="timeline-item">
+                    <div class="timeline-marker">
+                        <i class="fas fa-{{ paiement.get_mode_icon }}"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h6 class="mb-1">{{ paiement.commande.client.prenom }} {{ paiement.commande.client.nom }}</h6>
+                                <div class="small text-muted">
+                                    {{ paiement.commande.numero }} • {{ paiement.commande.habit.nom }}
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold text-success">{{ paiement.montant|floatformat:2 }}€</div>
+                                <span class="badge bg-{{ paiement.get_statut_color }}">
+                                    {{ paiement.get_statut_display }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="small">
+                                <i class="fas fa-{{ paiement.get_mode_icon }} me-1"></i>
+                                {{ paiement.get_mode_display }}
+                                <span class="mx-2">•</span>
+                                <i class="fas fa-clock me-1"></i>
+                                {{ paiement.date_paiement }}
+                            </div>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'paiements:paiement_detail' paiement.id %}" 
+                                   class="btn btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'paiements:paiement_print' paiement.id %}" 
+                                   class="btn btn-outline-info" target="_blank">
+                                    <i class="fas fa-print"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Vue Tableau -->
+        <div id="tableView" class="d-none">
+            <div class="view-toggle">
+                <button class="view-toggle-btn" data-view="grid">
+                    <i class="fas fa-th-large"></i> Grille
+                </button>
+                <button class="view-toggle-btn" data-view="timeline">
+                    <i class="fas fa-stream"></i> Chronologie
+                </button>
+                <button class="view-toggle-btn active" data-view="table">
+                    <i class="fas fa-table"></i> Tableau
+                </button>
+            </div>
+            
+            {% if paiements %}
+            <div class="card shadow-sm border-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="50">
+                                    <input type="checkbox" class="form-check-input" id="selectAll">
+                                </th>
+                                <th>Date</th>
+                                <th>Client</th>
+                                <th>Commande</th>
+                                <th class="text-end">Montant</th>
+                                <th>Mode</th>
+                                <th>Statut</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for paiement in paiements %}
+                            <tr>
+                                <td>
+                                    <input type="checkbox" class="form-check-input payment-check" value="{{ paiement.id }}">
+                                </td>
+                                <td>
+                                    <div>{{ paiement.date_paiement|date:"d/m/Y" }}</div>
+                                    <div class="small text-muted">{{ paiement.date_paiement }}</div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="client-avatar me-2">
+                                            {{ paiement.commande.client.prenom|first|upper }}{{ paiement.commande.client.nom|first|upper }}
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold">{{ paiement.commande.client.prenom }} {{ paiement.commande.client.nom }}</div>
+                                            <div class="small text-muted">{{ paiement.commande.client.telephone }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <a href="{% url 'commandes:commande_detail' paiement.commande.id %}" 
+                                       class="text-decoration-none fw-bold">
+                                        {{ paiement.commande.numero }}
+                                    </a>
+                                    <div class="small text-muted">{{ paiement.commande.type_habit.nom }}</div>
+                                </td>
+                                <td class="text-end">
+                                    <div class="fw-bold text-success">{{ paiement.montant|floatformat:2 }}€</div>
+                                    <div class="small text-muted">
+                                        Sur {{ paiement.commande.prix_final|floatformat:2 }}€
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark">
+                                        <i class="fas fa-{{ paiement.get_mode_icon }} me-1"></i>
+                                        {{ paiement.get_mode_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ paiement.get_statut_color }}">
+                                        {{ paiement.get_statut_display }}
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'paiements:paiement_detail' paiement.id %}" 
+                                           class="btn btn-outline-primary" title="Voir">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'paiements:paiement_update' paiement.id %}" 
+                                           class="btn btn-outline-warning" title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'paiements:paiement_print' paiement.id %}" 
+                                           class="btn btn-outline-info" title="Imprimer" target="_blank">
+                                            <i class="fas fa-print"></i>
+                                        </a>
+                                        <a href="{% url 'paiements:paiement_delete' paiement.id %}" 
+                                           class="btn btn-outline-danger" title="Supprimer">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if paiements.paginator.num_pages > 1 %}
+        <div class="card shadow-sm border-0 mt-4">
+            <div class="card-body">
+                <nav aria-label="Navigation des paiements">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="small text-muted">
+                            Affichage de {{ paiements.start_index }} à {{ paiements.end_index }} sur {{ paiements.paginator.count }} paiements
+                        </div>
+                        <ul class="pagination pagination-sm mb-0">
+                            {% if paiements.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ paiements.previous_page_number }}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for num in paiements.paginator.page_range %}
+                                {% if paiements.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                                {% elif num > paiements.number|add:'-3' and num < paiements.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if paiements.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ paiements.next_page_number }}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ paiements.paginator.num_pages }}">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </nav>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Colonne latérale : actions et graphiques -->
+    <div class="col-lg-4">
+        <!-- Actions groupées -->
+        <div class="action-panel mb-4">
+            <h6 class="mb-3"><i class="fas fa-tasks me-2"></i>Actions groupées</h6>
+            <div class="mb-3">
+                <div class="small text-muted mb-2" id="selectedCount">0 paiement(s) sélectionné(s)</div>
+                <div class="d-flex flex-wrap gap-2">
+                    <button class="btn btn-sm btn-outline-primary" id="exportSelectedBtn" disabled>
+                        <i class="fas fa-download me-1"></i>Exporter
+                    </button>
+                    <button class="btn btn-sm btn-outline-success" id="markAsPaidBtn" disabled>
+                        <i class="fas fa-check-circle me-1"></i>Marquer payé
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" id="deleteSelectedBtn" disabled>
+                        <i class="fas fa-trash me-1"></i>Supprimer
+                    </button>
+                </div>
+            </div>
+            
+            <div class="mt-3">
+                <a href="#" class="btn btn-sm btn-outline-secondary w-100 mb-2">
+                    <i class="fas fa-file-import me-1"></i>Importer CSV
+                </a>
+                <a href="{% url 'paiements:paiement_stats' %}" class="btn btn-sm btn-outline-info w-100">
+                    <i class="fas fa-chart-pie me-1"></i>Voir statistiques
+                </a>
+            </div>
+        </div>
+        
+        <!-- Graphique des paiements -->
+        <div class="revenue-chart">
+            <h6 class="mb-3"><i class="fas fa-chart-line me-2"></i>Évolution des paiements</h6>
+            <div style="height: 200px;">
+                <canvas id="paymentsChart"></canvas>
+            </div>
+            <div class="small text-center text-muted mt-2">
+                Période : 30 derniers jours
+            </div>
+        </div>
+        
+        <!-- Répartition par mode -->
+        <div class="revenue-chart">
+            <h6 class="mb-3"><i class="fas fa-pie-chart me-2"></i>Répartition par mode</h6>
+            <div style="height: 200px;">
+                <canvas id="methodsChart"></canvas>
+            </div>
+            <div class="row g-2 mt-3">
+                <div class="col-6">
+                    <div class="d-flex align-items-center">
+                        <div class="me-2" style="width: 10px; height: 10px; background: #667eea; border-radius: 2px;"></div>
+                        <span class="small">Espèces</span>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="d-flex align-items-center">
+                        <div class="me-2" style="width: 10px; height: 10px; background: #48bb78; border-radius: 2px;"></div>
+                        <span class="small">Carte</span>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="d-flex align-items-center">
+                        <div class="me-2" style="width: 10px; height: 10px; background: #ed8936; border-radius: 2px;"></div>
+                        <span class="small">Chèque</span>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="d-flex align-items-center">
+                        <div class="me-2" style="width: 10px; height: 10px; background: #4299e1; border-radius: 2px;"></div>
+                        <span class="small">Virement</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Alertes impayés -->
+        {% if commandes_impayees > 0 %}
+        <div class="revenue-chart border-danger">
+            <h6 class="mb-3 text-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>Alertes impayés
+            </h6>
+            <div class="alert alert-danger">
+                <div class="fw-bold mb-2">{{ commandes_impayees }} commande{{ commandes_impayees|pluralize }} en attente</div>
+                <div class="small">
+                    Total impayé : <span class="fw-bold">{{ impayes|floatformat:2 }}€</span>
+                </div>
+            </div>
+            <a href="{% url 'commandes:commande_list' %}?statut=confirmee" class="btn btn-sm btn-outline-danger w-100">
+                <i class="fas fa-external-link-alt me-1"></i>Voir les commandes
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion de la vue (grille/timeline/tableau)
+    const views = {
+        grid: document.getElementById('gridView'),
+        timeline: document.getElementById('timelineView'),
+        table: document.getElementById('tableView')
+    };
+    
+    const viewButtons = document.querySelectorAll('[data-view]');
+    viewButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const view = this.getAttribute('data-view');
+            
+            // Mettre à jour les boutons actifs
+            viewButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Afficher la vue correspondante
+            Object.values(views).forEach(viewEl => viewEl.classList.add('d-none'));
+            views[view].classList.remove('d-none');
+            
+            // Sauvegarder la préférence
+            localStorage.setItem('paymentViewPreference', view);
+        });
+    });
+    
+    // Restaurer la préférence de vue
+    const savedView = localStorage.getItem('paymentViewPreference') || 'grid';
+    const savedButton = document.querySelector(`[data-view="${savedView}"]`);
+    if (savedButton) savedButton.click();
+    
+    // Recherche en temps réel
+    const searchInput = document.getElementById('searchPayments');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            // Filtrer les cartes
+            const cards = document.querySelectorAll('#gridView .payment-card');
+            cards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    card.parentElement.style.display = '';
+                } else {
+                    card.parentElement.style.display = 'none';
+                }
+            });
+            
+            // Filtrer les éléments de timeline
+            const timelineItems = document.querySelectorAll('#timelineView .timeline-item');
+            timelineItems.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            
+            // Filtrer les lignes du tableau
+            const tableRows = document.querySelectorAll('#tableView tbody tr');
+            tableRows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    }
+    
+    // Filtres
+    const filterChips = document.querySelectorAll('.filter-chip');
+    filterChips.forEach(chip => {
+        chip.addEventListener('click', function() {
+            const filter = this.getAttribute('data-filter');
+            
+            // Mettre à jour les chips actifs
+            filterChips.forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Appliquer le filtre
+            applyFilters();
+        });
+    });
+    
+    document.getElementById('filterMethod')?.addEventListener('change', applyFilters);
+    document.getElementById('filterMinAmount')?.addEventListener('input', applyFilters);
+    document.getElementById('filterSort')?.addEventListener('change', applyFilters);
+    
+    // Gestion des sélections
+    const selectAll = document.getElementById('selectAll');
+    const paymentChecks = document.querySelectorAll('.payment-check');
+    const selectedCount = document.getElementById('selectedCount');
+    const exportSelectedBtn = document.getElementById('exportSelectedBtn');
+    const markAsPaidBtn = document.getElementById('markAsPaidBtn');
+    const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+    
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            const isChecked = this.checked;
+            paymentChecks.forEach(check => {
+                check.checked = isChecked;
+            });
+            updateSelectedCount();
+        });
+    }
+    
+    paymentChecks.forEach(check => {
+        check.addEventListener('change', updateSelectedCount);
+    });
+    
+    function updateSelectedCount() {
+        const selected = document.querySelectorAll('.payment-check:checked');
+        const count = selected.length;
+        
+        selectedCount.textContent = `${count} paiement(s) sélectionné(s)`;
+        exportSelectedBtn.disabled = count === 0;
+        markAsPaidBtn.disabled = count === 0;
+        deleteSelectedBtn.disabled = count === 0;
+        
+        // Mettre à jour selectAll
+        if (selectAll) {
+            selectAll.checked = count === paymentChecks.length && paymentChecks.length > 0;
+            selectAll.indeterminate = count > 0 && count < paymentChecks.length;
+        }
+    }
+    
+    // Actions groupées
+    if (exportSelectedBtn) {
+        exportSelectedBtn.addEventListener('click', function() {
+            const selected = document.querySelectorAll('.payment-check:checked');
+            if (selected.length === 0) return;
+            
+            const paymentIds = Array.from(selected).map(check => check.value);
+            console.log('Export des paiements :', paymentIds);
+            // Implémenter l'export
+        });
+    }
+    
+    if (markAsPaidBtn) {
+        markAsPaidBtn.addEventListener('click', function() {
+            const selected = document.querySelectorAll('.payment-check:checked');
+            if (selected.length === 0) return;
+            
+            if (confirm(`Marquer ${selected.length} paiement(s) comme payé(s) ?`)) {
+                const paymentIds = Array.from(selected).map(check => check.value);
+                updatePaymentsStatus(paymentIds, 'complet');
+            }
+        });
+    }
+    
+    if (deleteSelectedBtn) {
+        deleteSelectedBtn.addEventListener('click', function() {
+            const selected = document.querySelectorAll('.payment-check:checked');
+            if (selected.length === 0) return;
+            
+            if (confirm(`Supprimer ${selected.length} paiement(s) ? Cette action est irréversible.`)) {
+                const paymentIds = Array.from(selected).map(check => check.value);
+                deletePayments(paymentIds);
+            }
+        });
+    }
+    
+    // Graphique des paiements
+    initPaymentsChart();
+    initMethodsChart();
+});
+
+function applyFilters() {
+    const activeFilter = document.querySelector('.filter-chip.active')?.getAttribute('data-filter') || 'all';
+    const method = document.getElementById('filterMethod').value;
+    const minAmount = parseFloat(document.getElementById('filterMinAmount').value) || 0;
+    const sort = document.getElementById('filterSort').value;
+    
+    // Construire l'URL avec les filtres
+    let url = new URL(window.location.href);
+    
+    if (activeFilter !== 'all') url.searchParams.set('filter', activeFilter);
+    if (method) url.searchParams.set('method', method);
+    if (minAmount > 0) url.searchParams.set('min_amount', minAmount);
+    if (sort !== '-date') url.searchParams.set('sort', sort);
+    
+    // Rediriger
+    window.location.href = url.toString();
+}
+
+function updatePaymentsStatus(paymentIds, status) {
+    fetch('/api/paiements/bulk-update/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            payment_ids: paymentIds,
+            status: status
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(`${paymentIds.length} paiement(s) mis à jour avec succès`, 'success');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            showToast('Erreur lors de la mise à jour', 'error');
+        }
+    });
+}
+
+function deletePayments(paymentIds) {
+    fetch('/api/paiements/bulk-delete/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            payment_ids: paymentIds
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(`${paymentIds.length} paiement(s) supprimé(s) avec succès`, 'success');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            showToast('Erreur lors de la suppression', 'error');
+        }
+    });
+}
+
+function initPaymentsChart() {
+    const ctx = document.getElementById('paymentsChart');
+    if (!ctx) return;
+    
+    const data = {
+        labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
+        datasets: [{
+            label: 'Paiements (€)',
+            data: [450, 520, 480, 600, 750, 300, 420],
+            borderColor: '#48bb78',
+            backgroundColor: 'rgba(72, 187, 120, 0.1)',
+            fill: true,
+            tension: 0.4
+        }]
+    };
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '€';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function initMethodsChart() {
+    const ctx = document.getElementById('methodsChart');
+    if (!ctx) return;
+    
+    const data = {
+        labels: ['Espèces', 'Carte', 'Chèque', 'Virement'],
+        datasets: [{
+            data: [40, 35, 15, 10],
+            backgroundColor: [
+                '#667eea',
+                '#48bb78',
+                '#ed8936',
+                '#4299e1'
+            ],
+            borderWidth: 2,
+            borderColor: '#fff'
+        }]
+    };
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            cutout: '70%'
+        }
+    });
+}
+
+function showToast(message, type = 'info') {
+    // Créer un toast temporaire
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    const bsToast = new bootstrap.Toast(toast, {
+        autohide: true,
+        delay: 3000
+    });
+    bsToast.show();
+    
+    toast.addEventListener('hidden.bs.toast', function () {
+        toast.remove();
+    });
+}
+
+// Helper pour récupérer le cookie CSRF
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Animation pour les nouveaux paiements
+function highlightNewPayments() {
+    const newPayments = document.querySelectorAll('.payment-card:first-child');
+    newPayments.forEach(payment => {
+        payment.classList.add('animate__animated', 'animate__pulse');
+        setTimeout(() => {
+            payment.classList.remove('animate__pulse');
+        }, 2000);
+    });
+}
+
+// Initialiser les animations
+setTimeout(highlightNewPayments, 1000);
+</script>
+
+<!-- Animation CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+
+<!-- Styles pour les couleurs des paiements -->
+<style>
+.payment-header[style*="background: linear-gradient(135deg, #48bb78"] { --payment-color: #48bb78; }
+.payment-header[style*="background: linear-gradient(135deg, #667eea"] { --payment-color: #667eea; }
+.payment-header[style*="background: linear-gradient(135deg, #ed8936"] { --payment-color: #ed8936; }
+.payment-header[style*="background: linear-gradient(135deg, #4299e1"] { --payment-color: #4299e1; }
+
+@keyframes paymentPulse {
+    0% { box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+    50% { box-shadow: 0 5px 25px var(--payment-color, rgba(72, 187, 120, 0.3)); }
+    100% { box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+}
+
+.payment-card:hover {
+    animation: paymentPulse 1.5s infinite;
+}
+</style>
+{% endblock %}

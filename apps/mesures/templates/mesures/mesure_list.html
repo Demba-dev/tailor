@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Mesures des Clients - TAILOR{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/clients.css' %}">
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}"><i class="fas fa-home"></i></a></li>
+        {% if client %}
+        <li class="breadcrumb-item"><a href="{% url 'clients:client_list' %}">Clients</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'clients:client_detail' client.id %}">{{ client.prenom }} {{ client.nom }}</a></li>
+        <li class="breadcrumb-item active">Mesures</li>
+        {% else %}
+        <li class="breadcrumb-item active">Mesures</li>
+        {% endif %}
+    </ol>
+</nav>
+{% endblock %}
+
+{% block page_title %}
+<div class="d-flex justify-content-between align-items-center">
+    <div>
+        <h1 class="h2 mb-1">
+            <i class="fas fa-ruler-combined text-primary me-2"></i>
+            {% if client %}Mesures de {{ client.prenom }} {{ client.nom }}{% else %}Toutes les mesures{% endif %}
+        </h1>
+        <p class="text-muted mb-0">
+            <i class="fas fa-info-circle me-1"></i>
+            {% if client %}
+            Historique complet des mesures prises pour ce client
+            {% else %}
+            Gestion centralisée de toutes les mesures des clients
+            {% endif %}
+        </p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        {% if not client %}
+        <div class="input-group" style="width: 300px;">
+            <span class="input-group-text bg-white border-end-0">
+                <i class="fas fa-search text-muted"></i>
+            </span>
+            <input type="text" class="form-control border-start-0" id="searchInput" placeholder="Rechercher une mesure...">
+        </div>
+        {% endif %}
+        <div class="dropdown">
+            <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-download me-2"></i>Exporter
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="#"><i class="fas fa-file-excel text-success me-2"></i>Excel</a></li>
+                <li><a class="dropdown-item" href="#"><i class="fas fa-file-pdf text-danger me-2"></i>PDF</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="#"><i class="fas fa-print me-2"></i>Imprimer</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'mesures:mesure_create' %}{% if client %}?client={{ client.id }}{% endif %}" 
+   class="btn btn-primary">
+    <i class="fas fa-plus-circle me-2"></i>Nouvelle mesure
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Filtres et statistiques -->
+    <div class="col-lg-3 mb-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="fas fa-filter me-2"></i>Filtres</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label small text-muted">Type d'habit</label>
+                    <select class="form-select form-select-sm" id="filterType">
+                        <option value="">Tous les types</option>
+                        <option value="chemise">Chemise</option>
+                        <option value="pantalon">Pantalon</option>
+                        <option value="veste">Veste</option>
+                        <option value="robe">Robe</option>
+                        <option value="manteau">Manteau</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small text-muted">Période</label>
+                    <select class="form-select form-select-sm" id="filterPeriod">
+                        <option value="all">Toute période</option>
+                        <option value="today">Aujourd'hui</option>
+                        <option value="week">Cette semaine</option>
+                        <option value="month">Ce mois</option>
+                        <option value="year">Cette année</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small text-muted">Tri</label>
+                    <select class="form-select form-select-sm" id="filterSort">
+                        <option value="newest">Plus récentes</option>
+                        <option value="oldest">Plus anciennes</option>
+                        <option value="client">Par client</option>
+                    </select>
+                </div>
+                <button class="btn btn-sm btn-outline-primary w-100 mb-2" id="applyFilters">
+                    <i class="fas fa-check me-1"></i>Appliquer
+                </button>
+                <button class="btn btn-sm btn-outline-secondary w-100" id="resetFilters">
+                    <i class="fas fa-redo me-1"></i>Réinitialiser
+                </button>
+            </div>
+        </div>
+
+        <!-- Statistiques -->
+        <div class="card shadow-sm border-0 mt-3">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Statistiques</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="small text-muted">Total mesures</span>
+                    <span class="fw-bold">{{ mesures.count }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="small text-muted">Clients mesurés</span>
+                    <span class="fw-bold">{{ unique_clients }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="small text-muted">Dernière mesure</span>
+                    <span class="fw-bold">{{ last_measure_date|date:"d/m/Y"|default:"-" }}</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="small text-muted">Moyenne/mois</span>
+                    <span class="fw-bold">{{ avg_per_month }}</span>
+                </div>
+                <hr>
+                <div class="text-center">
+                    <div class="small text-muted mb-1">Répartition par type</div>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-primary" style="width: 30%">Ch 30%</div>
+                        <div class="progress-bar bg-success" style="width: 25%">Pt 25%</div>
+                        <div class="progress-bar bg-info" style="width: 20%">Vs 20%</div>
+                        <div class="progress-bar bg-warning" style="width: 15%">Rb 15%</div>
+                        <div class="progress-bar bg-danger" style="width: 10%">Mt 10%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions rapides -->
+        {% if not client %}
+        <div class="card shadow-sm border-0 mt-3">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="fas fa-bolt me-2"></i>Actions rapides</h6>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'mesures:mesure_import' %}" class="btn btn-outline-secondary btn-sm w-100 mb-2">
+                    <i class="fas fa-file-import me-1"></i>Importer CSV
+                </a>
+                <a href="{% url 'mesures:mesure_bulk_delete' %}" class="btn btn-outline-danger btn-sm w-100 mb-2">
+                    <i class="fas fa-trash-alt me-1"></i>Nettoyer anciennes
+                </a>
+                <a href="#" class="btn btn-outline-info btn-sm w-100" data-bs-toggle="modal" data-bs-target="#helpModal">
+                    <i class="fas fa-question-circle me-1"></i>Aide mesures
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Liste principale des mesures -->
+    <div class="col-lg-9">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    {% if client %}Mesures du client{% else %}Toutes les mesures{% endif %}
+                    <span class="badge bg-primary ms-2">{{ mesures.count }}</span>
+                </h6>
+                <div class="d-flex gap-2">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-secondary active" data-view="card">
+                            <i class="fas fa-th-large"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" data-view="table">
+                            <i class="fas fa-table"></i>
+                        </button>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><h6 class="dropdown-header">Colonnes visibles</h6></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-check-circle text-success me-2"></i>Toutes</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-times-circle text-danger me-2"></i>Masquer tour taille</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-sync-alt me-2"></i>Actualiser</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vue Cartes -->
+            <div class="card-body" id="cardView">
+                {% if mesures %}
+                <div class="row g-3">
+                    {% for mesure in mesures %}
+                    <div class="col-xl-4 col-lg-6 col-md-6">
+                        <div class="card border-hover shadow-sm h-100">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm me-2">
+                                        <div class="avatar-circle-sm bg-primary text-white">
+                                            {{ mesure.client.prenom|first|upper }}{{ mesure.client.nom|first|upper }}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">{{ mesure.client.prenom }} {{ mesure.client.nom }}</h6>
+                                        <small class="text-muted">{{ mesure.client.telephone }}</small>
+                                    </div>
+                                </div>
+                                <span class="badge bg-{{ mesure.get_type_color }}">{{ mesure.type_habit.nom|slice:":3" }}</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <div class="small text-muted">Tour poitrine</div>
+                                        <div class="fw-bold">{{ mesure.tour_poitrine|default:"-" }} cm</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="small text-muted">Tour taille</div>
+                                        <div class="fw-bold">{{ mesure.tour_taille|default:"-" }} cm</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="small text-muted">Longueur bras</div>
+                                        <div class="fw-bold">{{ mesure.longueur_bras|default:"-" }} cm</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="small text-muted">Tour hanches</div>
+                                        <div class="fw-bold">{{ mesure.tour_hanches|default:"-" }} cm</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar-alt me-1"></i>
+                                            {{ mesure.date_prise|date:"d/m/Y" }}
+                                        </small>
+                                        {% if mesure.est_recente %}
+                                        <span class="badge bg-success ms-2">Récente</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                            <i class="fas fa-ellipsis-h"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li>
+                                                <a class="dropdown-item" href="{% url 'mesures:mesure_detail' mesure.id %}">
+                                                    <i class="fas fa-eye text-primary me-2"></i>Voir détails
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item" href="{% url 'mesures:mesure_update' mesure.id %}">
+                                                    <i class="fas fa-edit text-warning me-2"></i>Modifier
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item" href="{% url 'mesures:mesure_duplicate' mesure.id %}">
+                                                    <i class="fas fa-copy text-info me-2"></i>Dupliquer
+                                                </a>
+                                            </li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <a class="dropdown-item text-danger" href="{% url 'mesures:mesure_delete' mesure.id %}">
+                                                    <i class="fas fa-trash me-2"></i>Supprimer
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="empty-state">
+                        <i class="fas fa-ruler-combined fa-4x text-muted mb-4"></i>
+                        <h4 class="text-muted">Aucune mesure trouvée</h4>
+                        <p class="text-muted mb-4">
+                            {% if client %}
+                            Ce client n'a pas encore de mesures enregistrées.
+                            {% else %}
+                            Commencez par ajouter des mesures pour vos clients.
+                            {% endif %}
+                        </p>
+                        <a href="{% url 'mesures:mesure_create' %}{% if client %}?client={{ client.id }}{% endif %}" 
+                           class="btn btn-primary">
+                            <i class="fas fa-plus-circle me-2"></i>Ajouter la première mesure
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Vue Tableau (cachée par défaut) -->
+            <div class="card-body d-none" id="tableView">
+                <form method="post" action="{% url 'mesures:mesure_bulk_delete' %}" id="bulkDeleteForm">
+                    {% csrf_token %}
+                    <div class="d-flex gap-2 mb-3">
+                        <button type="button" class="btn btn-sm btn-outline-danger" id="selectAllBtn">
+                            <i class="fas fa-check-square me-1"></i>Sélectionner tout
+                        </button>
+                        <button type="submit" class="btn btn-sm btn-danger" id="deleteBtnBulk" disabled>
+                            <i class="fas fa-trash me-1"></i>Supprimer sélectionnées
+                        </button>
+                    </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="40">
+                                    <input type="checkbox" class="form-check-input" id="selectAll">
+                                </th>
+                                <th>Client</th>
+                                <th>Type d'habit</th>
+                                <th class="text-center">Tour poitrine</th>
+                                <th class="text-center">Tour taille</th>
+                                <th class="text-center">Longueur</th>
+                                <th>Date mesure</th>
+                                <th>Âge mesure</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mesure in mesures %}
+                            <tr>
+                                <td>
+                                    <input type="checkbox" class="form-check-input measure-check" value="{{ mesure.id }}">
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-sm me-2">
+                                            <div class="avatar-circle-sm bg-primary text-white">
+                                                {{ mesure.client.prenom|first|upper }}{{ mesure.client.nom|first|upper }}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <a href="{% url 'clients:client_detail' mesure.client.id %}" 
+                                               class="text-decoration-none fw-bold">
+                                                {{ mesure.client.prenom }} {{ mesure.client.nom }}
+                                            </a>
+                                            <div class="small text-muted">{{ mesure.client.telephone }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ mesure.get_type_color }}">
+                                        {{ mesure.type_habit.nom }}
+                                    </span>
+                                </td>
+                                <td class="text-center fw-bold">{{ mesure.tour_poitrine|default:"-" }} cm</td>
+                                <td class="text-center fw-bold">{{ mesure.tour_taille|default:"-" }} cm</td>
+                                <td class="text-center">
+                                    {% if mesure.type_habit.categorie == 'pantalon' %}
+                                    {{ mesure.longueur_pantalon|default:"-" }} cm
+                                    {% else %}
+                                    {{ mesure.longueur_bras|default:"-" }} cm
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ mesure.date_prise|date:"d/m/Y" }}
+                                    <div class="small text-muted">{{ mesure.date_prise|timesince }}</div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ mesure.get_age_color }}">
+                                        {{ mesure.get_age_display }}
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'mesures:mesure_detail' mesure.id %}" 
+                                           class="btn btn-outline-primary" title="Voir">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'mesures:mesure_update' mesure.id %}" 
+                                           class="btn btn-outline-warning" title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'mesures:mesure_print' mesure.id %}" 
+                                           class="btn btn-outline-info" title="Imprimer" target="_blank">
+                                            <i class="fas fa-print"></i>
+                                        </a>
+                                        <a href="{% url 'mesures:mesure_delete' mesure.id %}" 
+                                           class="btn btn-outline-danger" title="Supprimer">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center py-5">
+                                    <div class="empty-state">
+                                        <i class="fas fa-ruler-combined fa-3x text-muted mb-3"></i>
+                                        <h5 class="text-muted">Aucune mesure</h5>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                </form>
+            </div>
+
+            <!-- Pagination -->
+            {% if mesures.paginator.num_pages > 1 %}
+            <div class="card-footer bg-white">
+                <nav aria-label="Navigation des mesures">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="small text-muted">
+                            Affichage de {{ mesures.start_index }} à {{ mesures.end_index }} sur {{ mesures.paginator.count }} mesures
+                        </div>
+                        <ul class="pagination pagination-sm mb-0">
+                            {% if mesures.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ mesures.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for num in mesures.paginator.page_range %}
+                                {% if mesures.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                                {% elif num > mesures.number|add:'-3' and num < mesures.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">{{ num }}</a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if mesures.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ mesures.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ mesures.paginator.num_pages }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Actions groupées -->
+        {% if mesures %}
+        <div class="card shadow-sm border-0 mt-3">
+            <div class="card-body py-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="small text-muted" id="selectedCount">0 sélectionné(s)</span>
+                        <div class="vr"></div>
+                        <button class="btn btn-sm btn-outline-secondary" id="compareBtn" disabled>
+                            <i class="fas fa-balance-scale me-1"></i>Comparer
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" id="deleteSelectedBtn" disabled>
+                            <i class="fas fa-trash me-1"></i>Supprimer
+                        </button>
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary" id="exportSelectedBtn" disabled>
+                        <i class="fas fa-download me-1"></i>Exporter sélection
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal d'aide -->
+<div class="modal fade" id="helpModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-question-circle me-2"></i>Aide : Gestion des mesures</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <h6><i class="fas fa-ruler me-2 text-primary"></i>Conseils de mesure</h6>
+                                <ul class="small">
+                                    <li>Toujours mesurer sur le client en sous-vêtements</li>
+                                    <li>Utiliser un mètre ruban souple et non élastique</li>
+                                    <li>Noter les mesures en centimètres</li>
+                                    <li>Prendre les mesures le matin si possible</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <h6><i class="fas fa-history me-2 text-primary"></i>Fréquence des mesures</h6>
+                                <ul class="small">
+                                    <li>Revoir les mesures tous les 6 mois</li>
+                                    <li>Reprendre après une perte/prise de poids</li>
+                                    <li>Mettre à jour après une grossesse</li>
+                                    <li>Conserver l'historique des modifications</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="alert alert-info">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    <strong>Astuce :</strong> Utilisez les mesures pour créer des patrons personnalisés et améliorer la fidélité client.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion de la vue (cartes/tableau)
+    const cardView = document.getElementById('cardView');
+    const tableView = document.getElementById('tableView');
+    const viewButtons = document.querySelectorAll('[data-view]');
+    
+    viewButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const view = this.getAttribute('data-view');
+            
+            // Mettre à jour les boutons actifs
+            viewButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Afficher la vue correspondante
+            if (view === 'card') {
+                cardView.classList.remove('d-none');
+                tableView.classList.add('d-none');
+            } else {
+                cardView.classList.add('d-none');
+                tableView.classList.remove('d-none');
+            }
+            
+            // Sauvegarder la préférence
+            localStorage.setItem('measureViewPreference', view);
+        });
+    });
+    
+    // Restaurer la préférence de vue
+    const savedView = localStorage.getItem('measureViewPreference') || 'card';
+    const savedButton = document.querySelector(`[data-view="${savedView}"]`);
+    if (savedButton) savedButton.click();
+    
+    // Recherche en temps réel
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const cards = document.querySelectorAll('#cardView .col-xl-4');
+            const rows = document.querySelectorAll('#tableView tbody tr');
+            
+            let visibleCount = 0;
+            
+            // Filtrer les cartes
+            cards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    card.style.display = '';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            // Filtrer les lignes du tableau
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Afficher un message si aucun résultat
+            const emptyState = document.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+            }
+        });
+    }
+    
+    // Gestion des cases à cocher
+    const selectAll = document.getElementById('selectAll');
+    const measureChecks = document.querySelectorAll('.measure-check');
+    const selectedCount = document.getElementById('selectedCount');
+    const compareBtn = document.getElementById('compareBtn');
+    const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+    const exportSelectedBtn = document.getElementById('exportSelectedBtn');
+    
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            const isChecked = this.checked;
+            measureChecks.forEach(check => {
+                check.checked = isChecked;
+            });
+            updateSelectedCount();
+        });
+    }
+    
+    measureChecks.forEach(check => {
+        check.addEventListener('change', updateSelectedCount);
+    });
+    
+    function updateSelectedCount() {
+        const selected = document.querySelectorAll('.measure-check:checked');
+        const count = selected.length;
+        
+        selectedCount.textContent = `${count} sélectionné(s)`;
+        compareBtn.disabled = count < 2;
+        deleteSelectedBtn.disabled = count === 0;
+        exportSelectedBtn.disabled = count === 0;
+        
+        // Mettre à jour selectAll
+        if (selectAll) {
+            selectAll.checked = count === measureChecks.length && measureChecks.length > 0;
+            selectAll.indeterminate = count > 0 && count < measureChecks.length;
+        }
+    }
+    
+    // Actions groupées
+    if (deleteSelectedBtn) {
+        deleteSelectedBtn.addEventListener('click', function() {
+            const selected = document.querySelectorAll('.measure-check:checked');
+            if (selected.length === 0) return;
+            
+            if (confirm(`Êtes-vous sûr de vouloir supprimer ${selected.length} mesure(s) ?`)) {
+                // Implémenter la suppression groupée
+                const measureIds = Array.from(selected).map(check => check.value);
+                console.log('Suppression des mesures :', measureIds);
+                // Envoyer une requête AJAX ici
+            }
+        });
+    }
+    
+    if (compareBtn) {
+        compareBtn.addEventListener('click', function() {
+            const selected = document.querySelectorAll('.measure-check:checked');
+            if (selected.length < 2) return;
+            
+            const measureIds = Array.from(selected).map(check => check.value);
+            window.location.href = `/mesures/compare/?ids=${measureIds.join(',')}`;
+        });
+    }
+    
+    // Application des filtres
+    document.getElementById('applyFilters')?.addEventListener('click', function() {
+        const type = document.getElementById('filterType').value;
+        const period = document.getElementById('filterPeriod').value;
+        const sort = document.getElementById('filterSort').value;
+        
+        // Construire l'URL avec les filtres
+        let url = new URL(window.location.href);
+        url.searchParams.set('type', type);
+        url.searchParams.set('period', period);
+        url.searchParams.set('sort', sort);
+        
+        window.location.href = url.toString();
+    });
+    
+    document.getElementById('resetFilters')?.addEventListener('click', function() {
+        window.location.href = window.location.pathname;
+    });
+    
+    // Tri des colonnes dans la vue tableau
+    const tableHeaders = document.querySelectorAll('#tableView th[data-sort]');
+    tableHeaders.forEach(header => {
+        header.style.cursor = 'pointer';
+        header.addEventListener('click', function() {
+            const sortBy = this.getAttribute('data-sort');
+            const currentUrl = new URL(window.location.href);
+            const currentSort = currentUrl.searchParams.get('sort') || '';
+            
+            // Déterminer l'ordre de tri
+            let newSort = sortBy;
+            if (currentSort === sortBy) {
+                newSort = `-${sortBy}`;
+            } else if (currentSort === `-${sortBy}`) {
+                newSort = '';
+            }
+            
+            if (newSort) {
+                currentUrl.searchParams.set('sort', newSort);
+            } else {
+                currentUrl.searchParams.delete('sort');
+            }
+            
+            window.location.href = currentUrl.toString();
+        });
+    });
+});
+</script>
+<script>
+document.getElementById('selectAllBtn').addEventListener('click', function() {
+    const checkboxes = document.querySelectorAll('.measure-check');
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    checkboxes.forEach(cb => cb.checked = !allChecked);
+    updateDeleteBtn();
+});
+
+document.querySelectorAll('.measure-check').forEach(cb => {
+    cb.addEventListener('change', updateDeleteBtn);
+});
+
+function updateDeleteBtn() {
+    const anyChecked = document.querySelector('.measure-check:checked');
+    document.getElementById('deleteBtnBulk').disabled = !anyChecked;
+}
+</script>
+{% endblock %}

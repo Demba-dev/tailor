@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}{% if form.instance.pk %}Modifier Commande #{{ form.instance.pk }}{% else %}Nouvelle Commande{% endif %} - TAILOR{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/clients.css' %}">
+{% endblock %}
+
+{% block page_title %}
+    {% if form.instance.pk %}
+    <i class="fas fa-edit me-2 text-primary opacity-50"></i>Modifier la commande
+    {% else %}
+    <i class="fas fa-plus-circle me-2 text-success opacity-50"></i>Nouvelle commande
+    {% endif %}
+{% endblock %}
+
+{% block page_subtitle %}
+    {% if form.instance.pk %}
+    Mettez à jour les informations de la commande #{{ form.instance.pk }}
+    {% else %}
+    Créez une nouvelle commande pour votre client
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <div class="card">
+            <div class="card-body p-4">
+                <form method="post" novalidate class="needs-validation">
+                    {% csrf_token %}
+                    
+                    <!-- Messages d'erreur globaux -->
+                    {% if form.errors %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <strong>Veuillez corriger les erreurs ci-dessous :</strong>
+                        <ul class="mb-0 mt-2 xsmall">
+                            {% for field in form %}
+                                {% for error in field.errors %}
+                                    <li>{{ field.label }}: {{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                            {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Section Informations de base -->
+                    <div class="form-section mb-4">
+                        <h5 class="section-title">
+                            <i class="fas fa-scroll"></i>
+                            Informations de base
+                        </h5>
+                        <div class="row">
+                            {% if form.date_livraison %}
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.date_livraison.id_for_label }}" class="form-label">
+                                    <i class="fas fa-calendar-alt me-1"></i>Date de livraison
+                                </label>
+                                <div class="input-group">
+                                    {{ form.date_livraison|add_class:"form-control border-end-0" }}
+                                    <span class="input-group-text bg-light border-start-0">
+                                        <i class="fas fa-calendar text-muted"></i>
+                                    </span>
+                                </div>
+                                {% if form.date_livraison.help_text %}
+                                <div class="form-text">{{ form.date_livraison.help_text }}</div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                            
+                            {% if form.statut %}
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.statut.id_for_label }}" class="form-label">
+                                    <i class="fas fa-tag me-1"></i>Statut
+                                </label>
+                                {{ form.statut|add_class:"form-select" }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Section Prix et Paiements -->
+                    <div class="form-section mb-4">
+                        <h5 class="section-title">
+                            <i class="fas fa-money-bill-wave"></i>
+                            Prix et paiements
+                        </h5>
+                        <div class="row">
+                            {% if form.prix_total %}
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.prix_total.id_for_label }}" class="form-label required">
+                                    <i class="fas fa-tag me-1"></i>Prix total
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="fas fa-money-bill text-muted"></i>
+                                    </span>
+                                    {{ form.prix_total|add_class:"form-control border-start-0" }}
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if form.reste_a_payer %}
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.reste_a_payer.id_for_label }}" class="form-label">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>Reste à payer
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="fas fa-money-bill text-muted"></i>
+                                    </span>
+                                    {{ form.reste_a_payer|add_class:"form-control border-start-0" }}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Autres champs -->
+                    <div class="form-section mb-4">
+                        {% for field in form.visible_fields %}
+                            {% if field.name not in 'date_livraison,statut,prix_total,avance,reste_a_payer' %}
+                            <div class="mb-3">
+                                <label for="{{ field.id_for_label }}" class="form-label">
+                                    {{ field.label }}
+                                </label>
+                                {{ field|add_class:"form-control" }}
+                                {% if field.help_text %}
+                                <div class="form-text">{{ field.help_text }}</div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Boutons d'action -->
+                    <div class="d-flex justify-content-between align-items-center pt-4 border-top">
+                        <div>
+                            <a href="{% url 'commandes:commande_list' %}" class="btn btn-light border">
+                                <i class="fas fa-arrow-left me-2"></i>Retour
+                            </a>
+                        </div>
+                        <div class="d-flex gap-2">
+                            {% if form.instance.pk %}
+                            <a href="{% url 'commandes:commande_list' %}" class="btn btn-light border text-danger">
+                                <i class="fas fa-times me-2"></i>Annuler
+                            </a>
+                            {% endif %}
+                            
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="fas fa-save me-2"></i>
+                                {% if form.instance.pk %}Mettre à jour{% else %}Créer la commande{% endif %}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Instructions d'aide -->
+        <div class="row g-4 mt-2">
+            <div class="col-md-4">
+                <div class="card h-100 border-0 bg-white shadow-sm p-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="avatar-sm" style="min-width: 40px;">
+                            <div class="avatar-circle bg-primary bg-opacity-10 text-primary">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 fw-bold small">Date de Livraison</h6>
+                            <p class="xsmall text-muted mb-0">Planifiez vos délais</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 bg-white shadow-sm p-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="avatar-sm" style="min-width: 40px;">
+                            <div class="avatar-circle bg-success bg-opacity-10 text-success">
+                                <i class="fas fa-money-bill"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 fw-bold small">Suivi Paiement</h6>
+                            <p class="xsmall text-muted mb-0">Gérez les paiements</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 bg-white shadow-sm p-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="avatar-sm" style="min-width: 40px;">
+                            <div class="avatar-circle bg-info bg-opacity-10 text-info">
+                                <i class="fas fa-clipboard-list"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 fw-bold small">Statut Suivi</h6>
+                            <p class="xsmall text-muted mb-0">En cours, terminée, livrée</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Validation du formulaire
+    const form = document.querySelector('.needs-validation');
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+});
+</script>
+{% endblock %}

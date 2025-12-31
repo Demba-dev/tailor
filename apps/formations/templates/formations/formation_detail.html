@@ -1,0 +1,499 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ formation.titre }} - ATELIER TAILOR{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/clients.css' %}">
+<style>
+    .detail-header {
+        background: linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .detail-header::before {
+        content: '';
+        position: absolute;
+        top: -10%;
+        right: -10%;
+        width: 120%;
+        height: 120%;
+        background: rgba(255,255,255,0.1);
+        transform: rotate(30deg);
+    }
+    
+    .header-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+    }
+    
+    .detail-icon {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        border: 5px solid white;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        flex-shrink: 0;
+    }
+    
+    .header-text h1 {
+        margin: 0 0 0.5rem 0;
+        font-size: 2rem;
+    }
+    
+    .header-meta {
+        display: flex;
+        gap: 2rem;
+        margin-top: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .meta-item {
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .detail-card {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        border-left: 4px solid;
+    }
+    
+    .detail-card.general {
+        border-left-color: #4299e1;
+    }
+    
+    .detail-card.schedule {
+        border-left-color: #ed8936;
+    }
+    
+    .detail-card.participants {
+        border-left-color: #48bb78;
+    }
+    
+    .detail-card.content {
+        border-left-color: #9f7aea;
+    }
+    
+    .detail-card h5 {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .detail-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .detail-row:last-child {
+        margin-bottom: 0;
+    }
+    
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .detail-label {
+        font-weight: 500;
+        color: #718096;
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .detail-value {
+        color: #2d3748;
+        font-size: 1rem;
+        line-height: 1.5;
+    }
+    
+    .badge-status {
+        display: inline-block;
+        padding: 0.5rem 1.2rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        width: fit-content;
+    }
+    
+    .badge-prevu {
+        background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+        color: white;
+    }
+    
+    .badge-terminee {
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+    }
+    
+    .badge-annulee {
+        background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+        color: white;
+    }
+    
+    .participant-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    .participant-card {
+        background: #f7fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .participant-card:hover {
+        border-color: #4299e1;
+        box-shadow: 0 4px 12px rgba(66, 153, 225, 0.1);
+    }
+    
+    .participant-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin: 0 auto 0.5rem;
+    }
+    
+    .participant-name {
+        font-weight: 600;
+        color: #2d3748;
+        font-size: 0.95rem;
+    }
+    
+    .participant-role {
+        font-size: 0.8rem;
+        color: #718096;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .stat-item {
+        background: #f7fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+    }
+    
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: #4299e1;
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+        color: #718096;
+        text-transform: uppercase;
+        margin-top: 0.5rem;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .btn-action {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(66, 153, 225, 0.3);
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(66, 153, 225, 0.4);
+    }
+    
+    .btn-secondary {
+        background: white;
+        color: #4299e1;
+        border: 2px solid #4299e1;
+    }
+    
+    .btn-secondary:hover {
+        background: #f0f9ff;
+    }
+    
+    @media (max-width: 768px) {
+        .header-content {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .header-meta {
+            justify-content: center;
+        }
+        
+        .detail-icon {
+            width: 100px;
+            height: 100px;
+        }
+        
+        .header-text h1 {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'formations:formation_list' %}">Formations</a></li>
+        <li class="breadcrumb-item active">{{ formation.titre }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="detail-header">
+        <div class="header-content">
+            <div class="detail-icon">
+                <i class="fas fa-chalkboard"></i>
+            </div>
+            <div class="header-text">
+                <h1>{{ formation.titre }}</h1>
+                <div class="header-meta">
+                    <div class="meta-item">
+                        <i class="fas fa-calendar"></i>
+                        {{ formation.date_debut|date:"d M Y" }} - {{ formation.date_fin|date:"d M Y" }}
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-users"></i>
+                        {{ participant_count }} participant(s)
+                    </div>
+                    <div class="meta-item">
+                        <span class="badge-status badge-{{ formation.statut }}">{{ formation.get_statut_display }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-item">
+            <div class="stat-value">{{ participant_count }}</div>
+            <div class="stat-label">Participant(s)</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{ places_available }}</div>
+            <div class="stat-label">Places libres</div>
+        </div>
+        {% if formation.nombre_places %}
+        <div class="stat-item">
+            <div class="stat-value">{{ formation.nombre_places }}</div>
+            <div class="stat-label">Places max</div>
+        </div>
+        {% endif %}
+        {% if formation.duree_heures %}
+        <div class="stat-item">
+            <div class="stat-value">{{ formation.duree_heures }}h</div>
+            <div class="stat-label">Durée</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="detail-card general">
+        <h5><i class="fas fa-info-circle"></i>Informations générales</h5>
+        <div class="detail-row">
+            {% if formation.type_formation %}
+            <div class="detail-item">
+                <span class="detail-label">Type</span>
+                <span class="detail-value">{{ formation.type_formation }}</span>
+            </div>
+            {% endif %}
+            {% if formation.formateur %}
+            <div class="detail-item">
+                <span class="detail-label">Formateur</span>
+                <span class="detail-value">{{ formation.formateur }}</span>
+            </div>
+            {% endif %}
+            {% if formation.lieu %}
+            <div class="detail-item">
+                <span class="detail-label">Lieu</span>
+                <span class="detail-value">{{ formation.lieu }}</span>
+            </div>
+            {% endif %}
+        </div>
+        {% if formation.description %}
+        <div class="detail-row">
+            <div class="detail-item">
+                <span class="detail-label">Description</span>
+                <span class="detail-value">{{ formation.description|linebreaks }}</span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="detail-card schedule">
+        <h5><i class="fas fa-calendar-alt"></i>Dates et Horaires</h5>
+        <div class="detail-row">
+            <div class="detail-item">
+                <span class="detail-label">Date de début</span>
+                <span class="detail-value">{{ formation.date_debut|date:"d M Y" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Date de fin</span>
+                <span class="detail-value">{{ formation.date_fin|date:"d M Y" }}</span>
+            </div>
+            {% if formation.heure_debut %}
+            <div class="detail-item">
+                <span class="detail-label">Heure de début</span>
+                <span class="detail-value">{{ formation.heure_debut|time:"H:i" }}</span>
+            </div>
+            {% endif %}
+            {% if formation.heure_fin %}
+            <div class="detail-item">
+                <span class="detail-label">Heure de fin</span>
+                <span class="detail-value">{{ formation.heure_fin|time:"H:i" }}</span>
+            </div>
+            {% endif %}
+        </div>
+        {% if formation.duree_heures or formation.duree_jours %}
+        <div class="detail-row">
+            {% if formation.duree_heures %}
+            <div class="detail-item">
+                <span class="detail-label">Durée en heures</span>
+                <span class="detail-value">{{ formation.duree_heures }} heures</span>
+            </div>
+            {% endif %}
+            {% if formation.duree_jours %}
+            <div class="detail-item">
+                <span class="detail-label">Durée en jours</span>
+                <span class="detail-value">{{ formation.duree_jours }} jours</span>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="detail-card participants">
+        <h5><i class="fas fa-users"></i>Participants ({{ participant_count }})</h5>
+        {% if participants %}
+        <div class="participant-list">
+            {% for participant in participants %}
+            <div class="participant-card">
+                <div class="participant-avatar">{{ participant.prenom|first|upper }}{{ participant.nom|first|upper }}</div>
+                <div class="participant-name">{{ participant.prenom }} {{ participant.nom }}</div>
+                <div class="participant-role">{{ participant.get_role_display }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p style="color: #718096; text-align: center; padding: 2rem;">Aucun participant enregistré</p>
+        {% endif %}
+    </div>
+
+    {% if formation.materiel_requis or formation.objectifs or formation.certification_delivree or formation.repas_inclus or formation.materiel_fourni %}
+    <div class="detail-card content">
+        <h5><i class="fas fa-book"></i>Contenu & Options</h5>
+        {% if formation.materiel_requis %}
+        <div class="detail-row">
+            <div class="detail-item">
+                <span class="detail-label">Matériel requis</span>
+                <span class="detail-value">{{ formation.materiel_requis }}</span>
+            </div>
+        </div>
+        {% endif %}
+        {% if formation.objectifs %}
+        <div class="detail-row">
+            <div class="detail-item">
+                <span class="detail-label">Objectifs</span>
+                <span class="detail-value">{{ formation.objectifs }}</span>
+            </div>
+        </div>
+        {% endif %}
+        <div class="detail-row">
+            {% if formation.certification_delivree %}
+            <div class="detail-item">
+                <span class="detail-label"><i class="fas fa-check-circle" style="color: #48bb78;"></i> Certification</span>
+                <span class="detail-value">Oui</span>
+            </div>
+            {% endif %}
+            {% if formation.repas_inclus %}
+            <div class="detail-item">
+                <span class="detail-label"><i class="fas fa-check-circle" style="color: #48bb78;"></i> Repas inclus</span>
+                <span class="detail-value">Oui</span>
+            </div>
+            {% endif %}
+            {% if formation.materiel_fourni %}
+            <div class="detail-item">
+                <span class="detail-label"><i class="fas fa-check-circle" style="color: #48bb78;"></i> Matériel fourni</span>
+                <span class="detail-value">Oui</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
+        <a href="{% url 'formations:formation_participants' formation.pk %}" class="btn btn-action btn-primary">
+            <i class="fas fa-user-plus"></i>Gérer les participants
+        </a>
+        <a href="{% url 'formations:formation_update' formation.pk %}" class="btn btn-action btn-secondary">
+            <i class="fas fa-edit"></i>Modifier
+        </a>
+        <a href="{% url 'formations:formation_list' %}" class="btn btn-action btn-secondary">
+            <i class="fas fa-arrow-left"></i>Retour
+        </a>
+    </div>
+</div>
+{% endblock %}

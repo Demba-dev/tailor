@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+{% block title %}Ventes mensuelles{% endblock %}
+{% block content %}
+
+<h2>Ventes du mois</h2>
+<p>Total ventes : {{ total_ventes }}</p>
+<p>Reste à encaisser : {{ total_reste }}</p>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Commande</th>
+            <th>Client</th>
+            <th>Prix total</th>
+            <th>Avance</th>
+            <th>Reste à payer</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for c in commandes %}
+        <tr>
+            <td>{{ c.id }}</td>
+            <td>{{ c.client }}</td>
+            <td>{{ c.prix_total }}</td>
+            <td>{{ c.avance }}</td>
+            <td>{{ c.reste_a_payer }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">Aucune commande ce mois-ci</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

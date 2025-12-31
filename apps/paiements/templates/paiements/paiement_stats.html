@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Statistiques des paiements{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>
+                <i class="fas fa-chart-bar me-2"></i>Statistiques des paiements
+            </h2>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{% url 'paiements:paiement_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Retour
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Total des paiements</h6>
+                    <p class="h4 fw-bold">{{ total_paiements|floatformat:0 }} CFA</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Total des commandes</h6>
+                    <p class="h4 fw-bold">{{ total_commandes|floatformat:0 }} CFA</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Nombre de paiements</h6>
+                    <p class="h4 fw-bold">{{ paiements_count }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Montant moyen par paiement</h6>
+                    <p class="h4 fw-bold">{{ montant_moyen|floatformat:0 }} CFA</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

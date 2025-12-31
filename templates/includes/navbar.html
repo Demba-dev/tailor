@@ -1,0 +1,509 @@
+<!-- Navbar Principale -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white main-navbar-custom" id="main-navbar">
+    <div class="container-fluid px-3">
+        <!-- Bouton toggle sidebar (mobile) -->
+        <button class="btn btn-toggle-mobile d-lg-none me-2" type="button" id="sidebarToggleMobile">
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <!-- Logo et nom -->
+        <a class="navbar-brand-custom d-flex align-items-center me-4" href="{% url 'dashboard:index' %}">
+            <div class="brand-logo-icon">
+                <i class="fas fa-scissors"></i>
+            </div>
+            <div class="brand-text-wrapper">
+                <span class="brand-logo-text">TAILOR</span>
+                <small class="brand-logo-subtitle">Atelier de Couture</small>
+            </div>
+        </a>
+
+        <!-- Bouton actions rapides -->
+        <div class="d-none d-lg-block me-3">
+            <button class="btn-quick-action" data-bs-toggle="modal" data-bs-target="#quickActionsModal">
+                <i class="fas fa-bolt"></i> <span>Actions Rapides</span>
+            </button>
+        </div>
+
+        <!-- Barre de recherche -->
+        <div class="navbar-search-custom flex-grow-1 me-4 d-none d-lg-block">
+            <form method="get" action="{% url 'clients:client_list' %}" class="position-relative">
+                <div class="search-input-group">
+                    <span class="search-icon">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="search" name="q" class="form-control-search" 
+                           placeholder="Rechercher client, commande, tissu..." 
+                           value="{{ request.GET.q|default:'' }}"
+                           aria-label="Recherche">
+                </div>
+            </form>
+        </div>
+
+        <!-- Navigation droite -->
+        <div class="navbar-nav-custom align-items-center ms-auto">
+            <!-- Notifications -->
+            <div class="nav-item dropdown me-3">
+                <a class="nav-icon-link position-relative" href="#" role="button" 
+                   data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-bell"></i>
+                    {% if notifications_count %}
+                    <span class="nav-indicator bg-danger">{{ notifications_count }}</span>
+                    {% endif %}
+                </a>
+                <div class="dropdown-menu dropdown-menu-end dropdown-menu-lg p-0 shadow-lg border-0" 
+                     style="width: 350px; border-radius: 12px; overflow: hidden;">
+                    <div class="dropdown-header-custom">
+                        <h6 class="mb-0"><i class="fas fa-bell me-2"></i>Notifications</h6>
+                        <a href="#" class="text-white small text-decoration-none opacity-75 hover-opacity-100">Tout marquer comme lu</a>
+                    </div>
+                    <div class="notification-list" style="max-height: 400px; overflow-y: auto;">
+                        <a href="#" class="dropdown-item py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-sm-circle bg-success">
+                                    <i class="fas fa-euro-sign"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <div class="fw-bold small">Paiement reçu</div>
+                                    <div class="xsmall text-muted">M. Dupont a payé 120CFA</div>
+                                    <div class="xsmall text-muted mt-1">Il y a 5 min</div>
+                                </div>
+                            </div>
+                        </a>
+                        <!-- ... autres notifications ... -->
+                    </div>
+                    <div class="dropdown-footer-custom">
+                        <a href="#" class="btn-view-all">Voir toutes les notifications</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Messages -->
+            <div class="nav-item dropdown me-3">
+                <a class="nav-icon-link position-relative" href="#" role="button" 
+                   data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-envelope"></i>
+                    <span class="nav-indicator bg-primary">3</span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end p-0 shadow-lg border-0" style="min-width: 300px; border-radius: 12px; overflow: hidden;">
+                    <div class="dropdown-header-custom header-info">
+                        <h6 class="mb-0"><i class="fas fa-envelope me-2"></i>Messages</h6>
+                    </div>
+                    <div class="message-list" style="max-height: 300px; overflow-y: auto;">
+                        <a href="#" class="dropdown-item py-2">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-sm-circle bg-primary">JD</div>
+                                <div class="ms-2 flex-grow-1 overflow-hidden">
+                                    <div class="fw-bold small">Jean Dupont</div>
+                                    <div class="xsmall text-muted text-truncate">Bonjour, où en est ma commande ?</div>
+                                </div>
+                                <div class="xsmall text-muted">10:30</div>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="dropdown-footer-custom">
+                        <a href="#" class="btn-view-all">Voir tous les messages</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profil Utilisateur -->
+            <div class="nav-item dropdown">
+                <a class="nav-user-profile d-flex align-items-center" href="#" role="button" 
+                   data-bs-toggle="dropdown" aria-expanded="false">
+                    <div class="nav-user-avatar">
+                        <div class="avatar-initials">
+                            {% if user.first_name and user.last_name %}
+                                {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                            {% else %}
+                                {{ user.username|first|upper }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="nav-user-info d-none d-xl-block">
+                        <div class="user-name-text">
+                            {% if user.first_name %}
+                                {{ user.first_name }} {{ user.last_name }}
+                            {% else %}
+                                {{ user.username }}
+                            {% endif %}
+                        </div>
+                        <div class="user-role-text">
+                            {% if user.is_superuser %}
+                                Administrateur
+                            {% elif user.groups.all %}
+                                {{ user.groups.all.0.name }}
+                            {% else %}
+                                Utilisateur
+                            {% endif %}
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-down ms-2 nav-chevron"></i>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2" style="min-width: 220px; border-radius: 12px;">
+                    <li><h6 class="dropdown-header text-muted fw-bold">Compte</h6></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-user-circle me-2 text-primary"></i>Mon profil</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2 text-secondary"></i>Paramètres</a></li>
+                    <li><a class="dropdown-item" href="{% url 'admin:index' %}"><i class="fas fa-shield-alt me-2 text-warning"></i>Admin</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="{% url 'admin:logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Déconnexion</a></li>
+                </ul>
+            </div>
+
+            <!-- Fullscreen -->
+            <div class="nav-item ms-3 d-none d-lg-block">
+                <button class="btn-fullscreen" id="fullscreenToggle" title="Plein écran">
+                    <i class="fas fa-expand-arrows-alt"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Breadcrumb Stylisé -->
+<nav aria-label="breadcrumb" class="breadcrumb-container d-none d-lg-block">
+    <div class="container-fluid px-4">
+        <ol class="breadcrumb-custom mb-0">
+            {% block breadcrumb %}
+            <li class="breadcrumb-item-custom">
+                <a href="{% url 'dashboard:index' %}" class="breadcrumb-home">
+                    <i class="fas fa-home"></i>
+                </a>
+            </li>
+            {% if breadcrumb_items %}
+                {% for item in breadcrumb_items %}
+                <li class="breadcrumb-item-custom {% if forloop.last %}active{% endif %}">
+                    {% if item.url and not forloop.last %}
+                    <a href="{{ item.url }}">{{ item.label }}</a>
+                    {% else %}
+                    <span>{{ item.label }}</span>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            {% endif %}
+            {% endblock %}
+        </ol>
+    </div>
+</nav>
+
+<style>
+/* Synchronisation avec Sidebar */
+.main-navbar-custom {
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+    padding: 0.75rem 1rem;
+    height: 70px;
+    display: flex;
+    align-items: center;
+}
+
+/* Logo harmonisé avec Sidebar */
+.navbar-brand-custom {
+    text-decoration: none;
+}
+
+.brand-logo-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border-radius: 10px;
+    color: white;
+    font-size: 18px;
+    margin-right: 12px;
+    box-shadow: 0 4px 10px rgba(30, 41, 59, 0.15);
+}
+
+.brand-logo-text {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1e293b;
+    display: block;
+    line-height: 1;
+    letter-spacing: 0.05em;
+    font-family: 'Georgia', serif;
+}
+
+.brand-logo-subtitle {
+    font-size: 10px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+}
+
+/* Bouton Actions Rapides */
+.btn-quick-action {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-quick-action:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    color: white;
+}
+
+/* Barre de recherche style Sidebar */
+.navbar-search-custom {
+    max-width: 450px;
+}
+
+.search-input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-icon {
+    position: absolute;
+    left: 14px;
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+.form-control-search {
+    background-color: #f1f5f9;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 10px 16px 10px 40px;
+    font-size: 14px;
+    width: 100%;
+    transition: all 0.2s ease;
+}
+
+.form-control-search:focus {
+    background-color: #ffffff;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    outline: none;
+}
+
+/* Navigation Icons */
+.nav-icon-link {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    color: #64748b;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    background: #f8fafc;
+}
+
+.nav-icon-link:hover {
+    background-color: #f1f5f9;
+    color: #1e293b;
+}
+
+.nav-indicator {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 9px;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #ffffff;
+}
+
+/* User Profile harmonisé */
+.nav-user-profile {
+    padding: 4px 8px;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.nav-user-profile:hover {
+    background-color: #f8fafc;
+}
+
+.avatar-initials {
+    width: 38px;
+    height: 38px;
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    color: white;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    box-shadow: 0 2px 6px rgba(30, 41, 59, 0.1);
+}
+
+.user-name-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+    line-height: 1.2;
+}
+
+.user-role-text {
+    font-size: 11px;
+    color: #94a3b8;
+    line-height: 1;
+}
+
+.nav-chevron {
+    font-size: 10px;
+    color: #94a3b8;
+}
+
+/* Dropdown Headers/Footers */
+.dropdown-header-custom {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dropdown-header-custom.header-info {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.dropdown-footer-custom {
+    padding: 10px;
+    text-align: center;
+    border-top: 1px solid #f1f5f9;
+}
+
+.btn-view-all {
+    color: #3b82f6;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.avatar-sm-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+}
+
+/* Breadcrumb Styling */
+.breadcrumb-container {
+    background: #f8fafc;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 10px 0;
+}
+
+.breadcrumb-custom {
+    display: flex;
+    flex-wrap: wrap;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    align-items: center;
+}
+
+.breadcrumb-item-custom {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.breadcrumb-item-custom + .breadcrumb-item-custom::before {
+    content: "\f105";
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    padding: 0 12px;
+    font-size: 11px;
+    color: #cbd5e1;
+}
+
+.breadcrumb-home {
+    color: #1e293b;
+    transition: color 0.2s;
+}
+
+.breadcrumb-home:hover {
+    color: #3b82f6;
+}
+
+.breadcrumb-item-custom a {
+    color: #64748b;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.breadcrumb-item-custom a:hover {
+    color: #3b82f6;
+}
+
+.breadcrumb-item-custom.active {
+    color: #1e293b;
+    font-weight: 600;
+}
+
+/* Utilities */
+.xsmall {
+    font-size: 11px;
+}
+.hover-opacity-100:hover {
+    opacity: 1 !important;
+}
+
+/* Fullscreen Button */
+.btn-fullscreen {
+    background: none;
+    border: 1px solid #e5e7eb;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-fullscreen:hover {
+    background: #1e293b;
+    color: white;
+    border-color: #1e293b;
+}
+
+/* Mobile Toggle */
+.btn-toggle-mobile {
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #475569;
+}
+</style>

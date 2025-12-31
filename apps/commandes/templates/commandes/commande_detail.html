@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Commande {{ commande.numero }} - TAILOR{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/clients.css' %}">
+<style>
+    /* Styles spécifiques pour la page détail commande */
+    .order-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .order-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 200%;
+        background: rgba(102, 126, 234, 0.05);
+        transform: rotate(30deg);
+    }
+    
+    .order-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #2c3e50;
+        letter-spacing: 1px;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .order-status {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 2;
+    }
+    
+    .status-badge {
+        padding: 0.5rem 1.5rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        border-radius: 20px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .timeline-wrapper {
+        position: relative;
+        padding: 2rem 0;
+    }
+    
+    .timeline-track {
+        position: absolute;
+        left: 40px;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: #e9ecef;
+        z-index: 1;
+    }
+    
+    .timeline-step {
+        position: relative;
+        padding-left: 80px;
+        margin-bottom: 2rem;
+        min-height: 60px;
+    }
+    
+    .timeline-step:last-child {
+        margin-bottom: 0;
+    }
+    
+    .step-icon {
+        position: absolute;
+        left: 20px;
+        top: 0;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: white;
+        border: 3px solid #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        z-index: 2;
+        transition: all 0.3s ease;
+    }
+    
+    .timeline-step.active .step-icon {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: #667eea;
+        transform: scale(1.1);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .timeline-step.completed .step-icon {
+        background: #48bb78;
+        color: white;
+        border-color: #48bb78;
+    }
+    
+    .step-content {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+        border-left: 4px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .timeline-step.active .step-content {
+        border-left-color: #667eea;
+        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.1);
+    }
+    
+    .timeline-step.completed .step-content {
+        border-left-color: #48bb78;
+    }
+    
+    .financial-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        margin-bottom: 1.5rem;
+        border-top: 5px solid #667eea;
+    }
+    
+    .financial-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .financial-row:last-child {
+        border-bottom: none;
+        font-weight: 700;
+        font-size: 1.2rem;
+        color: #2c3e50;
+    }
+    
+    .payment-status {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .document-card {
+        border: 2px dashed #e9ecef;
+        border-radius: 10px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        height: 100%;
+    }
+    
+    .document-card:hover {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.05);
+        transform: translateY(-2px);
+    }
+    
+    .document-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        margin: 0 auto 1rem;
+    }
+    
+    .action-panel {
+        position: sticky;
+        top: 20px;
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        border: 1px solid #e9ecef;
+    }
+    
+    .action-button {
+        width: 100%;
+        margin-bottom: 0.75rem;
+        padding: 0.75rem;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+    
+    .action-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .measurements-preview {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+    }
+    
+    .measurement-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .measurement-item {
+        text-align: center;
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    
+    .measurement-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #667eea;
+        margin-bottom: 0.25rem;
+    }
+    
+    .measurement-label {
+        font-size: 0.85rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .alert-custom {
+        border-radius: 10px;
+        border: none;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .alert-custom::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 5px;
+        background: currentColor;
+        opacity: 0.5;
+    }
+    
+    .chat-bubble {
+        max-width: 80%;
+        padding: 1rem 1.5rem;
+        border-radius: 20px;
+        margin-bottom: 1rem;
+        position: relative;
+    }
+    
+    .chat-bubble.system {
+        background: #f8f9fa;
+        align-self: flex-start;
+        border-bottom-left-radius: 5px;
+    }
+    
+    .chat-bubble.user {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        align-self: flex-end;
+        border-bottom-right-radius: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'commandes:commande_list' %}">Commandes</a></li>
+        <li class="breadcrumb-item active">Commande {{ commande.numero }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block page_title %}
+<div class="order-header">
+    <div class="order-status">
+        <span class="status-badge bg-{{ commande.get_statut_color }}">
+            <i class="fas fa-{{ commande.get_statut_icon }} me-2"></i>{{ commande.get_statut_display }}
+        </span>
+    </div>
+    
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="order-number mb-2">Commande {{ commande.numero }}</h1>
+            <div class="d-flex align-items-center gap-3">
+                <div>
+                    <i class="fas fa-user text-primary me-2"></i>
+                    <a href="{% url 'clients:client_detail' commande.client.id %}" class="text-decoration-none fw-bold">
+                        {{ commande.client.prenom }} {{ commande.client.nom }}
+                    </a>
+                </div>
+                <div>
+                    <i class="fas fa-tshirt text-success me-2"></i>
+                    <span class="fw-bold">{{ commande.habit.nom }}</span>
+                </div>
+                <div>
+                    <i class="fas fa-calendar-alt text-warning me-2"></i>
+                    <span>Commande du {{ commande.date_commande|date:"d/m/Y" }}</span>
+                </div>
+            </div>
+        </div>
+        
+        {% if commande.priorite == 'urgent' %}
+        <div class="text-end">
+            <div class="badge bg-danger p-2 fs-6">
+                <i class="fas fa-bolt me-1"></i>URGENT
+            </div>
+            <div class="small text-danger mt-1">À traiter en priorité</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Colonne principale -->
+    <div class="col-lg-8">
+        <!-- Alerte retard -->
+        {% if commande.est_en_retard %}
+        <div class="alert-custom alert-danger">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                <div>
+                    <h5 class="alert-heading mb-1">Commande en retard !</h5>
+                    <p class="mb-0">
+                        La date de livraison prévue était le {{ commande.date_livraison_prevue|date:"d/m/Y" }}
+                        ({{ commande.get_jours_retard }} jour{{ commande.get_jours_retard|pluralize }} de retard)
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Alerte paiement -->
+        {% if not commande.est_soldee %}
+        <div class="alert-custom alert-warning">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-euro-sign fa-2x me-3"></i>
+                <div>
+                    <h5 class="alert-heading mb-1">Paiement incomplet</h5>
+                    <p class="mb-0">
+                        Il reste {{ commande.get_reste_a_payer|floatformat:2 }}CFA à payer sur {{ commande.prix_final|floatformat:2 }}CFA
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Timeline de la commande -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-project-diagram me-2"></i>Suivi de production</h5>
+                <span class="badge bg-light text-dark">
+                    {{ commande.get_progression }}% complété
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="timeline-wrapper">
+                    <div class="timeline-track"></div>
+                    
+                    <!-- Étape 1: Commande validée -->
+                    <div class="timeline-step {% if commande.statut != 'brouillon' %}completed{% endif %} {% if commande.statut == 'confirmee' %}active{% endif %}">
+                        <div class="step-icon">
+                            <i class="fas fa-clipboard-check"></i>
+                        </div>
+                        <div class="step-content">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0">Commande validée</h6>
+                                <span class="badge bg-success">Terminé</span>
+                            </div>
+                            <p class="text-muted small mb-0">
+                                Commande confirmée le {{ commande.date_commande|date:"d/m/Y" }}
+                                {% if commande.validee_par %}
+                                par {{ commande.validee_par.get_full_name }}
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Étape 2: Prise de mesures -->
+                    <div class="timeline-step {% if commande.statut in 'en_mesures,en_decoupe,en_assemblage,en_finition,terminee,livree' %}completed{% endif %} {% if commande.statut == 'en_mesures' %}active{% endif %}">
+                        <div class="step-icon">
+                            <i class="fas fa-ruler-combined"></i>
+                        </div>
+                        <div class="step-content">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0">Prise de mesures</h6>
+                                {% if commande.statut in 'en_mesures,en_decoupe,en_assemblage,en_finition,terminee,livree' %}
+                                <span class="badge bg-success">Terminé</span>
+                                {% else %}
+                                <span class="badge bg-secondary">En attente</span>
+                                {% endif %}
+                            </div>
+                            {% if commande.mesures %}
+                            <p class="text-muted small mb-0">
+                                Mesures prises le {{ commande.mesures.date_prise|date:"d/m/Y" }}
+                            </p>
+                            <button class="btn btn-sm btn-outline-primary mt-2" data-bs-toggle="modal" data-bs-target="#mesuresModal">
+                                <i class="fas fa-eye me-1"></i>Voir les mesures
+                            </button>
+                            {% else %}
+                            <p class="text-muted small mb-0">
+                                Aucune mesure enregistrée pour cette commande
+                            </p>
+                            <a href="{% url 'mesures:mesure_create' %}?commande={{ commande.id }}" class="btn btn-sm btn-primary mt-2">
+                                <i class="fas fa-plus me-1"></i>Prendre des mesures
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Étape 3: Découpe -->
+                    <div class="timeline-step {% if commande.statut in 'en_decoupe,en_assemblage,en_finition,terminee,livree' %}completed{% endif %} {% if commande.statut == 'en_decoupe' %}active{% endif %}">
+                        <div class="step-icon">
+                            <i class="fas fa-cut"></i>
+                        </div>
+                        <div class="step-content">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0">Découpe du tissu</h6>
+                                {% if commande.statut in 'en_decoupe,en_assemblage,en_finition,terminee,livree' %}
+                                <span class="badge bg-success">Terminé</span>
+                                {% else %}
+                                <span class="badge bg-secondary">En attente</span>
+                                {% endif %}
+                            </div>
+                            <p class="text-muted small mb-0">
+                                Découpe du tissu selon le patron
+                            </p>
+                            {% if commande.tissu %}
+                            <div class="mt-2">
+                                <span class="badge bg-light text-dark">
+                                    <i class="fas fa-tshirt me-1"></i>{{ commande.tissu.nom }}
+                                </span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Étape 4: Assemblage -->
+                    <div class="timeline-step {% if commande.statut in 'en_assemblage,en_finition,terminee,livree' %}completed{% endif %} {% if commande.statut == 'en_assemblage' %}active{% endif %}">
+                        <div class="step-icon">
+                            <i class="fas fa-people-carry"></i>
+                        </div>
+                        <div class="step-content">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0">Assemblage</h6>
+                                {% if commande.statut in 'en_assemblage,en_finition,terminee,livree' %}
+                                <span class="badge bg-success">Terminé</span>
+                                {% else %}
+                                <span class="badge bg-secondary">En attente</span>
+                                {% endif %}
+                            </div>
+                            <p class="text-muted small mb-0">
+                                Assemblage des différentes parties de l'habit
+                            </p>
+                            {% if commande.personnel_assigne.exists %}
+                            <div class="mt-2">
+                                <small class="text-muted">Assigné à :</small>
+                                {% for personnel in commande.personnel_assigne.all %}
+                                <span class="badge bg-info me-1">
+                                    {{ personnel.prenom }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Étape 5: Finition -->
+                    <div class="timeline-step {% if commande.statut in 'en_finition,terminee,livree' %}completed{% endif %} {% if commande.statut == 'en_finition' %}active{% endif %}">
+                        <div class="step-icon">
+                            <i class="fas fa-magic"></i>
+                        </div>
+                        <div class="step-content">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0">Finition</h6>
+                                {% if commande.statut in 'en_finition,terminee,livree' %}
+                                <span class="badge bg-success">Terminé</span>
+                                {% else %}
+                                <span class="badge bg-secondary">En attente</span>
+                                {% endif %}
+                            </div>
+                            <p class="text-muted small mb-0">
+                                Finitions, boutons, ourlets, repassage
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Étape 6: Terminée -->
+                    <div class="timeline-step {% if commande.statut in 'terminee,livree' %}completed{% endif %} {% if commande.statut == 'terminee' %}active{% endif %}">
+                        <div class="step-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="step-content">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0">Commande terminée</h6>
+                                {% if commande.statut in 'terminee,livree' %}
+                                <span class="badge bg-success">Terminé</span>
+                                {% else %}
+                                <span class="badge bg-secondary">En attente</span>
+                                {% endif %}
+                            </div>
+                            <p class="text-muted small mb-0">
+                                L'habit est prêt pour la livraison
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Étape 7: Livrée -->
+                    <div class="timeline-step {% if commande.statut == 'livree' %}completed active{% endif %}">
+                        <div class="step-icon">
+                            <i class="fas fa-truck"></i>
+                        </div>
+                        <div class="step-content">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0">Livraison</h6>
+                                {% if commande.statut == 'livree' %}
+                                <span class="badge bg-success">Terminé</span>
+                                {% else %}
+                                <span class="badge bg-secondary">En attente</span>
+                                {% endif %}
+                            </div>
+                            {% if commande.statut == 'livree' %}
+                            <p class="text-muted small mb-0">
+                                Livrée le {{ commande.date_livraison_reelle|date:"d/m/Y" }}
+                            </p>
+                            {% else %}
+                            <p class="text-muted small mb-0">
+                                Date prévue : {{ commande.date_livraison_prevue|date:"d/m/Y" }}
+                            </p>
+                            {% if commande.est_en_retard %}
+                            <div class="alert alert-danger small mt-2">
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                {{ commande.get_jours_retard }} jour{{ commande.get_jours_retard|pluralize }} de retard
+                            </div>
+                            {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Barre de progression -->
+                <div class="progress mt-4" style="height: 10px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ commande.get_progression }}%">
+                        {{ commande.get_progression }}%
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section financière -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-euro-sign me-2"></i>Informations financières</h5>
+                <span class="payment-status bg-{{ commande.get_paiement_status_color }}">
+                    <i class="fas fa-{{ commande.get_paiement_icon }} me-1"></i>
+                    {{ commande.get_paiement_status }}
+                </span>
+            </div>
+            <div class="card-body p-0">
+                <div class="financial-card">
+                    <!-- Détail des coûts -->
+                    <div class="financial-row">
+                        <span class="text-muted">Prix de l'habit</span>
+                        <span class="fw-bold">{{ commande.prix_habit|floatformat:2 }}CFA</span>
+                    </div>
+                    
+                    {% if commande.prix_tissu > 0 %}
+                    <div class="financial-row">
+                        <span class="text-muted">Coût du tissu</span>
+                        <span class="fw-bold">{{ commande.prix_tissu|floatformat:2 }}CFA</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if commande.prix_options > 0 %}
+                    <div class="financial-row">
+                        <span class="text-muted">Options supplémentaires</span>
+                        <span class="fw-bold">{{ commande.prix_options|floatformat:2 }}CFA</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if commande.remise > 0 %}
+                    <div class="financial-row">
+                        <span class="text-muted">Remise ({{ commande.remise }}%)</span>
+                        <span class="fw-bold text-danger">-{{ commande.get_montant_remise|floatformat:2 }}CFA</span>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="financial-row">
+                        <span class="text-muted">Montant total</span>
+                        <span class="fw-bold text-primary">{{ commande.prix_total|floatformat:2 }}CFA</span>
+                    </div>
+                    
+                    <!-- Paiements -->
+                    <div class="mt-4 pt-3 border-top">
+                        <h6 class="mb-3"><i class="fas fa-credit-card me-2"></i>Paiements</h6>
+                        
+                        {% if commande.paiements.exists %}
+                        {% for paiement in commande.paiements.all %}
+                        <div class="financial-row">
+                            <div>
+                                <div class="fw-bold">{{ paiement.date_paiement|date:"d/m/Y" }}</div>
+                                <div class="small text-muted">{{ paiement.get_mode_display }}</div>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold">{{ paiement.montant|floatformat:2 }}CFA</div>
+                                <span class="badge bg-{{ paiement.get_statut_color }}">
+                                    {{ paiement.get_statut_display }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-euro-sign fa-3x text-muted mb-3"></i>
+                            <p class="text-muted mb-0">Aucun paiement enregistré</p>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="financial-row bg-light rounded p-3 mt-3">
+                            <span>Total payé</span>
+                            <span class="fw-bold text-success">{{ commande.get_montant_paye|floatformat:2 }}CFA</span>
+                        </div>
+                        
+                        <div class="financial-row">
+                            <span>Reste à payer</span>
+                            <span class="fw-bold text-danger">{{ commande.get_reste_a_payer|floatformat:2 }}CFA</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Détails et notes -->
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0"><i class="fas fa-sticky-note me-2"></i>Notes internes</h6>
+                    </div>
+                    <div class="card-body">
+                        {% if commande.note %}
+                        <div class="bg-light p-3 rounded">
+                            {{ commande.note|linebreaks }}
+                        </div>
+                        {% else %}
+                        <p class="text-muted fst-italic text-center py-3">Aucune note interne</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-4">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>Instructions spéciales</h6>
+                    </div>
+                    <div class="card-body">
+                        {% if commande.instructions_speciales %}
+                        <div class="alert alert-info">
+                            {{ commande.instructions_speciales|linebreaks }}
+                        </div>
+                        {% else %}
+                        <p class="text-muted fst-italic text-center py-3">Aucune instruction spéciale</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Documents -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-folder me-2"></i>Documents associés</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="document-card" onclick="generateDevis()">
+                            <div class="document-icon">
+                                <i class="fas fa-file-invoice-dollar"></i>
+                            </div>
+                            <h6>Devis</h6>
+                            <p class="small text-muted">Générer un devis PDF</p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="document-card" onclick="generateFacture()">
+                            <div class="document-icon">
+                                <i class="fas fa-receipt"></i>
+                            </div>
+                            <h6>Facture</h6>
+                            <p class="small text-muted">Générer une facture PDF</p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="document-card" onclick="generateBonLivraison()">
+                            <div class="document-icon">
+                                <i class="fas fa-truck-loading"></i>
+                            </div>
+                            <h6>Bon de livraison</h6>
+                            <p class="small text-muted">Générer un bon de livraison</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Colonne latérale : actions et informations -->
+    <div class="col-lg-4">
+        <div class="action-panel">
+            <h6 class="mb-3"><i class="fas fa-cogs me-2"></i>Actions</h6>
+            
+            <!-- Boutons d'action selon le statut -->
+            <div class="d-grid">
+                {% if commande.peut_modifier %}
+                <a href="{% url 'commandes:commande_update' commande.pk %}" class="action-button btn btn-primary">
+                    <i class="fas fa-edit"></i> Modifier la commande
+                </a>
+                {% endif %}
+                
+                {% if not commande.est_soldee %}
+                <a href="{% url 'paiements:paiement_create' %}?commande={{ commande.id }}" class="action-button btn btn-success">
+                    <i class="fas fa-euro-sign"></i> Enregistrer un paiement
+                </a>
+                {% endif %}
+                
+                {% if commande.statut == 'terminee' %}
+                <button class="action-button btn btn-warning" onclick="markAsDelivered()">
+                    <i class="fas fa-check-circle"></i> Marquer comme livrée
+                </button>
+                {% endif %}
+                
+                <a href="{% url 'commandes:commande_print' commande.pk %}" target="_blank" class="action-button btn btn-outline-primary">
+                    <i class="fas fa-print"></i> Imprimer la fiche
+                </a>
+                
+                <a href="{% url 'commandes:commande_duplicate' commande.pk %}" class="action-button btn btn-outline-info">
+                    <i class="fas fa-copy"></i> Dupliquer la commande
+                </a>
+                
+                {% if commande.statut not in 'livree,annulee' %}
+                <button class="action-button btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal">
+                    <i class="fas fa-times-circle"></i> Annuler la commande
+                </button>
+                {% endif %}
+                
+                <a href="{% url 'commandes:commande_list' %}" class="action-button btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Retour aux commandes
+                </a>
+            </div>
+            
+            <!-- Informations rapides -->
+            <div class="mt-4 pt-3 border-top">
+                <h6 class="mb-3"><i class="fas fa-info-circle me-2"></i>Informations</h6>
+                
+                <div class="mb-3">
+                    <div class="small text-muted">Référence</div>
+                    <div class="fw-bold">{{ commande.numero }}</div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="small text-muted">Client</div>
+                    <div class="fw-bold">
+                        <a href="{% url 'clients:client_detail' commande.client.id %}" class="text-decoration-none">
+                            {{ commande.client.prenom }} {{ commande.client.nom }}
+                        </a>
+                    </div>
+                    <div class="small text-muted">{{ commande.client.telephone }}</div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="small text-muted">Habit</div>
+                    <div class="fw-bold">
+                        <a href="{% url 'catalogue:catalogue_detail' commande.type_habit.id %}" class="text-decoration-none">
+                            {{ commande.type_habit.nom }}
+                        </a>
+                    </div>
+                    <div class="small text-muted">{{ commande.type_habit.categorie.nom }}</div>
+                </div>
+                
+                {% if commande.tissu %}
+                <div class="mb-3">
+                    <div class="small text-muted">Tissu</div>
+                    <div class="fw-bold">{{ commande.tissu.nom }}</div>
+                    <div class="small text-muted">{{ commande.tissu.couleur }}</div>
+                </div>
+                {% endif %}
+                
+                <div class="mb-3">
+                    <div class="small text-muted">Dates importantes</div>
+                    <div class="small">
+                        <div>Commande : {{ commande.date_commande|date:"d/m/Y" }}</div>
+                        <div>Livraison prévue : {{ commande.date_livraison_prevue|date:"d/m/Y" }}</div>
+                        {% if commande.date_livraison_reelle %}
+                        <div>Livraison réelle : {{ commande.date_livraison_reelle|date:"d/m/Y" }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if commande.personnel_assigne.exists %}
+                <div class="mb-3">
+                    <div class="small text-muted">Personnel assigné</div>
+                    <div>
+                        {% for personnel in commande.personnel_assigne.all %}
+                        <span class="badge bg-info me-1 mb-1">
+                            {{ personnel.prenom }} {{ personnel.nom|slice:":1" }}.
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="mb-3">
+                    <div class="small text-muted">Créée par</div>
+                    <div class="fw-bold">{{ commande.created_by.username }}</div>
+                    <div class="small text-muted">le {{ commande.created_at|date:"d/m/Y H:i" }}</div>
+                </div>
+            </div>
+            
+            <!-- Prévisualisation mesures -->
+            {% if commande.mesures %}
+            <div class="mt-4 pt-3 border-top">
+                <h6 class="mb-3"><i class="fas fa-ruler-combined me-2"></i>Mesures du client</h6>
+                <div class="measurements-preview">
+                    <div class="measurement-grid">
+                        <div class="measurement-item">
+                            <div class="measurement-value">{{ commande.mesures.tour_poitrine|default:"-" }}</div>
+                            <div class="measurement-label">Poitrine</div>
+                        </div>
+                        <div class="measurement-item">
+                            <div class="measurement-value">{{ commande.mesures.tour_taille|default:"-" }}</div>
+                            <div class="measurement-label">Taille</div>
+                        </div>
+                        <div class="measurement-item">
+                            <div class="measurement-value">{{ commande.mesures.longueur_bras|default:"-" }}</div>
+                            <div class="measurement-label">Bras</div>
+                        </div>
+                        <div class="measurement-item">
+                            <div class="measurement-value">{{ commande.mesures.tour_hanches|default:"-" }}</div>
+                            <div class="measurement-label">Hanches</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary w-100 mt-3" data-bs-toggle="modal" data-bs-target="#mesuresModal">
+                        <i class="fas fa-eye me-1"></i>Voir toutes les mesures
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal des mesures -->
+<div class="modal fade" id="mesuresModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-ruler-combined me-2"></i>Mesures du client
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                {% if commande.mesures %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Mesures principales</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <tbody>
+                                    <tr><td>Tour poitrine</td><td class="fw-bold">{{ commande.mesures.tour_poitrine|default:"-" }} cm</td></tr>
+                                    <tr><td>Tour taille</td><td class="fw-bold">{{ commande.mesures.tour_taille|default:"-" }} cm</td></tr>
+                                    <tr><td>Tour hanches</td><td class="fw-bold">{{ commande.mesures.tour_hanches|default:"-" }} cm</td></tr>
+                                    <tr><td>Hauteur taille</td><td class="fw-bold">{{ commande.mesures.hauteur_taille|default:"-" }} cm</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Mesures de longueur</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <tbody>
+                                    <tr><td>Longueur bras</td><td class="fw-bold">{{ commande.mesures.longueur_bras|default:"-" }} cm</td></tr>
+                                    <tr><td>Longueur pantalon</td><td class="fw-bold">{{ commande.mesures.longueur_pantalon|default:"-" }} cm</td></tr>
+                                    <tr><td>Largeur épaules</td><td class="fw-bold">{{ commande.mesures.largeur_epaules|default:"-" }} cm</td></tr>
+                                    <tr><td>Longueur épaule</td><td class="fw-bold">{{ commande.mesures.longueur_epaule|default:"-" }} cm</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if commande.mesures.note %}
+                <div class="mt-3">
+                    <h6>note</h6>
+                    <div class="bg-light p-3 rounded">
+                        {{ commande.mesures.note|linebreaks }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="mt-3 text-muted small">
+                    <i class="fas fa-calendar-alt me-1"></i>
+                    Prises le {{ commande.mesures.date_prise|date:"d/m/Y" }}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-ruler-combined fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Aucune mesure enregistrée</h5>
+                    <p class="text-muted mb-4">Prenez les mesures du client pour cette commande.</p>
+                    <a href="{% url 'mesures:mesure_create' %}?commande={{ commande.id }}" class="btn btn-primary">
+                        <i class="fas fa-plus-circle me-2"></i>Prendre des mesures
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                {% if commande.mesures %}
+                <a href="{% url 'mesures:mesure_update' commande.mesures.id %}" class="btn btn-primary">
+                    <i class="fas fa-edit me-2"></i>Modifier
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal d'annulation -->
+<div class="modal fade" id="cancelModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Annuler la commande</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir annuler la commande <strong>{{ commande.numero }}</strong> ?</p>
+                
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <strong>Attention !</strong> Cette action est réversible mais l'historique sera conservé.
+                </div>
+                
+                <div class="mb-3">
+                    <label for="cancelReason" class="form-label">Raison de l'annulation</label>
+                    <textarea class="form-control" id="cancelReason" rows="3" placeholder="Optionnel"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Non, garder</button>
+                <button type="button" class="btn btn-danger" onclick="cancelOrder()">
+                    <i class="fas fa-times-circle me-2"></i>Oui, annuler
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialiser les tooltips
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+    
+    // Animation de la timeline
+    animateTimeline();
+    
+    // Mettre à jour le compte à rebours si en retard
+    updateCountdown();
+});
+
+function animateTimeline() {
+    const steps = document.querySelectorAll('.timeline-step');
+    steps.forEach((step, index) => {
+        step.style.opacity = '0';
+        step.style.transform = 'translateX(-20px)';
+        
+        setTimeout(() => {
+            step.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            step.style.opacity = '1';
+            step.style.transform = 'translateX(0)';
+        }, index * 200);
+    });
+}
+
+function updateCountdown() {
+    const dueDate = new Date('{{ commande.date_livraison_prevue|date:"Y-m-d" }}');
+    const today = new Date();
+    const diffTime = dueDate - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    const countdownElement = document.getElementById('countdown');
+    if (countdownElement) {
+        if (diffDays > 0) {
+            countdownElement.textContent = `${diffDays} jour${diffDays > 1 ? 's' : ''} restant${diffDays > 1 ? 's' : ''}`;
+            countdownElement.className = 'badge bg-success';
+        } else if (diffDays < 0) {
+            countdownElement.textContent = `${Math.abs(diffDays)} jour${Math.abs(diffDays) > 1 ? 's' : ''} de retard`;
+            countdownElement.className = 'badge bg-danger';
+        } else {
+            countdownElement.textContent = 'Aujourd\'hui';
+            countdownElement.className = 'badge bg-warning';
+        }
+    }
+}
+
+// Actions de la commande
+function generateDevis() {
+    fetch(`/api/commandes/{{ commande.id }}/generate-devis/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.blob())
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Devis_{{ commande.numero }}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        showToast('Devis généré avec succès !', 'success');
+    });
+}
+
+function generateFacture() {
+    fetch(`/api/commandes/{{ commande.id }}/generate-facture/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.blob())
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Facture_{{ commande.numero }}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        showToast('Facture générée avec succès !', 'success');
+    });
+}
+
+function generateBonLivraison() {
+    fetch(`/api/commandes/{{ commande.id }}/generate-bon-livraison/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.blob())
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `BonLivraison_{{ commande.numero }}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        showToast('Bon de livraison généré avec succès !', 'success');
+    });
+}
+
+function markAsDelivered() {
+    if (confirm('Marquer la commande comme livrée ?')) {
+        fetch(`/api/commandes/{{ commande.id }}/mark-delivered/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Commande marquée comme livrée !', 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showToast('Erreur lors de la mise à jour', 'error');
+            }
+        });
+    }
+}
+
+function cancelOrder() {
+    const reason = document.getElementById('cancelReason').value;
+    
+    fetch(`/api/commandes/{{ commande.id }}/cancel/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ reason: reason })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Commande annulée avec succès', 'success');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            showToast('Erreur lors de l\'annulation', 'error');
+        }
+    });
+}
+
+function changeOrderStatus(newStatus) {
+    fetch(`/api/commandes/{{ commande.id }}/change-status/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: newStatus })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Statut mis à jour avec succès', 'success');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            showToast('Erreur lors de la mise à jour', 'error');
+        }
+    });
+}
+
+// Afficher un toast
+function showToast(message, type = 'info') {
+    // Créer ou réutiliser un toast
+    let toastContainer = document.querySelector('.toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+        document.body.appendChild(toastContainer);
+    }
+    
+    const toastId = 'toast-' + Date.now();
+    const toast = document.createElement('div');
+    toast.id = toastId;
+    toast.className = `toast align-items-center text-white bg-${type} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    const bsToast = new bootstrap.Toast(toast, {
+        autohide: true,
+        delay: 3000
+    });
+    bsToast.show();
+    
+    toast.addEventListener('hidden.bs.toast', function () {
+        toast.remove();
+    });
+}
+
+// Helper pour récupérer le cookie CSRF
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Mettre à jour automatiquement le statut toutes les 30 secondes (pour les notifications)
+setInterval(() => {
+    fetch(`/api/commandes/{{ commande.id }}/status/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status !== '{{ commande.statut }}') {
+                showToast('Le statut de la commande a été mis à jour', 'info');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            }
+        });
+}, 30000);
+</script>
+
+<!-- Animation CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+
+<!-- Styles pour les états de statut -->
+<style>
+.bg-brouillon { background-color: #6c757d !important; }
+.bg-confirmee { background-color: #0d6efd !important; }
+.bg-en_mesures { background-color: #6610f2 !important; }
+.bg-en_decoupe { background-color: #6f42c1 !important; }
+.bg-en_assemblage { background-color: #fd7e14 !important; }
+.bg-en_finition { background-color: #20c997 !important; }
+.bg-terminee { background-color: #198754 !important; }
+.bg-livree { background-color: #0dcaf0 !important; }
+.bg-annulee { background-color: #dc3545 !important; }
+</style>
+{% endblock %}

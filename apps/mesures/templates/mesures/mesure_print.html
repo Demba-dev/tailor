@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Mesures - {{ mesure.client.prenom }} {{ mesure.client.nom }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .print-header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+        }
+        .client-info {
+            margin: 20px 0;
+        }
+        .mesure-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .mesure-table th, .mesure-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        .mesure-table th {
+            background-color: #f0f0f0;
+        }
+        @media print {
+            body { margin: 0; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-header">
+        <h1>Mesures du Client</h1>
+    </div>
+    
+    <div class="client-info">
+        <h3>{{ mesure.client.prenom }} {{ mesure.client.nom }}</h3>
+        <p><strong>Téléphone :</strong> {{ mesure.client.telephone }}</p>
+        <p><strong>Email :</strong> {{ mesure.client.email }}</p>
+    </div>
+    
+    <div class="mesure-content">
+        <!-- Ajouter vos champs de mesure selon votre modèle -->
+        <p><strong>Date :</strong> {{ mesure.date_creation|date:"d/m/Y" }}</p>
+    </div>
+    
+    <button class="no-print" onclick="window.print()">Imprimer</button>
+</body>
+</html>

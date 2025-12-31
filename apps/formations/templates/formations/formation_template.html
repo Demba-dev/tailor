@@ -1,0 +1,554 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Utiliser un modèle de formation - ATELIER TAILOR{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/clients.css' %}">
+<style>
+    .template-header {
+        background: linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .template-header::before {
+        content: '';
+        position: absolute;
+        top: -10%;
+        right: -10%;
+        width: 120%;
+        height: 120%;
+        background: rgba(255,255,255,0.1);
+        transform: rotate(30deg);
+    }
+    
+    .header-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .header-content h1 {
+        margin: 0 0 0.5rem 0;
+        font-size: 2rem;
+    }
+    
+    .header-subtitle {
+        font-size: 1rem;
+        opacity: 0.95;
+    }
+    
+    .templates-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .template-card {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        border: 2px solid #e2e8f0;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .template-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.12);
+        border-color: #4299e1;
+    }
+    
+    .template-header-info {
+        background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+        padding: 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .template-type {
+        display: inline-block;
+        background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+        color: white;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+    }
+    
+    .template-title {
+        font-weight: 600;
+        color: #2d3748;
+        font-size: 1.1rem;
+        margin: 0 0 0.5rem 0;
+    }
+    
+    .template-body {
+        padding: 1.5rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .template-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #4a5568;
+    }
+    
+    .info-label {
+        color: #718096;
+        font-weight: 500;
+        min-width: 100px;
+    }
+    
+    .info-value {
+        color: #2d3748;
+        font-weight: 500;
+    }
+    
+    .template-description {
+        color: #718096;
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+        flex: 1;
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .template-stats {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem;
+        background: #f7fafc;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+    
+    .stat {
+        flex: 1;
+    }
+    
+    .stat-value {
+        display: block;
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: #4299e1;
+    }
+    
+    .stat-label {
+        font-size: 0.7rem;
+        color: #718096;
+        text-transform: uppercase;
+        margin-top: 0.25rem;
+    }
+    
+    .template-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+    
+    .btn-use-template {
+        flex: 1;
+        background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 0.75rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-use-template:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(66, 153, 225, 0.3);
+    }
+    
+    .btn-view-details {
+        background: white;
+        color: #4299e1;
+        border: 2px solid #4299e1;
+        border-radius: 6px;
+        padding: 0.75rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-view-details:hover {
+        background: #f0f9ff;
+        transform: translateY(-2px);
+    }
+    
+    .empty-state {
+        background: white;
+        border-radius: 12px;
+        padding: 4rem 2rem;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    
+    .empty-state-icon {
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        color: #cbd5e0;
+        font-size: 2.5rem;
+    }
+    
+    .empty-state-text {
+        color: #718096;
+        font-size: 1.1rem;
+    }
+    
+    .form-card {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        display: block;
+        font-weight: 500;
+        color: #4a5568;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+    }
+    
+    .form-input:focus {
+        outline: none;
+        border-color: #4299e1;
+        box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+    }
+    
+    .form-select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+    }
+    
+    .form-select:focus {
+        outline: none;
+        border-color: #4299e1;
+        box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+    }
+    
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+    }
+    
+    .modal-overlay.active {
+        display: flex;
+    }
+    
+    .modal {
+        background: white;
+        border-radius: 12px;
+        max-width: 500px;
+        width: 100%;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    
+    .modal-header {
+        padding: 2rem;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .modal-header h5 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+    
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #718096;
+    }
+    
+    .modal-body {
+        padding: 2rem;
+    }
+    
+    .modal-footer {
+        padding: 1.5rem 2rem;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+    }
+    
+    .btn-action {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(66, 153, 225, 0.3);
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(66, 153, 225, 0.4);
+    }
+    
+    .btn-secondary {
+        background: white;
+        color: #4299e1;
+        border: 2px solid #4299e1;
+    }
+    
+    .btn-secondary:hover {
+        background: #f0f9ff;
+    }
+    
+    @media (max-width: 768px) {
+        .templates-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .modal {
+            max-width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'formations:formation_list' %}">Formations</a></li>
+        <li class="breadcrumb-item active">Utiliser un modèle</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="template-header">
+        <div class="header-content">
+            <h1><i class="fas fa-copy me-2"></i>Utiliser un modèle de formation</h1>
+            <div class="header-subtitle">Clonez une formation existante pour créer rapidement une nouvelle formation</div>
+        </div>
+    </div>
+
+    {% if formations %}
+    <div class="templates-grid">
+        {% for formation in formations %}
+        <div class="template-card">
+            <div class="template-header-info">
+                {% if formation.type_formation %}
+                <div class="template-type">{{ formation.type_formation }}</div>
+                {% endif %}
+                <h4 class="template-title">{{ formation.titre }}</h4>
+            </div>
+            
+            <div class="template-body">
+                {% if formation.description %}
+                <p class="template-description">{{ formation.description }}</p>
+                {% endif %}
+                
+                <div class="template-stats">
+                    <div class="stat">
+                        <span class="stat-value">{{ formation.participants.count }}</span>
+                        <span class="stat-label">Participants</span>
+                    </div>
+                    {% if formation.duree_heures %}
+                    <div class="stat">
+                        <span class="stat-value">{{ formation.duree_heures }}</span>
+                        <span class="stat-label">Heures</span>
+                    </div>
+                    {% endif %}
+                    {% if formation.nombre_places %}
+                    <div class="stat">
+                        <span class="stat-value">{{ formation.nombre_places }}</span>
+                        <span class="stat-label">Places</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="template-info">
+                    {% if formation.formateur %}
+                    <div class="info-item">
+                        <i class="fas fa-user" style="color: #4299e1;"></i>
+                        <span class="info-label">Formateur:</span>
+                        <span class="info-value">{{ formation.formateur }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if formation.lieu %}
+                    <div class="info-item">
+                        <i class="fas fa-map-marker-alt" style="color: #ed8936;"></i>
+                        <span class="info-label">Lieu:</span>
+                        <span class="info-value">{{ formation.lieu }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="info-item">
+                        <i class="fas fa-flag" style="color: #48bb78;"></i>
+                        <span class="info-label">Statut:</span>
+                        <span class="info-value">{{ formation.get_statut_display }}</span>
+                    </div>
+                </div>
+                
+                <div class="template-actions">
+                    <button class="btn-use-template" data-formation-id="{{ formation.pk }}" data-formation-title="{{ formation.titre }}" onclick="openModal(this)">
+                        <i class="fas fa-clone"></i> Utiliser
+                    </button>
+                    <a href="{% url 'formations:formation_detail' formation.pk %}" class="btn-view-details">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
+        <p class="empty-state-text">Aucune formation disponible pour créer un modèle</p>
+        <p style="color: #a0aec0; margin-top: 0.5rem;">
+            <a href="{% url 'formations:formation_create' %}">Créez une formation d'abord</a>
+        </p>
+    </div>
+    {% endif %}
+</div>
+
+<div class="modal-overlay" id="templateModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h5>Créer une formation à partir du modèle</h5>
+            <button class="modal-close" onclick="closeModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <form method="post" id="templateForm">
+            {% csrf_token %}
+            <input type="hidden" name="source_formation_id" id="sourceFormationId">
+            
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="templateName">
+                        <i class="fas fa-heading me-1"></i>Nom de la nouvelle formation
+                    </label>
+                    <input type="text" id="templateName" name="template_name" class="form-input" placeholder="Ex: Copie de Formation couture" required>
+                    <small style="color: #718096; margin-top: 0.25rem;">Laissez vide pour utiliser le nom du modèle</small>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn-action btn-secondary" onclick="closeModal()">
+                    <i class="fas fa-times"></i>Annuler
+                </button>
+                <button type="submit" class="btn-action btn-primary">
+                    <i class="fas fa-check"></i>Créer la formation
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openModal(button) {
+    const formationId = button.getAttribute('data-formation-id');
+    const formationTitle = button.getAttribute('data-formation-title');
+    
+    document.getElementById('sourceFormationId').value = formationId;
+    document.getElementById('templateName').value = 'Copie de ' + formationTitle;
+    document.getElementById('templateModal').classList.add('active');
+    document.getElementById('templateName').focus();
+}
+
+function closeModal() {
+    document.getElementById('templateModal').classList.remove('active');
+    document.getElementById('templateForm').reset();
+}
+
+document.getElementById('templateModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeModal();
+    }
+});
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeModal();
+    }
+});
+</script>
+{% endblock %}

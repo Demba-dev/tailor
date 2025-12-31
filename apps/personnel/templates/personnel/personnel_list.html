@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Artisans - ATELIER TAILOR{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/clients.css' %}">
+<style>
+    .atelier-header {
+        background: linear-gradient(135deg, #1a365d 0%, #2d3748 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+        border-bottom: 5px solid #c53030;
+    }
+    
+    .atelier-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 200%;
+        background: rgba(255,255,255,0.05);
+        transform: rotate(30deg);
+        pointer-events: none;
+    }
+    
+    .artisan-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.25rem;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        transition: transform 0.3s ease;
+        border-top: 4px solid;
+        text-align: center;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-3px);
+    }
+    
+    .stat-card.couturiers { border-color: #c53030; }
+    .stat-card.apprentis { border-color: #ed8936; }
+    .stat-card.actifs { border-color: #38a169; }
+    .stat-card.productivite { border-color: #4299e1; }
+    
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: #2d3748;
+        line-height: 1;
+        margin-bottom: 0.25rem;
+    }
+    
+    .stat-label {
+        font-size: 0.85rem;
+        color: #718096;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .artisan-card {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        height: 100%;
+        border: 1px solid #e2e8f0;
+        position: relative;
+    }
+    
+    .artisan-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        border-color: #c53030;
+    }
+    
+    .artisan-specialty {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: rgba(197, 48, 48, 0.9);
+        color: white;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .artisan-avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        border: 3px solid white;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        overflow: hidden;
+        margin: -50px auto 1rem;
+        position: relative;
+        z-index: 2;
+        background: white;
+    }
+    
+    .avatar-initials {
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #c53030 0%, #9b2c2c 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: 700;
+        color: white;
+        font-family: 'Georgia', serif;
+    }
+    
+    .artisan-header {
+        background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+        padding: 2rem 1rem 3rem;
+        text-align: center;
+        position: relative;
+    }
+    
+    .artisan-role {
+        display: inline-block;
+        padding: 0.4rem 1rem;
+        background: rgba(197, 48, 48, 0.1);
+        color: #c53030;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+    }
+    
+    .artisan-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+    }
+    
+    .status-dot.active { background-color: #38a169; }
+    .status-dot.inactive { background-color: #718096; }
+    .status-dot.on-conges { background-color: #ed8936; }
+    
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+    
+    .skill-tag {
+        display: inline-block;
+        padding: 0.3rem 0.7rem;
+        margin: 0.2rem;
+        background: #f7fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        color: #4a5568;
+    }
+    
+    .artisan-metrics {
+        display: flex;
+        justify-content: space-around;
+        padding: 1rem;
+        background: #f7fafc;
+        border-top: 1px solid #e2e8f0;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .metric-item {
+        text-align: center;
+    }
+    
+    .metric-value {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #2d3748;
+    }
+    
+    .metric-label {
+        font-size: 0.75rem;
+        color: #718096;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .filters-toolbar {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .badge-couturier { background: linear-gradient(135deg, #c53030 0%, #9b2c2c 100%); }
+    .badge-apprenti { background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); }
+    .badge-tailleur { background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); }
+    .badge-admin { background: linear-gradient(135deg, #38a169 0%, #2f855a 100%); }
+    
+    .view-toggle {
+        display: flex;
+        gap: 0.5rem;
+        background: #f7fafc;
+        border-radius: 10px;
+        padding: 0.25rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .toggle-btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        background: none;
+        border-radius: 8px;
+        font-weight: 500;
+        color: #4a5568;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        flex: 1;
+        text-align: center;
+    }
+    
+    .toggle-btn.active {
+        background: linear-gradient(135deg, #c53030 0%, #9b2c2c 100%);
+        color: white;
+        box-shadow: 0 3px 8px rgba(197, 48, 48, 0.3);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    
+    .empty-state-icon {
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        color: #a0aec0;
+        font-size: 2.5rem;
+    }
+    
+    .quick-actions {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        z-index: 1000;
+    }
+    
+    .fab-btn {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #c53030 0%, #9b2c2c 100%);
+        color: white;
+        border: none;
+        box-shadow: 0 4px 15px rgba(197, 48, 48, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .fab-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 20px rgba(197, 48, 48, 0.5);
+    }
+    
+    @media (max-width: 768px) {
+        .artisan-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .artisan-avatar {
+            width: 80px;
+            height: 80px;
+            margin-top: -40px;
+        }
+        
+        .avatar-initials {
+            font-size: 1.5rem;
+        }
+        
+        .quick-actions {
+            bottom: 1rem;
+            right: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item active">Atelier</li>
+        <li class="breadcrumb-item active">Artisans</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block page_title %}
+<div class="atelier-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h2 mb-2">
+                <i class="fas fa-cut me-2"></i>Artisans de l'Atelier
+            </h1>
+            <p class="mb-0 opacity-75">
+                Gestion de l'équipe de tailleurs et couturiers
+            </p>
+        </div>
+        <div>
+            <a href="{% url 'personnel:personnel_create' %}" class="btn btn-light btn-lg">
+                <i class="fas fa-user-plus me-2"></i>Nouvel Artisan
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Statistiques de l'atelier -->
+<div class="artisan-stats">
+    <div class="stat-card couturiers">
+        <div class="stat-value">{{ couturiers_count }}</div>
+        <div class="stat-label">Couturiers</div>
+    </div>
+    
+    <div class="stat-card apprentis">
+        <div class="stat-value">{{ apprentis_count }}</div>
+        <div class="stat-label">Apprentis</div>
+    </div>
+    
+    <div class="stat-card actifs">
+        <div class="stat-value">{{ active_personnel }}</div>
+        <div class="stat-label">En activité</div>
+    </div>
+    
+    <div class="stat-card productivite">
+        <div class="stat-value">{{ commandes_moyennes|floatformat:1 }}</div>
+        <div class="stat-label">Cmd/mois</div>
+    </div>
+</div>
+
+<!-- Filtres et recherche -->
+<div class="filters-toolbar">
+    <div class="row g-3 align-items-center">
+        <div class="col-md-4">
+            <div class="input-group">
+                <span class="input-group-text bg-light border-end-0">
+                    <i class="fas fa-search text-muted"></i>
+                </span>
+                <input type="text" class="form-control border-start-0" id="searchInput" 
+                       placeholder="Rechercher un artisan..." onkeyup="filterArtisans()">
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <select class="form-select" id="specialiteFilter" onchange="filterArtisans()">
+                <option value="">Toutes spécialités</option>
+                <option value="homme">Vêtements Homme</option>
+                <option value="femme">Vêtements Femme</option>
+                <option value="costume">Costumes</option>
+                <option value="robe">Robes</option>
+                <option value="retouches">Retouches</option>
+            </select>
+        </div>
+        
+        <div class="col-md-3">
+            <select class="form-select" id="dispoFilter" onchange="filterArtisans()">
+                <option value="">Toutes disponibilités</option>
+                <option value="disponible">Disponible</option>
+                <option value="occupe">Occupé</option>
+                <option value="conges">En congés</option>
+            </select>
+        </div>
+        
+        <div class="col-md-2">
+            <button class="btn btn-outline-secondary w-100" onclick="clearFilters()">
+                <i class="fas fa-filter-circle-xmark me-2"></i>Effacer
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Sélecteur de vue -->
+<div class="view-toggle">
+    <button class="toggle-btn active" onclick="switchView('grid')">
+        <i class="fas fa-th-large me-2"></i>Grille
+    </button>
+    <button class="toggle-btn" onclick="switchView('table')">
+        <i class="fas fa-table me-2"></i>Tableau
+    </button>
+    <button class="toggle-btn" onclick="switchView('workload')">
+        <i class="fas fa-tasks me-2"></i>Charges
+    </button>
+</div>
+
+<!-- Vue Grille -->
+<div id="gridView">
+    {% if personnels %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for artisan in personnels %}
+        <div class="col">
+            <div class="artisan-card" data-artisan-id="{{ artisan.id }}">
+                <div class="artisan-header">
+                    {% if artisan.specialite %}
+                    <div class="artisan-specialty">{{ artisan.get_specialite_display }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="text-center px-3 pb-3">
+                    <div class="artisan-avatar">
+                        {% if artisan.photo %}
+                        <img src="{{ artisan.photo.url }}" alt="{{ artisan.prenom }} {{ artisan.nom }}" 
+                             class="w-100 h-100 object-fit-cover">
+                        {% else %}
+                        <div class="avatar-initials">
+                            {{ artisan.prenom|first|upper }}{{ artisan.nom|first|upper }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <h5 class="mb-1">{{ artisan.prenom }} {{ artisan.nom }}</h5>
+                    <div class="artisan-role mb-2">{{ artisan.get_role_display }}</div>
+                    
+                    <div class="artisan-status mb-3 
+                        {% if artisan.disponibilite == 'disponible' %}bg-success
+                        {% elif artisan.disponibilite == 'occupe' %}bg-warning
+                        {% else %}bg-secondary{% endif %}">
+                        <span class="status-dot 
+                            {% if artisan.disponibilite == 'disponible' %}active
+                            {% elif artisan.disponibilite == 'occupe' %}on-conges
+                            {% else %}inactive{% endif %}"></span>
+                        {{ artisan.get_disponibilite_display }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {% for competence in artisan.competences.all|slice:":3" %}
+                        <span class="skill-tag">{{ competence.nom }}</span>
+                        {% endfor %}
+                        {% if artisan.competences.count > 3 %}
+                        <span class="skill-tag">+{{ artisan.competences.count|add:"-3" }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="artisan-metrics mb-3">
+                        <div class="metric-item">
+                            <div class="metric-value">{{ artisan.commandes_encours }}</div>
+                            <div class="metric-label">En cours</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">{{ artisan.taux_reussite|default:"-" }}%</div>
+                            <div class="metric-label">Réussite</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">{{ artisan.note_moyenne|default:"-" }}/5</div>
+                            <div class="metric-label">Note</div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-center gap-2">
+                        <a href="{% url 'personnel:personnel_detail' artisan.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye me-1"></i>Profil
+                        </a>
+                        <a href="{% url 'personnel:personnel_assign' artisan.id %}" class="btn btn-sm btn-outline-success">
+                            <i class="fas fa-tasks me-1"></i>Assigner
+                        </a>
+                        <a href="{% url 'personnel:personnel_update' artisan.id %}" class="btn btn-sm btn-outline-warning">
+                            <i class="fas fa-edit me-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <i class="fas fa-user-secret"></i>
+        </div>
+        <h4 class="text-muted mb-3">Aucun artisan enregistré</h4>
+        <p class="text-muted mb-4">Commencez par ajouter vos tailleurs et couturiers à l'atelier</p>
+        <a href="{% url 'personnel:personnel_create' %}" class="btn btn-primary btn-lg">
+            <i class="fas fa-user-plus me-2"></i>Ajouter le premier artisan
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Vue Tableau -->
+<div id="tableView" style="display: none;">
+    {% if personnels %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Artisan</th>
+                    <th>Rôle</th>
+                    <th>Spécialité</th>
+                    <th>Disponibilité</th>
+                    <th>Commandes</th>
+                    <th>Expérience</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for artisan in personnels %}
+                <tr class="artisan-row" data-artisan-id="{{ artisan.id }}">
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                {% if artisan.photo %}
+                                <img src="{{ artisan.photo.url }}" alt="{{ artisan.prenom }} {{ artisan.nom }}" 
+                                     class="rounded-circle" width="40" height="40">
+                                {% else %}
+                                <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                                     style="width: 40px; height: 40px; background: linear-gradient(135deg, #c53030 0%, #9b2c2c 100%); color: white; font-weight: bold;">
+                                    {{ artisan.prenom|first|upper }}{{ artisan.nom|first|upper }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <div class="fw-bold">{{ artisan.prenom }} {{ artisan.nom }}</div>
+                                <div class="small text-muted">{{ artisan.email|default:"-" }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge 
+                            {% if artisan.role == 'couturier' %}badge-couturier
+                            {% elif artisan.role == 'apprenti' %}badge-apprenti
+                            {% elif artisan.role == 'tailleur' %}badge-tailleur
+                            {% else %}badge-admin{% endif %}">
+                            {{ artisan.get_role_display }}
+                        </span>
+                    </td>
+                    <td>{{ artisan.get_specialite_display|default:"-" }}</td>
+                    <td>
+                        <span class="badge 
+                            {% if artisan.disponibilite == 'disponible' %}bg-success
+                            {% elif artisan.disponibilite == 'occupe' %}bg-warning
+                            {% else %}bg-secondary{% endif %}">
+                            {{ artisan.get_disponibilite_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="small">
+                            <div>En cours: <strong>{{ artisan.commandes_encours }}</strong></div>
+                            <div>Terminées: <strong>{{ artisan.commandes_terminees }}</strong></div>
+                        </div>
+                    </td>
+                    <td>
+                        {% if artisan.annees_experience %}
+                        <span class="badge bg-info">{{ artisan.annees_experience }} an{{ artisan.annees_experience|pluralize:"s" }}</span>
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            <a href="{% url 'personnel:personnel_detail' artisan.id %}" class="btn btn-sm btn-outline-primary" title="Voir profil">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'personnel:personnel_schedule' artisan.id %}" class="btn btn-sm btn-outline-secondary" title="Calendrier">
+                                <i class="fas fa-calendar-alt"></i>
+                            </a>
+                            <a href="{% url 'personnel:personnel_update' artisan.id %}" class="btn btn-sm btn-outline-warning" title="Modifier">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <i class="fas fa-user-secret"></i>
+        </div>
+        <h4 class="text-muted mb-3">Aucun artisan enregistré</h4>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Vue Charges de travail -->
+<div id="workloadView" style="display: none;">
+    {% if personnels %}
+    <div class="row g-4">
+        {% for artisan in personnels %}
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    {% if artisan.photo %}
+                                    <img src="{{ artisan.photo.url }}" alt="{{ artisan.prenom }} {{ artisan.nom }}" 
+                                         class="rounded-circle" width="60" height="60">
+                                    {% else %}
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                                         style="width: 60px; height: 60px; background: linear-gradient(135deg, #c53030 0%, #9b2c2c 100%); color: white; font-size: 1.5rem; font-weight: bold;">
+                                        {{ artisan.prenom|first|upper }}{{ artisan.nom|first|upper }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">{{ artisan.prenom }} {{ artisan.nom }}</h6>
+                                    <div class="small text-muted">{{ artisan.get_role_display }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-2">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <small>Charge de travail</small>
+                                    <small>{{ artisan.charge_travail }}%</small>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar 
+                                        {% if artisan.charge_travail < 60 %}bg-success
+                                        {% elif artisan.charge_travail < 85 %}bg-warning
+                                        {% else %}bg-danger{% endif %}" 
+                                        role="progressbar" 
+                                        style="width: {{ artisan.charge_travail }}%">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-4">
+                                    <div class="text-center">
+                                        <div class="fw-bold text-primary">{{ artisan.commandes_encours }}</div>
+                                        <div class="small text-muted">En cours</div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-center">
+                                        <div class="fw-bold text-success">{{ artisan.commandes_terminees }}</div>
+                                        <div class="small text-muted">Terminées</div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-center">
+                                        <div class="fw-bold text-warning">{{ artisan.jours_retard }}</div>
+                                        <div class="small text-muted">Retards</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 text-end">
+                            <div class="d-flex flex-column gap-2">
+                                <a href="{% url 'personnel:personnel_assign' artisan.id %}" 
+                                   class="btn btn-sm {% if artisan.charge_travail < 70 %}btn-success{% else %}btn-outline-secondary{% endif %}">
+                                    <i class="fas fa-plus-circle me-1"></i>Assigner
+                                </a>
+                                <a href="{% url 'personnel:personnel_schedule' artisan.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-calendar-alt me-1"></i>Calendrier
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <i class="fas fa-user-secret"></i>
+        </div>
+        <h4 class="text-muted mb-3">Aucun artisan enregistré</h4>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Bouton d'action flottant -->
+<div class="quick-actions">
+    <button class="fab-btn" data-bs-toggle="dropdown">
+        <i class="fas fa-plus"></i>
+    </button>
+    <div class="dropdown-menu dropdown-menu-end" style="min-width: 200px;">
+        <h6 class="dropdown-header">Actions rapides</h6>
+        <a class="dropdown-item" href="{% url 'personnel:personnel_create' %}">
+            <i class="fas fa-user-plus me-2"></i>Nouvel artisan
+        </a>
+        <a class="dropdown-item" href="{% url 'personnel:personnel_bulk_assign' %}">
+            <i class="fas fa-tasks me-2"></i>Assigner en masse
+        </a>
+        <a class="dropdown-item" href="{% url 'personnel:personnel_report' %}">
+            <i class="fas fa-chart-bar me-2"></i>Rapport productivité
+        </a>
+        <div class="dropdown-divider"></div>
+        <a class="dropdown-item" href="#" onclick="printWorkSchedule()">
+            <i class="fas fa-print me-2"></i>Imprimer planning
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion du clic sur les cartes artisans
+    const artisanCards = document.querySelectorAll('.artisan-card, .artisan-row');
+    artisanCards.forEach(card => {
+        card.addEventListener('click', function(e) {
+            if (e.target.tagName === 'A' || e.target.closest('a')) {
+                return;
+            }
+            const artisanId = this.getAttribute('data-artisan-id');
+            if (artisanId) {
+                window.location.href = `/personnel/${artisanId}/`;
+            }
+        });
+    });
+    
+    // Restaurer la vue sauvegardée
+    const savedView = localStorage.getItem('artisanView') || 'grid';
+    switchView(savedView);
+});
+
+function switchView(viewType) {
+    // Cacher toutes les vues
+    ['grid', 'table', 'workload'].forEach(view => {
+        document.getElementById(view + 'View').style.display = 'none';
+    });
+    
+    // Mettre à jour les boutons actifs
+    document.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Afficher la vue sélectionnée
+    document.getElementById(viewType + 'View').style.display = 'block';
+    document.querySelector(`.toggle-btn[onclick="switchView('${viewType}')"]`).classList.add('active');
+    
+    // Sauvegarder la préférence
+    localStorage.setItem('artisanView', viewType);
+}
+
+function filterArtisans() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const specialiteFilter = document.getElementById('specialiteFilter').value;
+    const dispoFilter = document.getElementById('dispoFilter').value;
+    
+    const currentView = localStorage.getItem('artisanView') || 'grid';
+    const container = document.getElementById(currentView + 'View');
+    
+    // Pour la vue grille
+    if (currentView === 'grid') {
+        const artisans = container.querySelectorAll('.col');
+        filterGridArtisans(artisans, searchTerm, specialiteFilter, dispoFilter);
+    }
+    // Pour la vue tableau
+    else if (currentView === 'table') {
+        const rows = container.querySelectorAll('.artisan-row');
+        filterTableRows(rows, searchTerm, specialiteFilter, dispoFilter);
+    }
+    // Pour la vue charges
+    else {
+        const cards = container.querySelectorAll('.card');
+        filterWorkloadCards(cards, searchTerm, specialiteFilter, dispoFilter);
+    }
+}
+
+function filterGridArtisans(artisans, searchTerm, specialiteFilter, dispoFilter) {
+    artisans.forEach(artisan => {
+        const name = artisan.querySelector('h5')?.textContent.toLowerCase() || '';
+        const specialite = artisan.querySelector('.artisan-specialty')?.textContent.toLowerCase() || '';
+        const disponibilite = artisan.querySelector('.artisan-status')?.textContent.toLowerCase() || '';
+        
+        let show = true;
+        
+        if (searchTerm && !name.includes(searchTerm)) {
+            show = false;
+        }
+        
+        if (specialiteFilter && !specialite.includes(specialiteFilter)) {
+            show = false;
+        }
+        
+        if (dispoFilter && !disponibilite.includes(dispoFilter)) {
+            show = false;
+        }
+        
+        artisan.style.display = show ? '' : 'none';
+    });
+}
+
+function filterTableRows(rows, searchTerm, specialiteFilter, dispoFilter) {
+    rows.forEach(row => {
+        const name = row.querySelector('.fw-bold')?.textContent.toLowerCase() || '';
+        const specialite = row.querySelector('td:nth-child(3)')?.textContent.toLowerCase() || '';
+        const disponibilite = row.querySelector('td:nth-child(4) .badge')?.textContent.toLowerCase() || '';
+        
+        let show = true;
+        
+        if (searchTerm && !name.includes(searchTerm)) {
+            show = false;
+        }
+        
+        if (specialiteFilter && !specialite.includes(specialiteFilter)) {
+            show = false;
+        }
+        
+        if (dispoFilter && !disponibilite.includes(dispoFilter)) {
+            show = false;
+        }
+        
+        row.style.display = show ? '' : 'none';
+    });
+}
+
+function filterWorkloadCards(cards, searchTerm, specialiteFilter, dispoFilter) {
+    // Implémentation similaire pour les cartes de charge
+}
+
+function clearFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('specialiteFilter').selectedIndex = 0;
+    document.getElementById('dispoFilter').selectedIndex = 0;
+    filterArtisans();
+}
+
+function printWorkSchedule() {
+    alert('Fonctionnalité d\'impression du planning en développement');
+    // Ici, vous pourriez implémenter l'impression du planning
+}
+
+// Recherche rapide avec la touche '/'
+document.addEventListener('keydown', function(e) {
+    if (e.key === '/' && !e.target.matches('input, textarea, select')) {
+        e.preventDefault();
+        document.getElementById('searchInput').focus();
+    }
+});
+</script>
+
+<!-- Animation pour les cartes -->
+<style>
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .col {
+        animation: slideInUp 0.5s ease-out;
+        animation-fill-mode: both;
+    }
+    
+    .col:nth-child(1) { animation-delay: 0.1s; }
+    .col:nth-child(2) { animation-delay: 0.2s; }
+    .col:nth-child(3) { animation-delay: 0.3s; }
+    .col:nth-child(4) { animation-delay: 0.4s; }
+    .col:nth-child(5) { animation-delay: 0.5s; }
+    .col:nth-child(6) { animation-delay: 0.6s; }
+</style>
+{% endblock %}

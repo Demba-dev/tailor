@@ -1,0 +1,440 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Gérer les participants - ATELIER TAILOR{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/clients.css' %}">
+<style>
+    .participants-header {
+        background: linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .participants-header::before {
+        content: '';
+        position: absolute;
+        top: -10%;
+        right: -10%;
+        width: 120%;
+        height: 120%;
+        background: rgba(255,255,255,0.1);
+        transform: rotate(30deg);
+    }
+    
+    .header-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .header-content h1 {
+        margin: 0 0 0.5rem 0;
+        font-size: 2rem;
+    }
+    
+    .header-meta {
+        display: flex;
+        gap: 2rem;
+        margin-top: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .meta-item {
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .section-card {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+    }
+    
+    .section-title {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 1.1rem;
+    }
+    
+    .participants-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .participant-item {
+        background: #f7fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .participant-item:hover {
+        border-color: #4299e1;
+        box-shadow: 0 4px 12px rgba(66, 153, 225, 0.1);
+    }
+    
+    .participant-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+    }
+    
+    .participant-info {
+        margin-bottom: 1rem;
+    }
+    
+    .participant-name {
+        font-weight: 600;
+        color: #2d3748;
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .participant-role {
+        font-size: 0.85rem;
+        color: #718096;
+    }
+    
+    .remove-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: #f56565;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 0.5rem 0.75rem;
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: all 0.3s ease;
+    }
+    
+    .remove-btn:hover {
+        background: #e53e3e;
+        transform: scale(1.05);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #718096;
+    }
+    
+    .empty-state-icon {
+        font-size: 3rem;
+        color: #cbd5e0;
+        margin-bottom: 1rem;
+    }
+    
+    .available-personnel {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .personnel-card {
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .personnel-card:hover {
+        border-color: #48bb78;
+        box-shadow: 0 4px 12px rgba(72, 187, 120, 0.1);
+    }
+    
+    .personnel-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+    }
+    
+    .personnel-info {
+        margin-bottom: 1rem;
+    }
+    
+    .personnel-name {
+        font-weight: 600;
+        color: #2d3748;
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .personnel-role {
+        font-size: 0.85rem;
+        color: #718096;
+    }
+    
+    .add-btn {
+        width: 100%;
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 0.75rem;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+    
+    .add-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+    }
+    
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-item {
+        background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #4299e1;
+    }
+    
+    .stat-label {
+        font-size: 0.85rem;
+        color: #718096;
+        text-transform: uppercase;
+        margin-top: 0.5rem;
+        font-weight: 500;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+    }
+    
+    .btn-action {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-secondary {
+        background: white;
+        color: #4299e1;
+        border: 2px solid #4299e1;
+    }
+    
+    .btn-secondary:hover {
+        background: #f0f9ff;
+        transform: translateY(-2px);
+    }
+    
+    @media (max-width: 768px) {
+        .header-meta {
+            flex-direction: column;
+        }
+        
+        .participants-list,
+        .available-personnel {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'formations:formation_list' %}">Formations</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'formations:formation_detail' formation.pk %}">{{ formation.titre }}</a></li>
+        <li class="breadcrumb-item active">Gérer les participants</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="participants-header">
+        <div class="header-content">
+            <h1>Gérer les participants</h1>
+            <div class="header-meta">
+                <div class="meta-item">
+                    <i class="fas fa-graduation-cap"></i>
+                    {{ formation.titre }}
+                </div>
+                <div class="meta-item">
+                    <i class="fas fa-calendar"></i>
+                    {{ formation.date_debut|date:"d M Y" }} - {{ formation.date_fin|date:"d M Y" }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if messages %}
+    <div style="margin-bottom: 2rem;">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="stats-row">
+        <div class="stat-item">
+            <div class="stat-value">{{ participants.count }}</div>
+            <div class="stat-label">Participants</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{ available_personnel.count }}</div>
+            <div class="stat-label">Disponibles</div>
+        </div>
+        {% if formation.nombre_places %}
+        <div class="stat-item">
+            <div class="stat-value">{{ formation.nombre_places }}</div>
+            <div class="stat-label">Places max</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="section-card">
+        <h5 class="section-title">
+            <i class="fas fa-users"></i>Participants inscrits ({{ participants.count }})
+        </h5>
+        
+        {% if participants %}
+        <div class="participants-list">
+            {% for participant in participants %}
+            <div class="participant-item">
+                <form method="post" style="margin: 0;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="remove">
+                    <input type="hidden" name="participant_id" value="{{ participant.pk }}">
+                    <button type="submit" class="remove-btn" title="Retirer">
+                        <i class="fas fa-times"></i> Retirer
+                    </button>
+                </form>
+                
+                <div class="participant-avatar">
+                    {{ participant.prenom|first|upper }}{{ participant.nom|first|upper }}
+                </div>
+                <div class="participant-info">
+                    <div class="participant-name">{{ participant.prenom }} {{ participant.nom }}</div>
+                    <div class="participant-role">{{ participant.get_role_display }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon"><i class="fas fa-user-slash"></i></div>
+            <p>Aucun participant enregistré pour cette formation</p>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if available_personnel %}
+    <div class="section-card">
+        <h5 class="section-title">
+            <i class="fas fa-user-plus"></i>Personnel disponible ({{ available_personnel.count }})
+        </h5>
+        
+        <div class="available-personnel">
+            {% for personnel in available_personnel %}
+            <div class="personnel-card">
+                <div class="personnel-avatar">
+                    {{ personnel.prenom|first|upper }}{{ personnel.nom|first|upper }}
+                </div>
+                <div class="personnel-info">
+                    <div class="personnel-name">{{ personnel.prenom }} {{ personnel.nom }}</div>
+                    <div class="personnel-role">{{ personnel.get_role_display }}</div>
+                </div>
+                <form method="post" style="margin: 0;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add">
+                    <input type="hidden" name="participant_id" value="{{ personnel.pk }}">
+                    <button type="submit" class="add-btn">
+                        <i class="fas fa-check"></i> Ajouter
+                    </button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="section-card">
+        <h5 class="section-title">
+            <i class="fas fa-user-plus"></i>Personnel disponible
+        </h5>
+        <div class="empty-state">
+            <div class="empty-state-icon"><i class="fas fa-check-double"></i></div>
+            <p>Tous les membres du personnel actifs sont inscrits à cette formation</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="action-buttons">
+        <a href="{% url 'formations:formation_detail' formation.pk %}" class="btn btn-action btn-secondary">
+            <i class="fas fa-arrow-left"></i>Retour à la formation
+        </a>
+        <a href="{% url 'formations:formation_list' %}" class="btn btn-action btn-secondary">
+            <i class="fas fa-list"></i>Liste des formations
+        </a>
+    </div>
+</div>
+{% endblock %}

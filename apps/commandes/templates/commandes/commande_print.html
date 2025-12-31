@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commande #{{ commande.id }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .print-header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+        }
+        .print-header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .info-section {
+            margin: 20px 0;
+        }
+        .info-section h3 {
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .label {
+            font-weight: bold;
+        }
+        .total-section {
+            margin: 30px 0;
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        @media print {
+            body { margin: 0; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-header">
+        <h1>Commande #{{ commande.id }}</h1>
+        <p>TAILOR - Atelier de Couture</p>
+    </div>
+    
+    <div class="info-section">
+        <h3>Client</h3>
+        <div class="info-row">
+            <span class="label">Nom:</span>
+            <span>{{ commande.client.prenom }} {{ commande.client.nom }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Téléphone:</span>
+            <span>{{ commande.client.telephone }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Email:</span>
+            <span>{{ commande.client.email }}</span>
+        </div>
+    </div>
+    
+    <div class="info-section">
+        <h3>Détails Commande</h3>
+        <div class="info-row">
+            <span class="label">Statut:</span>
+            <span>{{ commande.get_statut_display }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Date Commande:</span>
+            <span>{{ commande.date_commande|date:"d/m/Y" }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Date Livraison:</span>
+            <span>{{ commande.date_livraison|date:"d/m/Y"|default:"-" }}</span>
+        </div>
+    </div>
+    
+    <div class="total-section">
+        <div class="info-row">
+            <span class="label">Prix Total:</span>
+            <span style="font-size: 18px;">{{ commande.prix_total|floatformat:2 }}CFA</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Montant Payé:</span>
+            <span>{{ commande.get_montant_paye|floatformat:2 }}CFA</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Reste à Payer:</span>
+            <span style="color: {% if commande.get_reste_a_payer > 0 %}red{% else %}green{% endif %};">
+                {{ commande.get_reste_a_payer|floatformat:2 }}CFA
+            </span>
+        </div>
+    </div>
+    
+    <button class="no-print" onclick="window.print()">Imprimer</button>
+</body>
+</html>

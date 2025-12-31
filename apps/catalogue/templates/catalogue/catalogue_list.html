@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Catalogue des Habits - TAILOR{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/clients.css' %}">
+<style>
+    /* Styles spécifiques pour le catalogue */
+    .catalog-card {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        height: 100%;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        position: relative;
+    }
+    
+    .catalog-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+    }
+    
+    .catalog-card .card-img-top {
+        height: 200px;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+    
+    .catalog-card:hover .card-img-top {
+        transform: scale(1.05);
+    }
+    
+    .card-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        z-index: 2;
+    }
+    
+    .card-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.7), transparent 40%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        display: flex;
+        align-items: flex-end;
+        padding: 20px;
+        border-radius: 15px;
+    }
+    
+    .catalog-card:hover .card-overlay {
+        opacity: 1;
+    }
+    
+    .overlay-content {
+        color: white;
+        transform: translateY(20px);
+        transition: transform 0.3s ease;
+    }
+    
+    .catalog-card:hover .overlay-content {
+        transform: translateY(0);
+    }
+    
+    .price-tag {
+        position: absolute;
+        bottom: 15px;
+        left: 15px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 1.1rem;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .category-filter {
+        position: sticky;
+        top: 20px;
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+    
+    .filter-item {
+        display: block;
+        padding: 10px 15px;
+        margin: 5px 0;
+        border-radius: 8px;
+        text-decoration: none;
+        color: #495057;
+        transition: all 0.2s ease;
+    }
+    
+    .filter-item:hover,
+    .filter-item.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        transform: translateX(5px);
+    }
+    
+    .stat-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 10px;
+        padding: 1.5rem;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #667eea;
+        line-height: 1;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .quick-action-btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+        border-radius: 8px;
+        padding: 0.75rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .quick-action-btn:hover {
+        transform: translateY(-2px);
+    }
+    
+    .empty-state {
+        padding: 4rem 2rem;
+        text-align: center;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 15px;
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        color: #adb5bd;
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item active">Catalogue</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block page_title %}
+<div class="d-flex justify-content-between align-items-center">
+    <div>
+        <h1 class="h2 mb-1">
+            <i class="fas fa-tshirt text-primary me-2"></i>Catalogue des Habits
+        </h1>
+        <p class="text-muted mb-0">
+            <i class="fas fa-info-circle me-1"></i>
+            Découvrez notre collection complète d'habits sur mesure
+        </p>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+        <div class="input-group" style="width: 300px;">
+            <span class="input-group-text bg-white border-end-0">
+                <i class="fas fa-search text-muted"></i>
+            </span>
+            <input type="text" class="form-control border-start-0" id="searchCatalog" placeholder="Rechercher un habit...">
+        </div>
+        <div class="dropdown">
+            <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-filter me-2"></i>Filtrer
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><h6 class="dropdown-header">Trier par</h6></li>
+                <li><a class="dropdown-item" href="?sort=prix"><i class="fas fa-sort-numeric-down me-2"></i>Prix croissant</a></li>
+                <li><a class="dropdown-item" href="?sort=-prix"><i class="fas fa-sort-numeric-up me-2"></i>Prix décroissant</a></li>
+                <li><a class="dropdown-item" href="?sort=nom"><i class="fas fa-sort-alpha-down me-2"></i>Nom A-Z</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="?sort=popularite"><i class="fas fa-fire me-2"></i>Popularité</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block page_actions %}
+<a href="#" class="btn btn-primary">
+    <i class="fas fa-plus-circle me-2"></i>Nouvel habit
+</a>
+<a href="{% url 'catalogue:catalogue_import' %}" class="btn btn-outline-primary">
+    <i class="fas fa-file-import me-2"></i>Importer
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Filtres et statistiques -->
+    <div class="col-lg-3 mb-4">
+        <div class="category-filter mb-4">
+            <h6 class="mb-3"><i class="fas fa-filter me-2"></i>Catégories</h6>
+            <div class="nav flex-column">
+                <a href="{% url 'catalogue:catalogue_list' %}" class="filter-item {% if not active_category %}active{% endif %}">
+                    <i class="fas fa-th-large me-2"></i>Toutes les catégories
+                    <span class="badge bg-secondary float-end">{{ total_habits }}</span>
+                </a>
+                {% for category in categories %}
+                <a href="{% url 'catalogue:catalogue_list' %}?category={{ category.slug }}" 
+                   class="filter-item {% if active_category == category.slug %}active{% endif %}">
+                    <i class="{{ category.icon }} me-2"></i>{{ category.nom }}
+                    <span class="badge bg-light text-dark float-end">{{ category.count }}</span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Statistiques -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Statistiques</h6>
+            </div>
+            <div class="card-body">
+                <div class="stat-card">
+                    <div class="stat-number">{{ total_habits }}</div>
+                    <div class="stat-label">Habits au total</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ avg_price|floatformat:0 }}</div>
+                    <div class="stat-label">Prix moyen (FCFA)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ most_popular_category }}</div>
+                    <div class="stat-label">Catégorie populaire</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ new_this_month }}</div>
+                    <div class="stat-label">Nouveaux ce mois</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions rapides -->
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="fas fa-bolt me-2"></i>Actions rapides</h6>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'catalogue:catalogue_create' %}" class="btn btn-primary quick-action-btn">
+                    <i class="fas fa-plus me-2"></i>Créer un habit
+                </a>
+                <a href="#" class="btn btn-outline-success quick-action-btn">
+                    <i class="fas fa-file-export me-2"></i>Exporter catalogue
+                </a>
+                <a href="#" class="btn btn-outline-warning quick-action-btn">
+                    <i class="fas fa-edit me-2"></i>Modifier en masse
+                </a>
+                <a href="#" class="btn btn-outline-info quick-action-btn" data-bs-toggle="modal" data-bs-target="#helpModal">
+                    <i class="fas fa-question-circle me-2"></i>Aide catalogue
+                </a>
+            </div>
+        </div>
+
+        <!-- Promotion spéciale -->
+        <div class="card bg-gradient border-0 mt-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="card-body text-white text-center">
+                <h6 class="mb-3"><i class="fas fa-gift me-2"></i>Promotion du mois</h6>
+                <h4 class="mb-2">-20%</h4>
+                <p class="small mb-3">sur les costumes complets</p>
+                <a href="#" class="btn btn-light btn-sm">
+                    <i class="fas fa-arrow-right me-1"></i>Découvrir
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grille des habits -->
+    <div class="col-lg-9">
+        <!-- Barre de contrôle -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted">
+                            Affichage de <strong>{{ habits.start_index }}-{{ habits.end_index }}</strong> 
+                            sur <strong>{{ habits.paginator.count }}</strong> habits
+                        </span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-secondary active" data-view="grid">
+                                <i class="fas fa-th-large"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" data-view="list">
+                                <i class="fas fa-list"></i>
+                            </button>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-sort-amount-down me-1"></i>24
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="?per_page=12">12 par page</a></li>
+                                <li><a class="dropdown-item active" href="?per_page=24">24 par page</a></li>
+                                <li><a class="dropdown-item" href="?per_page=48">48 par page</a></li>
+                                <li><a class="dropdown-item" href="?per_page=100">100 par page</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vue Grille -->
+        <div id="gridView">
+            {% if habits %}
+            <div class="row g-4">
+                {% for habit in habits %}
+                <div class="col-xl-3 col-lg-4 col-md-6">
+                    <div class="catalog-card card">
+                        <!-- Badges -->
+                        <div class="card-badge">
+                            {% if habit.is_new %}
+                            <span class="badge bg-success">Nouveau</span>
+                            {% endif %}
+                            {% if habit.promotion %}
+                            <span class="badge bg-danger">Promo -{{ habit.promotion }}%</span>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Image -->
+                        {% if habit.image %}
+                        <img src="{{ habit.image.url }}" class="card-img-top" alt="{{ habit.nom }}">
+                        {% else %}
+                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                            <i class="fas fa-tshirt fa-3x text-muted"></i>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Overlay au survol -->
+                        <div class="card-overlay">
+                            <div class="overlay-content">
+                                <div class="btn-group">
+                                    <a href="{% url 'catalogue:catalogue_detail' habit.pk %}" class="btn btn-sm btn-light me-2">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="#" class="btn btn-sm btn-light me-2">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="#" class="btn btn-sm btn-light">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Étiquette de prix -->
+                        <div class="price-tag">
+                            {% if habit.promotion %}
+                            <div class="d-flex align-items-center">
+                                <span class="text-decoration-line-through me-2" style="font-size: 0.8rem;">
+                                    {{ habit.prix_standard }} FCFA
+                                </span>
+                                <span>{{ habit.get_promotion_price|floatformat:0 }} FCFA</span>
+                            </div>
+                            {% else %}
+                            {{ habit.prix_standard }} FCFA
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Contenu -->
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title mb-0">{{ habit.nom }}</h5>
+                                <span class="badge bg-light text-dark">
+                                    <i class="fas fa-{{ habit.categorie.icon }} me-1"></i>
+                                    {{ habit.categorie.nom }}
+                                </span>
+                            </div>
+                            
+                            <p class="card-text small text-muted mb-2">
+                                {{ habit.description|truncatechars:60 }}
+                            </p>
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock me-1"></i>
+                                        {{ habit.delai_realisation }} jours
+                                    </small>
+                                </div>
+                                <div>
+                                    {% if habit.niveau_difficulte == 1 %}
+                                    <span class="badge bg-success">Facile</span>
+                                    {% elif habit.niveau_difficulte == 2 %}
+                                    <span class="badge bg-warning">Moyen</span>
+                                    {% elif habit.niveau_difficulte == 3 %}
+                                    <span class="badge bg-danger">Difficile</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="mt-3">
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">
+                                        <i class="fas fa-shopping-cart me-1"></i>
+                                        {{ habit.commandes_count }} commande{{ habit.commandes_count|pluralize }}
+                                    </small>
+                                    <small class="text-muted">
+                                        <i class="fas fa-star text-warning me-1"></i>
+                                        {{ habit.moyenne_notes|floatformat:1 }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Footer avec actions -->
+                        <div class="card-footer bg-white border-top-0 pt-0">
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'commandes:commande_create' %}?habit={{ habit.pk }}" 
+                                   class="btn btn-primary btn-sm">
+                                    <i class="fas fa-cart-plus me-1"></i>Commander
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="fas fa-tshirt"></i>
+                </div>
+                <h4 class="text-muted mb-3">Catalogue vide</h4>
+                <p class="text-muted mb-4">
+                    Aucun habit n'est disponible dans le catalogue pour le moment.
+                    Commencez par ajouter vos premiers modèles.
+                </p>
+                <a href="{% url 'catalogue:catalogue_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter le premier habit
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Vue Liste (cachée par défaut) -->
+        <div id="listView" class="d-none">
+            {% if habits %}
+            <div class="card shadow-sm border-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 60px;"></th>
+                                <th>Habit</th>
+                                <th class="text-center">Catégorie</th>
+                                <th class="text-center">Prix</th>
+                                <th class="text-center">Délai</th>
+                                <th class="text-center">Popularité</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for habit in habits %}
+                            <tr>
+                                <td>
+                                    {% if habit.image %}
+                                    <img src="{{ habit.image.url }}" class="rounded" style="width: 50px; height: 50px; object-fit: cover;" alt="{{ habit.nom }}">
+                                    {% else %}
+                                    <div class="rounded bg-light d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <i class="fas fa-tshirt text-muted"></i>
+                                    </div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div>
+                                        <h6 class="mb-1">{{ habit.nom }}</h6>
+                                        <p class="small text-muted mb-0">{{ habit.description|truncatechars:80 }}</p>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-light text-dark">
+                                        {{ habit.categorie.nom }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="fw-bold">{{ habit.prix_standard }} FCFA</div>
+                                    {% if habit.promotion %}
+                                    <small class="text-danger">-{{ habit.promotion }}%</small>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-info">{{ habit.delai_realisation }} j</span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="d-flex align-items-center justify-content-center">
+                                        <div class="me-2">
+                                            <i class="fas fa-shopping-cart text-primary"></i>
+                                            <span class="ms-1">{{ habit.commandes_count }}</span>
+                                        </div>
+                                        <div>
+                                            <i class="fas fa-star text-warning"></i>
+                                            <span class="ms-1">{{ habit.moyenne_notes|floatformat:1 }}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'catalogue:catalogue_detail' habit.pk %}" 
+                                           class="btn btn-outline-primary" title="Voir">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="#" 
+                                           class="btn btn-outline-warning" title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'commandes:commande_create' %}?habit={{ habit.pk }}" 
+                                           class="btn btn-outline-success" title="Commander">
+                                            <i class="fas fa-cart-plus"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Pagination -->
+        {% if habits.paginator.num_pages > 1 %}
+        <div class="card shadow-sm border-0 mt-4">
+            <div class="card-body">
+                <nav aria-label="Navigation du catalogue">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="small text-muted">
+                            Page {{ habits.number }} sur {{ habits.paginator.num_pages }}
+                        </div>
+                        <ul class="pagination pagination-sm mb-0">
+                            {% if habits.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ habits.previous_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for num in habits.paginator.page_range %}
+                                {% if habits.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                                {% elif num > habits.number|add:'-3' and num < habits.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">{{ num }}</a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if habits.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ habits.next_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ habits.paginator.num_pages }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                        <div class="small text-muted">
+                            {{ habits.paginator.count }} habits au total
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal d'aide -->
+<div class="modal fade" id="helpModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-question-circle me-2"></i>Aide : Gestion du catalogue</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <h6><i class="fas fa-cogs me-2 text-primary"></i>Gestion des prix</h6>
+                                <ul class="small">
+                                    <li>Mettez à jour les prix régulièrement</li>
+                                    <li>Ajoutez des promotions saisonnières</li>
+                                    <li>Différenciez prix standard et VIP</li>
+                                    <li>Incluez le coût des matières premières</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <h6><i class="fas fa-images me-2 text-primary"></i>Photos des habits</h6>
+                                <ul class="small">
+                                    <li>Utilisez des photos haute qualité</li>
+                                    <li>Montrez différents angles</li>
+                                    <li>Ajoutez des photos de détails</li>
+                                    <li>Mettez en avant les finitions</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="alert alert-info">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    <strong>Conseil :</strong> Un catalogue bien organisé augmente les ventes de 30%. 
+                    Mettez régulièrement à jour les photos et descriptions.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion de la vue (grille/liste)
+    const gridView = document.getElementById('gridView');
+    const listView = document.getElementById('listView');
+    const viewButtons = document.querySelectorAll('[data-view]');
+    
+    viewButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const view = this.getAttribute('data-view');
+            
+            // Mettre à jour les boutons actifs
+            viewButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Afficher la vue correspondante
+            if (view === 'grid') {
+                gridView.classList.remove('d-none');
+                listView.classList.add('d-none');
+            } else {
+                gridView.classList.add('d-none');
+                listView.classList.remove('d-none');
+            }
+            
+            // Sauvegarder la préférence
+            localStorage.setItem('catalogViewPreference', view);
+        });
+    });
+    
+    // Restaurer la préférence de vue
+    const savedView = localStorage.getItem('catalogViewPreference') || 'grid';
+    const savedButton = document.querySelector(`[data-view="${savedView}"]`);
+    if (savedButton) savedButton.click();
+    
+    // Recherche en temps réel
+    const searchInput = document.getElementById('searchCatalog');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const cards = document.querySelectorAll('#gridView .col-xl-3');
+            const rows = document.querySelectorAll('#listView tbody tr');
+            
+            let visibleCount = 0;
+            
+            // Filtrer les cartes
+            cards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    card.style.display = '';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            // Filtrer les lignes du tableau
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Afficher un message si aucun résultat
+            if (visibleCount === 0) {
+                const emptyState = document.querySelector('.empty-state');
+                if (!emptyState) {
+                    gridView.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <h4 class="text-muted mb-3">Aucun résultat</h4>
+                            <p class="text-muted mb-4">
+                                Aucun habit ne correspond à votre recherche.
+                                Essayez avec d'autres termes.
+                            </p>
+                            <button class="btn btn-outline-primary" onclick="clearSearch()">
+                                <i class="fas fa-times me-2"></i>Effacer la recherche
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+        });
+    }
+    
+    // Animation des cartes au chargement
+    const cards = document.querySelectorAll('.catalog-card');
+    cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+        card.classList.add('animate__animated', 'animate__fadeInUp');
+    });
+    
+    // Gestion des filtres de catégorie
+    const filterItems = document.querySelectorAll('.filter-item');
+    filterItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            if (this.classList.contains('active')) {
+                e.preventDefault();
+            }
+        });
+    });
+    
+    // Calcul du prix avec promotion
+    function calculatePromotionPrice(basePrice, discount) {
+        return basePrice * (1 - discount / 100);
+    }
+    
+    // Affichage des prix avec formatage
+    const priceElements = document.querySelectorAll('.price-tag');
+    priceElements.forEach(element => {
+        const priceText = element.textContent.trim();
+        const price = parseFloat(priceText.replace(/[^0-9.]/g, ''));
+        if (!isNaN(price)) {
+            element.innerHTML = `<span class="fw-bold">${price.toLocaleString()} FCFA</span>`;
+        }
+    });
+});
+
+function clearSearch() {
+    document.getElementById('searchCatalog').value = '';
+    window.location.reload();
+}
+
+// Animation pour les ajouts récents
+function highlightNewItems() {
+    const newItems = document.querySelectorAll('.badge.bg-success');
+    newItems.forEach(item => {
+        item.classList.add('animate__animated', 'animate__pulse', 'animate__infinite');
+        setTimeout(() => {
+            item.classList.remove('animate__infinite');
+        }, 2000);
+    });
+}
+
+// Initialiser les animations
+setTimeout(highlightNewItems, 1000);
+
+// Gestion des favoris
+function toggleFavorite(habitId) {
+    const heartIcon = document.getElementById(`heart-${habitId}`);
+    const isFavorite = heartIcon.classList.contains('fas');
+    
+    fetch(`/api/catalogue/${habitId}/favorite/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ favorite: !isFavorite })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (isFavorite) {
+                heartIcon.classList.remove('fas', 'text-danger');
+                heartIcon.classList.add('far');
+            } else {
+                heartIcon.classList.remove('far');
+                heartIcon.classList.add('fas', 'text-danger');
+            }
+        }
+    });
+}
+
+// Helper pour récupérer le cookie CSRF
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+
+<!-- Animation CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+{% endblock %}

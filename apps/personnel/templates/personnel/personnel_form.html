@@ -1,0 +1,1494 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Modifier {{ form.instance.prenom }} {{ form.instance.nom }}{% else %}Nouveau Membre du Personnel{% endif %} - TAILOR{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/clients.css' %}">
+<style>
+    /* Styles spécifiques pour le formulaire personnel */
+    .personnel-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .personnel-header::before {
+        content: '';
+        position: absolute;
+        top: -10%;
+        right: -10%;
+        width: 120%;
+        height: 120%;
+        background: rgba(255,255,255,0.1);
+        transform: rotate(30deg);
+    }
+    
+    .employee-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        border: 5px solid white;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        margin: 0 auto 1.5rem;
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .employee-avatar:hover {
+        transform: scale(1.05);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+    }
+    
+    .avatar-initials {
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: white;
+    }
+    
+    .avatar-upload {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        text-align: center;
+        padding: 0.5rem;
+        font-size: 0.8rem;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .employee-avatar:hover .avatar-upload {
+        opacity: 1;
+    }
+    
+    .skills-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .skill-tag {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        margin: 0.25rem;
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .skill-tag:hover {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    .skill-tag.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: #667eea;
+    }
+    
+    .contract-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        border-left: 4px solid #667eea;
+        margin-bottom: 2rem;
+    }
+    
+    .salary-display {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #667eea;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    
+    .salary-period {
+        font-size: 0.9rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .schedule-preview {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 5px;
+        margin-top: 1rem;
+    }
+    
+    .day-cell {
+        padding: 0.5rem;
+        text-align: center;
+        border-radius: 5px;
+        background: #f8f9fa;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .day-cell.active {
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+    }
+    
+    .availability-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .indicator-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+    
+    .form-section-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 2rem;
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 0.5rem;
+    }
+    
+    .form-tab {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        background: none;
+        font-weight: 500;
+        color: #6c757d;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+    
+    .form-tab:hover {
+        color: #667eea;
+    }
+    
+    .form-tab.active {
+        color: #667eea;
+    }
+    
+    .form-tab.active::after {
+        content: '';
+        position: absolute;
+        bottom: -0.5rem;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: #667eea;
+        border-radius: 3px;
+    }
+    
+    .tab-content {
+        display: none;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .form-group-highlight {
+        border-left: 3px solid #667eea;
+        padding-left: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .commission-calculator {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+    }
+    
+    .calculator-result {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #48bb78;
+        text-align: center;
+        margin-top: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'personnel:personnel_list' %}">Personnel</a></li>
+        <li class="breadcrumb-item active">
+            {% if form.instance.pk %}Modifier{% else %}Nouveau membre{% endif %}
+        </li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block page_title %}
+<div class="personnel-header">
+    <div class="text-center">
+        {% if form.instance.pk %}
+        <div class="employee-avatar" onclick="triggerAvatarUpload()">
+            {% if form.instance.photo %}
+            <img src="{{ form.instance.photo.url }}" alt="{{ form.instance.prenom }} {{ form.instance.nom }}" class="w-100 h-100 object-fit-cover">
+            {% else %}
+            <div class="avatar-initials">
+                {{ form.instance.prenom|first|upper }}{{ form.instance.nom|first|upper }}
+            </div>
+            {% endif %}
+            <div class="avatar-upload">
+                <i class="fas fa-camera me-1"></i>Changer la photo
+            </div>
+        </div>
+        {% endif %}
+        
+        <h1 class="h2 mb-2">
+            {% if form.instance.pk %}
+            <i class="fas fa-user-edit me-2"></i>Modifier le profil
+            {% else %}
+            <i class="fas fa-user-plus me-2"></i>Nouveau membre du personnel
+            {% endif %}
+        </h1>
+        <p class="mb-0 opacity-75">
+            {% if form.instance.pk %}
+            Mettez à jour les informations de {{ form.instance.prenom }} {{ form.instance.nom }}
+            {% else %}
+            Ajoutez un nouveau membre à votre équipe
+            {% endif %}
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <form method="post" id="personnelForm" enctype="multipart/form-data" class="needs-validation" novalidate>
+            {% csrf_token %}
+            
+            <!-- Messages d'erreur globaux -->
+            {% if form.errors %}
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle fa-2x me-3"></i>
+                <div>
+                    <h5 class="alert-heading">Veuillez corriger les erreurs suivantes :</h5>
+                    <ul class="mb-0 mt-2">
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                                <li><strong>{{ field.label }} :</strong> {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endif %}
+            
+            <!-- Onglets du formulaire -->
+            <div class="form-section-tabs">
+                <button type="button" class="form-tab active" data-tab="info">
+                    <i class="fas fa-id-card me-2"></i>Informations
+                </button>
+                <button type="button" class="form-tab" data-tab="contract">
+                    <i class="fas fa-file-contract me-2"></i>Contrat
+                </button>
+                <button type="button" class="form-tab" data-tab="skills">
+                    <i class="fas fa-tools me-2"></i>Compétences
+                </button>
+                <button type="button" class="form-tab" data-tab="schedule">
+                    <i class="fas fa-calendar-alt me-2"></i>Disponibilité
+                </button>
+            </div>
+            
+            <!-- Onglet 1: Informations personnelles -->
+            <div id="info-tab" class="tab-content active">
+                <div class="card shadow-lg border-0 mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="fas fa-user-circle me-2"></i>Informations personnelles</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.prenom.id_for_label }}" class="form-label required">
+                                    <i class="fas fa-signature me-1"></i>Prénom
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-user"></i>
+                                    </span>
+                                    {{ form.prenom }}
+                                </div>
+                                <div class="invalid-feedback">
+                                    Veuillez saisir un prénom.
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.nom.id_for_label }}" class="form-label required">
+                                    <i class="fas fa-signature me-1"></i>Nom
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-user"></i>
+                                    </span>
+                                    {{ form.nom }}
+                                </div>
+                                <div class="invalid-feedback">
+                                    Veuillez saisir un nom.
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.genre.id_for_label }}" class="form-label">
+                                    <i class="fas fa-venus-mars me-1"></i>Genre
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-user-tag"></i>
+                                    </span>
+                                    {{ form.genre }}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.date_naissance.id_for_label }}" class="form-label">
+                                    <i class="fas fa-calendar-plus me-1"></i>Date de naissance
+                                </label>
+                                <div class="input-group">
+                                    {{ form.date_naissance }}
+                                    <span class="input-group-text">
+                                        <i class="fas fa-calendar-alt"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.lieu_naissance.id_for_label }}" class="form-label">
+                                    <i class="fas fa-map-marker-alt me-1"></i>Lieu de naissance
+                                </label>
+                                {{ form.lieu_naissance }}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.cin.id_for_label }}" class="form-label">
+                                    <i class="fas fa-id-card me-1"></i>CIN / Passeport
+                                </label>
+                                {{ form.cin }}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.numero_securite_sociale.id_for_label }}" class="form-label">
+                                    <i class="fas fa-shield-alt me-1"></i>N° Sécurité Sociale
+                                </label>
+                                {{ form.numero_securite_sociale }}
+                            </div>
+                        </div>
+                        
+                        <!-- Champ photo caché -->
+                        {{ form.photo }}
+                    </div>
+                </div>
+                
+                <!-- Coordonnées -->
+                <div class="card shadow-lg border-0 mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="fas fa-address-book me-2"></i>Coordonnées</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.telephone.id_for_label }}" class="form-label">
+                                    <i class="fas fa-phone me-1"></i>Téléphone
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-mobile-alt"></i>
+                                    </span>
+                                    {{ form.telephone }}
+                                </div>
+                                <div class="invalid-feedback">
+                                    Veuillez saisir un numéro de téléphone valide.
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.email.id_for_label }}" class="form-label">
+                                    <i class="fas fa-envelope me-1"></i>Email
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-at"></i>
+                                    </span>
+                                    {{ form.email }}
+                                </div>
+                                <div class="invalid-feedback">
+                                    Veuillez saisir une adresse email valide.
+                                </div>
+                            </div>
+                            
+                            <div class="col-12 mb-3">
+                                <label for="{{ form.adresse.id_for_label }}" class="form-label">
+                                    <i class="fas fa-map-marker-alt me-1"></i>Adresse
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-home"></i>
+                                    </span>
+                                    {{ form.adresse }}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.ville.id_for_label }}" class="form-label">
+                                    <i class="fas fa-city me-1"></i>Ville
+                                </label>
+                                {{ form.ville }}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.code_postal.id_for_label }}" class="form-label">
+                                    <i class="fas fa-mail-bulk me-1"></i>Code postal
+                                </label>
+                                {{ form.code_postal }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Onglet 2: Contrat -->
+            <div id="contract-tab" class="tab-content">
+                <div class="card shadow-lg border-0 mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="fas fa-file-signature me-2"></i>Informations contractuelles</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.role.id_for_label }}" class="form-label required">
+                                    <i class="fas fa-briefcase me-1"></i>Rôle
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-user-tie"></i>
+                                    </span>
+                                    {{ form.role }}
+                                </div>
+                                <div class="invalid-feedback">
+                                    Veuillez sélectionner un rôle.
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.type_contrat.id_for_label }}" class="form-label required">
+                                    <i class="fas fa-file-contract me-1"></i>Type de contrat
+                                </label>
+                                {{ form.type_contrat }}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.date_embauche.id_for_label }}" class="form-label required">
+                                    <i class="fas fa-calendar-plus me-1"></i>Date d'embauche
+                                </label>
+                                <div class="input-group">
+                                    {{ form.date_embauche }}
+                                    <span class="input-group-text">
+                                        <i class="fas fa-calendar-alt"></i>
+                                    </span>
+                                </div>
+                                <div class="invalid-feedback">
+                                    Veuillez saisir une date d'embauche.
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.date_fin_contrat.id_for_label }}" class="form-label">
+                                    <i class="fas fa-calendar-minus me-1"></i>Date fin de contrat
+                                </label>
+                                <div class="input-group">
+                                    {{ form.date_fin_contrat }}
+                                    <span class="input-group-text">
+                                        <i class="fas fa-calendar-alt"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Salaire -->
+                        <div class="contract-card">
+                            <h6><i class="fas fa-money-bill-wave me-2"></i>Rémunération</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.salaire_base.id_for_label }}" class="form-label required">
+                                        Salaire de base
+                                    </label>
+                                    <div class="input-group">
+                                        {{ form.salaire }}
+                                        <span class="input-group-text">FCFA</span>
+                                    </div>
+                                    <div class="form-text">
+                                        Salaire mensuel brut
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.type_salaire.id_for_label }}" class="form-label">
+                                        Périodicité
+                                    </label>
+                                    {{ form.type_salaire }}
+                                </div>
+                                
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.prime_fixe.id_for_label }}" class="form-label">
+                                        Prime fixe
+                                    </label>
+                                    <div class="input-group">
+                                        {{ form.prime_fixe }}
+                                        <span class="input-group-text">FCFA</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Calculateur de commission -->
+                            <div class="commission-calculator">
+                                <h6><i class="fas fa-calculator me-2"></i>Calculateur de commission</h6>
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <label class="form-label small">Chiffre d'affaires mensuel</label>
+                                        <input type="number" class="form-control form-control-sm" id="caInput" placeholder="Saisir le CA">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button type="button" class="btn btn-sm btn-outline-primary w-100 h-100" onclick="calculateCommission()">
+                                            Calculer
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="calculator-result" id="commissionResult">
+                                    --
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Statut -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.statut_emploi.id_for_label }}" class="form-label required">
+                                    <i class="fas fa-user-check me-1"></i>Statut d'emploi
+                                </label>
+                                {{ form.statut_emploi }}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.niveau_etude.id_for_label }}" class="form-label">
+                                    <i class="fas fa-graduation-cap me-1"></i>Niveau d'étude
+                                </label>
+                                {{ form.niveau_etude }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Onglet 3: Compétences -->
+            <div id="skills-tab" class="tab-content">
+                <div class="card shadow-lg border-0 mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="fas fa-tools me-2"></i>Compétences et qualifications</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="skills-section">
+                            <h6 class="mb-3"><i class="fas fa-star me-2"></i>Compétences techniques</h6>
+                            <div class="mb-4">
+                                {% for skill in skills_list %}
+                                <span class="skill-tag" data-skill="{{ skill }}">
+                                    {{ skill }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="customSkill" class="form-label">Ajouter une compétence</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="customSkill" placeholder="Ex: Patronage, Finitions...">
+                                    <button class="btn btn-outline-primary" type="button" onclick="addCustomSkill()">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <input type="hidden" name="competences" id="competencesField" value="{{ form.competences.value|default:'' }}">
+                        </div>
+                        
+                        <!-- Expérience -->
+                        <div class="mb-4">
+                            <label for="{{ form.annees_experience.id_for_label }}" class="form-label">
+                                <i class="fas fa-history me-1"></i>Années d'expérience
+                            </label>
+                            <div class="input-group">
+                                {{ form.annees_experience }}
+                                <span class="input-group-text">années</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Formations -->
+                        <div class="mb-3">
+                            <label for="{{ form.formations_notes.id_for_label }}" class="form-label">
+                                <i class="fas fa-certificate me-1"></i>Formations & Certifications
+                            </label>
+                            {{ form.formations_notes }}
+                            <div class="form-text">
+                                Listez les formations et certifications obtenues
+                            </div>
+                        </div>
+                        
+                        <!-- Spécialités -->
+                        <div class="mb-3">
+                            <label for="{{ form.specialites.id_for_label }}" class="form-label">
+                                <i class="fas fa-award me-1"></i>Spécialités
+                            </label>
+                            {{ form.specialites }}
+                            <div class="form-text">
+                                Domaines d'expertise spécifiques
+                            </div>
+                        </div>
+                        
+                        <!-- Notes -->
+                        <div class="mb-3">
+                            <label for="{{ form.notes_competences.id_for_label }}" class="form-label">
+                                <i class="fas fa-sticky-note me-1"></i>Notes sur les compétences
+                            </label>
+                            {{ form.notes_competences }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Onglet 4: Disponibilité -->
+            <div id="schedule-tab" class="tab-content">
+                <div class="card shadow-lg border-0 mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Disponibilité et horaires</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Jours de travail -->
+                        <div class="mb-4">
+                            <label class="form-label mb-3">
+                                <i class="fas fa-calendar-day me-1"></i>Jours de travail
+                            </label>
+                            <div class="schedule-preview">
+                                <div class="day-cell" data-day="1">Lun</div>
+                                <div class="day-cell" data-day="2">Mar</div>
+                                <div class="day-cell" data-day="3">Mer</div>
+                                <div class="day-cell" data-day="4">Jeu</div>
+                                <div class="day-cell" data-day="5">Ven</div>
+                                <div class="day-cell" data-day="6">Sam</div>
+                                <div class="day-cell" data-day="0">Dim</div>
+                            </div>
+                            <input type="hidden" name="jours_travail" id="joursTravailField" value="{{ form.jours_travail.value|default:'1,2,3,4,5' }}">
+                        </div>
+                        
+                        <!-- Horaires -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.heure_debut.id_for_label }}" class="form-label">
+                                    <i class="fas fa-clock me-1"></i>Heure de début
+                                </label>
+                                <div class="input-group">
+                                    {{ form.heure_debut }}
+                                    <span class="input-group-text">
+                                        <i class="fas fa-sun"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.heure_fin.id_for_label }}" class="form-label">
+                                    <i class="fas fa-clock me-1"></i>Heure de fin
+                                </label>
+                                <div class="input-group">
+                                    {{ form.heure_fin }}
+                                    <span class="input-group-text">
+                                        <i class="fas fa-moon"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Disponibilité -->
+                        <div class="mb-4">
+                            <label for="{{ form.disponibilite.id_for_label }}" class="form-label">
+                                <i class="fas fa-user-clock me-1"></i>Disponibilité
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-check-circle"></i>
+                                </span>
+                                {{ form.disponibilites }}
+                            </div>
+                        </div>
+                        
+                        <!-- Congés -->
+                        <div class="contract-card">
+                            <h6><i class="fas fa-umbrella-beach me-2"></i>Congés et absences</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.jours_conges_restants.id_for_label }}" class="form-label">
+                                        Jours de congés restants
+                                    </label>
+                                    <div class="input-group">
+                                        {{ form.jours_conges_restants }}
+                                        <span class="input-group-text">jours</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.jours_maladie.id_for_label }}" class="form-label">
+                                        Jours maladie pris
+                                    </label>
+                                    <div class="input-group">
+                                        {{ form.jours_maladies }}
+                                        <span class="input-group-text">jours</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Notes horaires -->
+                        <div class="mb-3">
+                            <label for="{{ form.notes_horaires.id_for_label }}" class="form-label">
+                                <i class="fas fa-clipboard-list me-1"></i>Notes sur les horaires
+                            </label>
+                            {{ form.notes_horaires }}
+                            <div class="form-text">
+                                Informations importantes concernant les horaires ou disponibilités
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Boutons d'action -->
+            <div class="d-flex justify-content-between align-items-center pt-4 border-top">
+                <div>
+                    <a href="{% url 'personnel:personnel_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Retour à la liste
+                    </a>
+                </div>
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-success btn-lg px-4">
+                        <i class="fas fa-save me-2"></i>
+                        {% if form.instance.pk %}Mettre à jour{% else %}Enregistrer{% endif %}
+                    </button>
+                    {% if not form.instance.pk %}
+                    <button type="submit" name="save_and_add_another" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus-circle me-2"></i>Enregistrer et ajouter
+                    </button>
+                    {% endif %}
+                    <button type="button" class="btn btn-outline-info btn-lg" onclick="printEmployeeCard()">
+                        <i class="fas fa-print me-2"></i>Imprimer fiche
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal de prévisualisation -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-id-card me-2"></i>Fiche employé
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="previewContent">
+                <!-- Contenu généré dynamiquement -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                <button type="button" class="btn btn-primary" onclick="printPreview()">
+                    <i class="fas fa-print me-2"></i>Imprimer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion des onglets
+    const tabs = document.querySelectorAll('.form-tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const tabId = this.getAttribute('data-tab');
+            
+            // Mettre à jour les onglets actifs
+            tabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Afficher le contenu correspondant
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+                if (content.id === `${tabId}-tab`) {
+                    content.classList.add('active');
+                }
+            });
+        });
+    });
+    
+    // Date pickers
+    const dateFields = ['date_naissance', 'date_embauche', 'date_fin_contrat'];
+    dateFields.forEach(fieldName => {
+        const field = document.getElementById('id_' + fieldName);
+        if (field && !field.type === 'date') {
+            flatpickr(field, {
+                dateFormat: "d/m/Y",
+                locale: "fr",
+                disableMobile: "true"
+            });
+        }
+    });
+    
+    // Auto-remplir la date d'embauche si vide
+    const dateEmbaucheField = document.getElementById('id_date_embauche');
+    if (dateEmbaucheField && !dateEmbaucheField.value) {
+        dateEmbaucheField.value = new Date().toLocaleDateString('fr-FR');
+    }
+    
+    // Gestion des compétences
+    const skillTags = document.querySelectorAll('.skill-tag');
+    const competencesField = document.getElementById('competencesField');
+    let selectedSkills = new Set(competencesField.value ? competencesField.value.split(',') : []);
+    
+    skillTags.forEach(tag => {
+        const skill = tag.getAttribute('data-skill');
+        
+        // Marquer les compétences déjà sélectionnées
+        if (selectedSkills.has(skill)) {
+            tag.classList.add('active');
+        }
+        
+        tag.addEventListener('click', function() {
+            this.classList.toggle('active');
+            
+            if (this.classList.contains('active')) {
+                selectedSkills.add(skill);
+            } else {
+                selectedSkills.delete(skill);
+            }
+            
+            // Mettre à jour le champ caché
+            competencesField.value = Array.from(selectedSkills).join(',');
+        });
+    });
+    
+    // Jours de travail
+    const dayCells = document.querySelectorAll('.day-cell');
+    const joursTravailField = document.getElementById('joursTravailField');
+    let selectedDays = new Set(joursTravailField.value ? joursTravailField.value.split(',') : []);
+    
+    dayCells.forEach(cell => {
+        const day = cell.getAttribute('data-day');
+        
+        // Marquer les jours déjà sélectionnés (par défaut: Lundi à Vendredi)
+        if (selectedDays.has(day)) {
+            cell.classList.add('active');
+        }
+        
+        cell.addEventListener('click', function() {
+            this.classList.toggle('active');
+            
+            if (this.classList.contains('active')) {
+                selectedDays.add(day);
+            } else {
+                selectedDays.delete(day);
+            }
+            
+            // Mettre à jour le champ caché
+            joursTravailField.value = Array.from(selectedDays).join(',');
+        });
+    });
+    
+    // Validation du formulaire
+    const form = document.getElementById('personnelForm');
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        
+        // Validation personnalisée
+        if (!validateEmployeeForm()) {
+            event.preventDefault();
+        }
+        
+        form.classList.add('was-validated');
+    });
+    
+    // Calcul automatique de l'âge
+    const dateNaissanceField = document.getElementById('{{ form.date_naissance.id_for_label }}');
+    if (dateNaissanceField) {
+        dateNaissanceField.addEventListener('change', calculateAge);
+    }
+    
+    // Formatage du téléphone
+    const phoneField = document.getElementById('{{ form.telephone.id_for_label }}');
+    if (phoneField) {
+        phoneField.addEventListener('input', formatPhoneNumber);
+    }
+    
+    // Gestion des salaires
+    const salaireBaseField = document.getElementById('{{ form.salaire_base.id_for_label }}');
+    const typeSalaireField = document.getElementById('{{ form.type_salaire.id_for_label }}');
+    const tauxCommissionField = document.getElementById('{{ form.taux_commission.id_for_label }}');
+    
+    if (salaireBaseField) {
+        salaireBaseField.addEventListener('input', formatCurrency);
+        salaireBaseField.addEventListener('blur', calculateNetSalary);
+    }
+    
+    if (typeSalaireField) {
+        typeSalaireField.addEventListener('change', updateSalaryPreview);
+    }
+});
+
+    // Fonctions pour le formulaire
+    function triggerAvatarUpload() {
+        const photoInput = document.getElementById('{{ form.photo.id_for_label }}');
+        if (photoInput) {
+            photoInput.click();
+            photoInput.onchange = function(event) {
+                previewAvatar(event.target.files[0]);
+            };
+        }
+    }
+
+function previewAvatar(file) {
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const avatar = document.querySelector('.employee-avatar');
+            avatar.innerHTML = `
+                <img src="${e.target.result}" alt="Preview" class="w-100 h-100 object-fit-cover">
+                <div class="avatar-upload">
+                    <i class="fas fa-camera me-1"></i>Changer la photo
+                </div>
+            `;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function addCustomSkill() {
+    const skillInput = document.getElementById('customSkill');
+    const skill = skillInput.value.trim();
+    
+    if (skill) {
+        const skillTagsContainer = document.querySelector('.skills-section .mb-4');
+        const competencesField = document.getElementById('competencesField');
+        let selectedSkills = new Set(competencesField.value ? competencesField.value.split(',') : []);
+        
+        // Créer un nouveau tag
+        const newTag = document.createElement('span');
+        newTag.className = 'skill-tag active';
+        newTag.textContent = skill;
+        newTag.setAttribute('data-skill', skill);
+        
+        // Gestion du clic
+        newTag.addEventListener('click', function() {
+            this.classList.toggle('active');
+            
+            if (this.classList.contains('active')) {
+                selectedSkills.add(skill);
+            } else {
+                selectedSkills.delete(skill);
+            }
+            
+            competencesField.value = Array.from(selectedSkills).join(',');
+        });
+        
+        skillTagsContainer.appendChild(newTag);
+        selectedSkills.add(skill);
+        competencesField.value = Array.from(selectedSkills).join(',');
+        skillInput.value = '';
+        
+        // Animation
+        newTag.classList.add('animate__animated', 'animate__bounceIn');
+        setTimeout(() => {
+            newTag.classList.remove('animate__animated', 'animate__bounceIn');
+        }, 1000);
+    }
+}
+
+function calculateCommission() {
+    const caInput = document.getElementById('caInput');
+    const tauxCommissionField = document.getElementById('{{ form.taux_commission.id_for_label }}');
+    const resultElement = document.getElementById('commissionResult');
+    
+    if (caInput && tauxCommissionField && resultElement) {
+        const ca = parseFloat(caInput.value) || 0;
+        const taux = parseFloat(tauxCommissionField.value) || 0;
+        const commission = (ca * taux / 100).toFixed(2);
+        
+        resultElement.innerHTML = `
+            <div class="text-center">
+                <div class="small text-muted">Commission estimée</div>
+                <div>${commission.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} FCFA</div>
+                <div class="small text-muted">Sur un CA de ${ca.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} FCFA</div>
+            </div>
+        `;
+    }
+}
+
+function calculateAge() {
+    const dateNaissanceField = document.getElementById('{{ form.date_naissance.id_for_label }}');
+    if (dateNaissanceField && dateNaissanceField.value) {
+        const birthDate = new Date(dateNaissanceField.value);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        
+        // Afficher l'âge dans une info-bulle
+        const ageBadge = document.getElementById('ageBadge');
+        if (!ageBadge) {
+            const container = dateNaissanceField.parentElement;
+            const badge = document.createElement('div');
+            badge.id = 'ageBadge';
+            badge.className = 'mt-1 small';
+            badge.innerHTML = `<span class="badge bg-info">${age} ans</span>`;
+            container.appendChild(badge);
+        } else {
+            ageBadge.innerHTML = `<span class="badge bg-info">${age} ans</span>`;
+        }
+    }
+}
+
+function formatPhoneNumber() {
+    const phoneField = document.getElementById('{{ form.telephone.id_for_label }}');
+    if (phoneField) {
+        let value = phoneField.value.replace(/\D/g, '');
+        
+        if (value.length > 0) {
+            if (value.startsWith('0')) {
+                value = value.replace(/^0/, '+33 ');
+            } else if (!value.startsWith('+')) {
+                value = '+33 ' + value.substring(1);
+            }
+            
+            // Formatage avec espacements
+            if (value.length > 3) {
+                value = value.replace(/(\+\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/, '$1 $2 $3 $4 $5');
+            }
+        }
+        
+        phoneField.value = value;
+    }
+}
+
+function formatCurrency(event) {
+    const input = event.target;
+    let value = input.value.replace(/\D/g, '');
+    
+    if (value) {
+        value = parseInt(value, 10).toLocaleString('fr-FR');
+        input.value = value;
+    }
+}
+
+function calculateNetSalary() {
+    const salaireBaseField = document.getElementById('{{ form.salaire_base.id_for_label }}');
+    if (salaireBaseField && salaireBaseField.value) {
+        const brut = parseFloat(salaireBaseField.value.replace(/\s/g, '')) || 0;
+        // Estimation des charges (environ 22% pour le salarié)
+        const net = (brut * 0.78).toFixed(2);
+        
+        const netBadge = document.getElementById('netSalaryBadge');
+        if (!netBadge) {
+            const container = salaireBaseField.parentElement;
+            const badge = document.createElement('div');
+            badge.id = 'netSalaryBadge';
+            badge.className = 'mt-1 small';
+            badge.innerHTML = `
+                <span class="badge bg-success">
+                    Net estimé : ${parseFloat(net).toLocaleString('fr-FR')} FCFA
+                </span>
+            `;
+            container.appendChild(badge);
+        } else {
+            netBadge.innerHTML = `
+                <span class="badge bg-success">
+                    Net estimé : ${parseFloat(net).toLocaleString('fr-FR')} FCFA
+                </span>
+            `;
+        }
+    }
+}
+
+function updateSalaryPreview() {
+    const salaireBaseField = document.getElementById('{{ form.salaire_base.id_for_label }}');
+    const typeSalaireField = document.getElementById('{{ form.type_salaire.id_for_label }}');
+    const salaryDisplay = document.querySelector('.salary-display');
+    
+    if (salaireBaseField && typeSalaireField && salaryDisplay) {
+        const brut = parseFloat(salaireBaseField.value.replace(/\s/g, '')) || 0;
+        const type = typeSalaireField.value;
+        let montant = brut;
+        let periode = 'mois';
+        
+        switch(type) {
+            case 'horaire':
+                // Estimation basée sur 35h/semaine * 4.33 semaines
+                montant = brut * 35 * 4.33;
+                periode = 'mois (est.)';
+                break;
+            case 'journalier':
+                montant = brut * 22; // 22 jours travaillés en moyenne
+                periode = 'mois (est.)';
+                break;
+            case 'hebdomadaire':
+                montant = brut * 4.33;
+                periode = 'mois (est.)';
+                break;
+            case 'mensuel':
+                montant = brut;
+                periode = 'mois';
+                break;
+            case 'annuel':
+                montant = brut / 12;
+                periode = 'mois (moy.)';
+                break;
+        }
+        
+        salaryDisplay.textContent = montant.toLocaleString('fr-FR', { 
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2 
+        });
+        
+        document.querySelector('.salary-period').textContent = `${periode}`;
+    }
+}
+
+function validateEmployeeForm() {
+    let isValid = true;
+    const errors = [];
+    
+    // Validation du téléphone
+    const phoneField = document.getElementById('{{ form.telephone.id_for_label }}');
+    if (phoneField && phoneField.value) {
+        const phoneRegex = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/;
+        if (!phoneRegex.test(phoneField.value.replace(/\s/g, ''))) {
+            errors.push("Le numéro de téléphone n'est pas valide");
+            phoneField.classList.add('is-invalid');
+            isValid = false;
+        }
+    }
+    
+    // Validation de l'email
+    const emailField = document.getElementById('{{ form.email.id_for_label }}');
+    if (emailField && emailField.value) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(emailField.value)) {
+            errors.push("L'adresse email n'est pas valide");
+            emailField.classList.add('is-invalid');
+            isValid = false;
+        }
+    }
+    
+    // Validation des dates
+    const dateEmbaucheField = document.getElementById('{{ form.date_embauche.id_for_label }}');
+    const dateFinContratField = document.getElementById('{{ form.date_fin_contrat.id_for_label }}');
+    
+    if (dateEmbaucheField && dateFinContratField && 
+        dateEmbaucheField.value && dateFinContratField.value) {
+        const debut = new Date(dateEmbaucheField.value);
+        const fin = new Date(dateFinContratField.value);
+        
+        if (fin < debut) {
+            errors.push("La date de fin de contrat ne peut pas être antérieure à la date d'embauche");
+            dateFinContratField.classList.add('is-invalid');
+            isValid = false;
+        }
+    }
+    
+    // Afficher les erreurs
+    if (errors.length > 0) {
+        showFormErrors(errors);
+    }
+    
+    return isValid;
+}
+
+function showFormErrors(errors) {
+    let errorContainer = document.getElementById('customErrors');
+    
+    if (!errorContainer) {
+        errorContainer = document.createElement('div');
+        errorContainer.id = 'customErrors';
+        errorContainer.className = 'alert alert-danger alert-dismissible fade show';
+        errorContainer.innerHTML = `
+            <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+            <div>
+                <h5 class="alert-heading">Erreurs de validation :</h5>
+                <ul class="mb-0 mt-2" id="errorList"></ul>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        form.prepend(errorContainer);
+    }
+    
+    const errorList = document.getElementById('errorList');
+    errorList.innerHTML = '';
+    
+    errors.forEach(error => {
+        const li = document.createElement('li');
+        li.textContent = error;
+        errorList.appendChild(li);
+    });
+}
+
+function printEmployeeCard() {
+    const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+    const previewContent = document.getElementById('previewContent');
+    
+    // Générer le contenu de prévisualisation
+    previewContent.innerHTML = generateEmployeeCard();
+    modal.show();
+}
+
+function generateEmployeeCard() {
+    const prenom = document.getElementById('{{ form.prenom.id_for_label }}')?.value || '';
+    const nom = document.getElementById('{{ form.nom.id_for_label }}')?.value || '';
+    const role = document.getElementById('{{ form.role.id_for_label }}')?.value || '';
+    const telephone = document.getElementById('{{ form.telephone.id_for_label }}')?.value || '';
+    const dateEmbauche = document.getElementById('{{ form.date_embauche.id_for_label }}')?.value || '';
+    
+    return `
+        <div class="employee-card-preview p-4">
+            <div class="text-center mb-4">
+                <div class="employee-avatar mx-auto mb-3">
+                    <div class="avatar-initials" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        ${prenom.charAt(0).toUpperCase()}${nom.charAt(0).toUpperCase()}
+                    </div>
+                </div>
+                <h2 class="mb-1">${prenom} ${nom}</h2>
+                <div class="badge bg-primary fs-6 mb-3">${role}</div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h6><i class="fas fa-id-card me-2"></i>Informations</h6>
+                    <table class="table table-sm">
+                        <tr><td>Téléphone :</td><td><strong>${telephone}</strong></td></tr>
+                        <tr><td>Date d'embauche :</td><td><strong>${dateEmbauche}</strong></td></tr>
+                        <tr><td>Statut :</td><td><span class="badge bg-success">Actif</span></td></tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h6><i class="fas fa-calendar-alt me-2"></i>Horaires</h6>
+                    <div class="schedule-preview">
+                        ${generateSchedulePreview()}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <h6><i class="fas fa-qrcode me-2"></i>Code employé</h6>
+                <div class="text-center">
+                    <div id="employeeQRCode"></div>
+                    <div class="small text-muted mt-2">Scan pour accéder au profil</div>
+                </div>
+            </div>
+        </div>
+        
+        <style>
+            .employee-card-preview {
+                background: white;
+                border-radius: 10px;
+            }
+            
+            @media print {
+                .modal-footer { display: none !important; }
+                body * { visibility: hidden; }
+                .modal-content, .modal-content * { visibility: visible; }
+                .modal-content { position: absolute; left: 0; top: 0; }
+            }
+        </style>
+    `;
+}
+
+function generateSchedulePreview() {
+    const dayCells = document.querySelectorAll('.day-cell');
+    let html = '';
+    
+    dayCells.forEach(cell => {
+        const day = cell.textContent;
+        const isActive = cell.classList.contains('active');
+        html += `
+            <div class="day-cell ${isActive ? 'active' : ''}">
+                ${day}
+            </div>
+        `;
+    });
+    
+    return html;
+}
+
+function printPreview() {
+    window.print();
+}
+
+// Initialisation après le chargement
+window.addEventListener('load', function() {
+    // Initialiser Flatpickr pour les champs d'heure
+    const timeFields = ['heure_debut', 'heure_fin'];
+    timeFields.forEach(fieldName => {
+        const field = document.getElementById('id_' + fieldName);
+        if (field) {
+            flatpickr(field, {
+                enableTime: true,
+                noCalendar: true,
+                dateFormat: "H:i",
+                time_24hr: true,
+                minuteIncrement: 15
+            });
+        }
+    });
+    
+    // Mettre à jour l'affichage du salaire
+    updateSalaryPreview();
+    
+    // Générer les initiales pour l'avatar
+    const prenomField = document.getElementById('{{ form.prenom.id_for_label }}');
+    const nomField = document.getElementById('{{ form.nom.id_for_label }}');
+    
+    function updateAvatarInitials() {
+        const prenom = prenomField?.value || '';
+        const nom = nomField?.value || '';
+        const initials = document.querySelector('.avatar-initials');
+        
+        if (initials && prenom && nom) {
+            initials.textContent = `${prenom.charAt(0).toUpperCase()}${nom.charAt(0).toUpperCase()}`;
+        }
+    }
+    
+    if (prenomField) prenomField.addEventListener('input', updateAvatarInitials);
+    if (nomField) nomField.addEventListener('input', updateAvatarInitials);
+});
+
+// Détecter les changements dans le formulaire
+let formChanged = false;
+const formElements = document.querySelectorAll('#personnelForm input, #personnelForm select, #personnelForm textarea');
+formElements.forEach(element => {
+    element.addEventListener('change', function() {
+        formChanged = true;
+    });
+});
+
+// Avertir avant de quitter si des changements non sauvegardés
+const submitButtons = document.querySelectorAll('#personnelForm button[type="submit"]');
+submitButtons.forEach(btn => {
+    btn.addEventListener('click', function() {
+        formChanged = false;
+    });
+});
+
+window.addEventListener('beforeunload', function(e) {
+    if (formChanged) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+});
+
+// Sauvegarder automatiquement après 30 secondes d'inactivité
+let saveTimeout;
+formElements.forEach(element => {
+    element.addEventListener('input', function() {
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(function() {
+            if (formChanged) {
+                console.log('Auto-save triggered...');
+                // Ici, vous pourriez implémenter une sauvegarde automatique via AJAX
+            }
+        }, 30000); // 30 secondes
+    });
+});
+</script>
+
+    <!-- Inclure Flatpickr pour les sélecteurs de date et heure --> 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://npmcdn.com/flatpickr/dist/l10n/fr.js"></script>
+
+<!-- Inclure animate.css pour les animations -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+
+<!-- Script pour générer les codes QR -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator/qrcode.min.js"></script>
+
+<script>
+// Générer le QR code pour la carte employé
+function generateQRCode(content, elementId) {
+    const qr = qrcode(0, 'M');
+    qr.addData(content);
+    qr.make();
+    const qrElement = document.getElementById(elementId);
+    if (qrElement) {
+        qrElement.innerHTML = qr.createImgTag(5);
+    }
+}
+
+// Lorsque la modal s'affiche, générer le QR code
+document.getElementById('previewModal').addEventListener('shown.bs.modal', function() {
+    const employeeId = '{{ form.instance.pk|default:"NEW" }}';
+    const qrContent = `${window.location.origin}/personnel/${employeeId}/`;
+    generateQRCode(qrContent, 'employeeQRCode');
+});
+</script>
+{% endblock %}
