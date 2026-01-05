@@ -442,11 +442,11 @@
                 </div>
                 
                 <div class="template-info">
-                    {% if formation.formateur %}
+                    {% if formation.instructeur %}
                     <div class="info-item">
                         <i class="fas fa-user" style="color: #4299e1;"></i>
                         <span class="info-label">Formateur:</span>
-                        <span class="info-value">{{ formation.formateur }}</span>
+                        <span class="info-value">{{ formation.instructeur.prenom }} {{ formation.instructeur.nom }}</span>
                     </div>
                     {% endif %}
                     

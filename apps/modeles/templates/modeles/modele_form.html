@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}{% if modele %}Modifier{% else %}Ajouter{% endif %} Modèle{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <h1 class="page-title mb-4">
+                {% if modele %}
+                    <i class="fas fa-edit"></i> Modifier le Modèle
+                {% else %}
+                    <i class="fas fa-plus"></i> Ajouter un Modèle
+                {% endif %}
+            </h1>
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="nom" class="form-label">Nom <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="nom" name="nom" value="{{ modele.nom }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="type_habit" class="form-label">Type d'habit <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="type_habit" name="type_habit" value="{{ modele.type_habit }}" placeholder="Ex: Chemise, Pantalon..." required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="difficulte" class="form-label">Difficulté</label>
+                                <select class="form-control" id="difficulte" name="difficulte">
+                                    {% for code, label in difficultes %}
+                                        <option value="{{ code }}" {% if modele.difficulte == code %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="temps_realisation_heures" class="form-label">Temps de réalisation (heures)</label>
+                                <input type="number" class="form-control" id="temps_realisation_heures" name="temps_realisation_heures" value="{{ modele.temps_realisation_heures }}">
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="prix_main_oeuvre" class="form-label">Prix main d'œuvre (€) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="prix_main_oeuvre" name="prix_main_oeuvre" step="0.01" value="{{ modele.prix_main_oeuvre }}" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3">{{ modele.description }}</textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description_technique" class="form-label">Détails Techniques</label>
+                            <textarea class="form-control" id="description_technique" name="description_technique" rows="4" placeholder="Mesures, instructions de confection...">{{ modele.description_technique }}</textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="image" class="form-label">Image</label>
+                            {% if modele.image %}
+                                <div class="mb-2">
+                                    <img src="{{ modele.image.url }}" alt="{{ modele.nom }}" style="max-width: 150px;">
+                                </div>
+                            {% endif %}
+                            <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> {% if modele %}Modifier{% else %}Ajouter{% endif %}
+                            </button>
+                            <a href="{% url 'modeles:modele_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

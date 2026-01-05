@@ -360,10 +360,10 @@
                 <span class="detail-value">{{ formation.type_formation }}</span>
             </div>
             {% endif %}
-            {% if formation.formateur %}
+            {% if formation.instructeur %}
             <div class="detail-item">
                 <span class="detail-label">Formateur</span>
-                <span class="detail-value">{{ formation.formateur }}</span>
+                <span class="detail-value">{{ formation.instructeur.prenom }} {{ formation.instructeur.nom }}</span>
             </div>
             {% endif %}
             {% if formation.lieu %}

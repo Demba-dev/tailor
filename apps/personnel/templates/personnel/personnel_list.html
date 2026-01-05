@@ -486,12 +486,12 @@
                     
                     <div class="artisan-metrics mb-3">
                         <div class="metric-item">
-                            <div class="metric-value">{{ artisan.commandes_encours }}</div>
-                            <div class="metric-label">En cours</div>
+                            <div class="metric-value">{{ artisan.annees_experience|default:"-" }}</div>
+                            <div class="metric-label">Années d'exp</div>
                         </div>
                         <div class="metric-item">
-                            <div class="metric-value">{{ artisan.taux_reussite|default:"-" }}%</div>
-                            <div class="metric-label">Réussite</div>
+                            <div class="metric-value">{{ artisan.get_role_display }}</div>
+                            <div class="metric-label">Rôle</div>
                         </div>
                         <div class="metric-item">
                             <div class="metric-value">{{ artisan.note_moyenne|default:"-" }}/5</div>
@@ -540,7 +540,7 @@
                     <th>Rôle</th>
                     <th>Spécialité</th>
                     <th>Disponibilité</th>
-                    <th>Commandes</th>
+                    <th>Actif</th>
                     <th>Expérience</th>
                     <th>Actions</th>
                 </tr>
@@ -587,8 +587,11 @@
                     </td>
                     <td>
                         <div class="small">
-                            <div>En cours: <strong>{{ artisan.commandes_encours }}</strong></div>
-                            <div>Terminées: <strong>{{ artisan.commandes_terminees }}</strong></div>
+                            {% if artisan.is_active %}
+                            <span class="badge bg-success">Actif</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Inactif</span>
+                            {% endif %}
                         </div>
                     </td>
                     <td>
@@ -675,19 +678,19 @@
                             <div class="row">
                                 <div class="col-4">
                                     <div class="text-center">
-                                        <div class="fw-bold text-primary">{{ artisan.commandes_encours }}</div>
-                                        <div class="small text-muted">En cours</div>
+                                        <div class="fw-bold text-primary">{{ artisan.annees_experience|default:"-" }}</div>
+                                        <div class="small text-muted">Années exp.</div>
                                     </div>
                                 </div>
                                 <div class="col-4">
                                     <div class="text-center">
-                                        <div class="fw-bold text-success">{{ artisan.commandes_terminees }}</div>
-                                        <div class="small text-muted">Terminées</div>
+                                        <div class="fw-bold text-success">{{ artisan.get_role_display }}</div>
+                                        <div class="small text-muted">Rôle</div>
                                     </div>
                                 </div>
                                 <div class="col-4">
                                     <div class="text-center">
-                                        <div class="fw-bold text-warning">{{ artisan.jours_retard }}</div>
+                                        {% if artisan.is_active %}<span class="badge bg-success">Actif</span>{% else %}<span class="badge bg-danger">Inactif</span>{% endif %}</div>
                                         <div class="small text-muted">Retards</div>
                                     </div>
                                 </div>

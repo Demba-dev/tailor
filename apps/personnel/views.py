@@ -107,7 +107,7 @@ def personnel_bulk_assign(request):
 def personnel_report(request):
     personnels = Personnel.objects.all()
     total_personnels = personnels.count()
-    personnels_actifs = personnels.filter(actif=True).count()
+    personnels_actifs = personnels.filter(is_active=True).count()
     
     stats = {
         'total': total_personnels,

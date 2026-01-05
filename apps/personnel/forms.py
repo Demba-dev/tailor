@@ -9,7 +9,7 @@ class PersonnelForm(forms.ModelForm):
             'prenom',
             'is_active',
             'photo',
-            'email', 'telephone', 'role', 'date_embauche', 'actif', 'note',
+            'email', 'telephone', 'role', 'date_embauche', 'note',
             'genre', 'date_naissance', 'lieu_naissance', 'cni', 'numero_securite_sociale',
             'adresse', 'ville', 'code_postal', 'statut_emploi', 'niveau_etude', 'annees_experience',
             'formations_notes', 'specialites', 'notes_competences', 'jours_travail', 'heure_debut',

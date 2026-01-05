@@ -1,205 +1,760 @@
 {% extends "base.html" %}
 {% load static %}
+{% load dashboard_filters %}
 
-{% block title %}Tableau de bord - TAILOR{% endblock %}
+{% block title %}Tableau de bord - ATELIER TAILOR{% endblock %}
 
-{% block page_title %}
-<i class="fas fa-tachometer-alt me-2 text-primary opacity-50"></i>Tableau de bord
+{% block extra_css %}
+<style>
+    .dashboard-header {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        border: 1px solid #e2e8f0;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+        border-radius: 4px 4px 0 0;
+    }
+    
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, var(--color-bg), var(--color-bg-dark));
+        color: var(--color-icon);
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 800;
+        line-height: 1;
+        margin-bottom: 0.5rem;
+        color: #1e293b;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: #64748b;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .stat-change {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-top: 0.5rem;
+    }
+    
+    .stat-change.positive {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+    }
+    
+    .stat-change.negative {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+    
+    .activity-timeline {
+        position: relative;
+        padding-left: 2rem;
+    }
+    
+    .activity-timeline::before {
+        content: '';
+        position: absolute;
+        left: 1rem;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #e2e8f0;
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+    
+    .timeline-dot {
+        position: absolute;
+        left: -2rem;
+        top: 0.25rem;
+        width: 1rem;
+        height: 1rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        border: 3px solid white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .timeline-content {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .recent-orders {
+        background: white;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        overflow: hidden;
+    }
+    
+    .order-row {
+        display: flex;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #f1f5f9;
+        transition: all 0.2s ease;
+    }
+    
+    .order-row:hover {
+        background: #f8fafc;
+        transform: translateX(4px);
+    }
+    
+    .order-row:last-child {
+        border-bottom: none;
+    }
+    
+    .order-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.9rem;
+        margin-right: 1rem;
+    }
+    
+    .quick-actions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1rem;
+    }
+    
+    .quick-action {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem 1rem;
+        background: white;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        text-decoration: none;
+        color: #475569;
+        transition: all 0.2s ease;
+    }
+    
+    .quick-action:hover {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-color: #cbd5e1;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        color: #1e293b;
+    }
+    
+    .quick-action-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        margin-bottom: 0.75rem;
+        background: linear-gradient(135deg, var(--color-bg), var(--color-bg-dark));
+        color: var(--color-icon);
+    }
+    
+    .quick-action-text {
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-align: center;
+    }
+    
+    .progress-circle {
+        width: 80px;
+        height: 80px;
+        position: relative;
+    }
+    
+    .progress-circle svg {
+        transform: rotate(-90deg);
+    }
+    
+    .progress-circle-bg {
+        fill: none;
+        stroke: #e2e8f0;
+        stroke-width: 8;
+    }
+    
+    .progress-circle-fill {
+        fill: none;
+        stroke: var(--color-primary);
+        stroke-width: 8;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 1s ease;
+    }
+    
+    .progress-value {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
+    
+    .widget-card {
+        background: white;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        overflow: hidden;
+        height: 100%;
+    }
+    
+    .widget-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid #f1f5f9;
+        background: #f8fafc;
+    }
+    
+    .widget-body {
+        padding: 1.5rem;
+    }
+    
+    .performance-meter {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+    }
+    
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .quick-actions-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .dashboard-header {
+            padding: 1.5rem;
+        }
+    }
+</style>
 {% endblock %}
 
-{% block page_subtitle %}
-Aperçu en temps réel de votre atelier de couture
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active"><i class="fas fa-home"></i> Dashboard</li>
+    </ol>
+</nav>
 {% endblock %}
 
 {% block content %}
-<!-- Section KPIs Principaux -->
-<div class="row g-4 mb-4">
-    <!-- Commandes en cours -->
-    <div class="col-md-6 col-lg-3">
-        <div class="card h-100 border-0 shadow-sm border-start border-primary border-4">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div class="avatar-sm">
-                        <div class="avatar-circle bg-primary bg-opacity-10 text-primary">
-                            <i class="fas fa-scroll"></i>
-                        </div>
-                    </div>
-                    <span class="badge bg-info status-badge">En cours</span>
-                </div>
-                <h3 class="fw-bold mb-1">{{ commandes_encours|default:"0" }}</h3>
-                <p class="text-muted small mb-0 text-uppercase fw-semibold letter-spacing-1">Commandes actives</p>
-            </div>
+<!-- Header du Dashboard -->
+<div class="dashboard-header">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-2">
+                <i class="fas fa-tachometer-alt me-2"></i>Dashboard de l'Atelier
+            </h1>
+            <p class="text-muted mb-0">
+                Bonjour {{ user.first_name|default:user.username }}, voici l'activité de votre atelier
+            </p>
+        </div>
+        <div class="text-end">
+            <div class="text-muted small mb-1">Dernière mise à jour</div>
+            <div class="fw-bold">{{ now|date:"d/m/Y H:i" }}</div>
         </div>
     </div>
-
-    <!-- Reste à payer -->
-    <div class="col-md-6 col-lg-3">
-        <div class="card h-100 border-0 shadow-sm border-start border-primary border-4">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div class="avatar-sm">
-                        <div class="avatar-circle bg-primaborder-primary bg-opacity-10 text-primaborder-primary">
-                            <i class="fas fa-hand-holding-usd"></i>
-                        </div>
-                    </div>
-                    <span class="badge bg-primaborder-primary status-badge">À recouvrer</span>
-                </div>
-                <h3 class="fw-bold mb-1 text-primaborder-primary">{{ reste_total|default:"0" }}CFA</h3>
-                <p class="text-muted small mb-0 text-uppercase fw-semibold letter-spacing-1">Reste à payer</p>
+    
+    <!-- Statistiques rapides -->
+    <div class="stats-grid">
+        <div class="stat-card" style="--color-primary: #3b82f6; --color-secondary: #2563eb; --color-bg: #dbeafe; --color-bg-dark: #bfdbfe; --color-icon: #1d4ed8;">
+            <div class="stat-icon">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <div class="stat-value">{{ commandes_encours|default:"0" }}</div>
+            <div class="stat-label">Commandes en cours</div>
+            {% with change=commandes_evolution %}
+            {% if change > 0 %}
+            <div class="stat-change positive">
+                <i class="fas fa-arrow-up"></i> +{{ change }}% ce mois
+            </div>
+            {% elif change < 0 %}
+            <div class="stat-change negative">
+                <i class="fas fa-arrow-down"></i> {{ change }}% ce mois
+            </div>
+            {% endif %}
+            {% endwith %}
+        </div>
+        
+        <div class="stat-card" style="--color-primary: #10b981; --color-secondary: #059669; --color-bg: #d1fae5; --color-bg-dark: #a7f3d0; --color-icon: #047857;">
+            <div class="stat-icon">
+                <i class="fas fa-wallet"></i>
+            </div>
+            <div class="stat-value">{{ ca_mensuel|default:"0"|floatformat:0 }}</div>
+            <div class="stat-label">CA ce mois (FCFA)</div>
+            <div class="stat-change positive">
+                <i class="fas fa-arrow-up"></i> Objectif: {{ objectif_ca|default:"100" }}%
             </div>
         </div>
-    </div>
-
-    <!-- Clients Total -->
-    <div class="col-md-6 col-lg-3">
-        <div class="card h-100 border-0 shadow-sm border-start border-success border-4">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div class="avatar-sm">
-                        <div class="avatar-circle bg-success bg-opacity-10 text-success">
-                            <i class="fas fa-users"></i>
-                        </div>
-                    </div>
-                    <span class="badge bg-success status-badge text-white">Base active</span>
-                </div>
-                <h3 class="fw-bold mb-1">{{ total_clients|default:"0" }}</h3>
-                <p class="text-muted small mb-0 text-uppercase fw-semibold letter-spacing-1">Clients inscrits</p>
+        
+        <div class="stat-card" style="--color-primary: #8b5cf6; --color-secondary: #7c3aed; --color-bg: #ede9fe; --color-bg-dark: #ddd6fe; --color-icon: #6d28d9;">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
             </div>
+            <div class="stat-value">{{ total_clients|default:"0" }}</div>
+            <div class="stat-label">Clients actifs</div>
+            {% with new_clients=nouveaux_clients_30j %}
+            {% if new_clients > 0 %}
+            <div class="stat-change positive">
+                <i class="fas fa-user-plus"></i> +{{ new_clients }} nouveaux
+            </div>
+            {% endif %}
+            {% endwith %}
         </div>
-    </div>
-
-    <!-- CA Total (Paiements) -->
-    <div class="col-md-6 col-lg-3">
-        <div class="card h-100 border-0 shadow-sm border-start border-info border-4">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div class="avatar-sm">
-                        <div class="avatar-circle bg-info bg-opacity-10 text-info">
-                            <i class="fas fa-wallet"></i>
-                        </div>
-                    </div>
-                    <span class="badge bg-info status-badge text-white">Chiffre d'Affaires</span>
-                </div>
-                <h3 class="fw-bold mb-1 text-primary">{{ total_paiements|default:"0" }}CFA</h3>
-                <p class="text-muted small mb-0 text-uppercase fw-semibold letter-spacing-1">Recettes totales</p>
+        
+        <div class="stat-card" style="--color-primary: #f59e0b; --color-secondary: #d97706; --color-bg: #fef3c7; --color-bg-dark: #fde68a; --color-icon: #b45309;">
+            <div class="stat-icon">
+                <i class="fas fa-clock"></i>
             </div>
+            <div class="stat-value">{{ commandes_retard|default:"0" }}</div>
+            <div class="stat-label">Commandes en retard</div>
+            {% if commandes_retard > 0 %}
+            <div class="stat-change negative">
+                <i class="fas fa-exclamation-triangle"></i> Attention requis
+            </div>
+            {% else %}
+            <div class="stat-change positive">
+                <i class="fas fa-check-circle"></i> Tout est à jour
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
 
-<!-- Section Secondaire -->
+<!-- Deuxième ligne : Activité et performance -->
 <div class="row g-4 mb-4">
-    <!-- Performance & Ressources -->
+    <!-- Dernières activités -->
     <div class="col-lg-8">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white py-3">
-                <h5 class="mb-0 fw-bold" style="font-family: var(--font-heading);">
-                    <i class="fas fa-chart-line me-2 text-primary"></i>Activité de l'Atelier
-                </h5>
+        <div class="widget-card">
+            <div class="widget-header">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Activité récente</h5>
             </div>
-            <div class="card-body">
-                <div class="row g-4 text-center">
-                    <div class="col-6 col-md-3">
-                        <div class="p-3 border rounded-3 bg-light bg-opacity-50">
-                            <div class="text-success mb-1 fw-bold fs-4">{{ commandes_terminees|default:"0" }}</div>
-                            <div class="xsmall text-muted text-uppercase fw-bold">Livrées</div>
+            <div class="widget-body">
+                <div class="activity-timeline">
+                    {% for activity in recent_activities %}
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div class="fw-bold">{{ activity.title }}</div>
+                                <div class="small text-muted">{{ activity.time }}</div>
+                            </div>
+                            <p class="mb-2 small">{{ activity.description }}</p>
+                            <div class="d-flex align-items-center gap-2">
+                                {% if activity.badge %}
+                                <span class="badge" style="background: {{ activity.badge_color }}; color: white;">
+                                    {{ activity.badge }}
+                                </span>
+                                {% endif %}
+                                {% if activity.link %}
+                                <a href="{{ activity.link }}" class="small text-decoration-none">
+                                    <i class="fas fa-arrow-right me-1"></i>Voir
+                                </a>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
-                    <div class="col-6 col-md-3">
-                        <div class="p-3 border rounded-3 bg-light bg-opacity-50">
-                            <div class="text-danger mb-1 fw-bold fs-4">{{ commandes_annulees|default:"0" }}</div>
-                            <div class="xsmall text-muted text-uppercase fw-bold">Annulées</div>
-                        </div>
+                    {% empty %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-calendar-alt fa-3x text-muted mb-3"></i>
+                        <h6 class="text-muted">Aucune activité récente</h6>
                     </div>
-                    <div class="col-6 col-md-3">
-                        <div class="p-3 border rounded-3 bg-light bg-opacity-50">
-                            <div class="text-primary mb-1 fw-bold fs-4">{{ total_personnel|default:"0" }}</div>
-                            <div class="xsmall text-muted text-uppercase fw-bold">Équipe</div>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <div class="p-3 border rounded-3 bg-light bg-opacity-50">
-                            <div class="text-warning mb-1 fw-bold fs-4">{{ formations_a_venir|default:"0" }}</div>
-                            <div class="xsmall text-muted text-uppercase fw-bold">Formations</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Espace pour un futur graphique -->
-                <div class="mt-4 p-5 text-center border border-dashed rounded-3">
-                    <i class="fas fa-chart-area fa-3x text-muted opacity-25 mb-3"></i>
-                    <p class="text-muted">Graphique d'évolution des ventes bientôt disponible</p>
+                    {% endfor %}
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Actions Rapides & Infos -->
+    
+    <!-- Performance de l'atelier -->
     <div class="col-lg-4">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white py-3">
-                <h5 class="mb-0 fw-bold" style="font-family: var(--font-heading);">
-                    <i class="fas fa-bolt me-2 text-warning"></i>Pilotage
-                </h5>
+        <div class="widget-card">
+            <div class="widget-header">
+                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Performance de l'atelier</h5>
             </div>
-            <div class="card-body">
-                <div class="list-group list-group-flush">
-                    <a href="{% url 'commandes:commande_create' %}" class="list-group-item list-group-item-action border-0 px-0 py-3">
-                        <div class="d-flex align-items-center">
-                            <div class="avatar-sm me-3">
-                                <div class="avatar-circle bg-primary text-white" style="width: 38px; height: 38px; font-size: 14px;">
-                                    <i class="fas fa-plus"></i>
-                                </div>
+            <div class="widget-body">
+                <div class="performance-meter">
+                    <div class="progress-circle">
+                        <svg width="80" height="80" viewBox="0 0 100 100">
+                            <circle class="progress-circle-bg" cx="50" cy="50" r="40"></circle>
+                            <circle class="progress-circle-fill" cx="50" cy="50" r="40" 
+                                    stroke-dasharray="251.2" 
+                                    stroke-dashoffset="{{ stroke_dashoffset|default:251.2 }}">
+                            </circle>
+                        </svg>
+                        <div class="progress-value">{{ taux_satisfaction|default:"0" }}%</div>
+                    </div>
+                    <div>
+                        <div class="fw-bold mb-1">Taux de satisfaction</div>
+                        <div class="small text-muted mb-3">Basé sur {{ avis_clients|default:"0" }} avis clients</div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div>
+                                <div class="fw-bold text-success">{{ commandes_livrees|default:"0" }}</div>
+                                <div class="xsmall text-muted">Livrées</div>
                             </div>
                             <div>
-                                <h6 class="mb-0 fw-bold small">Nouvelle Commande</h6>
-                                <p class="xsmall text-muted mb-0">Enregistrez un nouveau projet</p>
+                                <div class="fw-bold text-warning">{{ commandes_en_production|default:"0" }}</div>
+                                <div class="xsmall text-muted">En production</div>
                             </div>
-                            <i class="fas fa-chevron-right ms-auto xsmall text-muted"></i>
                         </div>
-                    </a>
-                    <a href="{% url 'clients:client_create' %}" class="list-group-item list-group-item-action border-0 px-0 py-3">
-                        <div class="d-flex align-items-center">
-                            <div class="avatar-sm me-3">
-                                <div class="avatar-circle bg-success text-white" style="width: 38px; height: 38px; font-size: 14px;">
-                                    <i class="fas fa-user-plus"></i>
-                                </div>
-                            </div>
-                            <div>
-                                <h6 class="mb-0 fw-bold small">Ajouter un Client</h6>
-                                <p class="xsmall text-muted mb-0">Développez votre base</p>
-                            </div>
-                            <i class="fas fa-chevron-right ms-auto xsmall text-muted"></i>
-                        </div>
-                    </a>
-                    <a href="{% url 'paiements:paiement_list' %}" class="list-group-item list-group-item-action border-0 px-0 py-3">
-                        <div class="d-flex align-items-center">
-                            <div class="avatar-sm me-3">
-                                <div class="avatar-circle bg-warning text-white" style="width: 38px; height: 38px; font-size: 14px;">
-                                    <i class="fas fa-euro-sign"></i>
-                                </div>
-                            </div>
-                            <div>
-                                <h6 class="mb-0 fw-bold small">Suivi des Paiements</h6>
-                                <p class="xsmall text-muted mb-0">Consultez les encaissements</p>
-                            </div>
-                            <i class="fas fa-chevron-right ms-auto xsmall text-muted"></i>
-                        </div>
-                    </a>
+                    </div>
                 </div>
-
-                <div class="alert alert-info mt-3 xsmall mb-0">
-                    <i class="fas fa-lightbulb me-2"></i>
-                    <strong>Astuce :</strong> Pensez à vérifier les mesures des clients avant de lancer une nouvelle commande.
+                
+                <div class="mt-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="small text-muted">Productivité des artisans</div>
+                        <div class="fw-bold">{{ productivite_moyenne|default:"0" }}%</div>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-success" role="progressbar" 
+                             style="width: {{ productivite_moyenne|default:"0" }}%"></div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<style>
-    .letter-spacing-1 { letter-spacing: 0.1em; }
-    .border-dashed { border-style: dashed !important; border-width: 2px !important; }
-    .avatar-sm { min-width: 40px; }
-</style>
+<!-- Troisième ligne : Commandes récentes et actions rapides -->
+<div class="row g-4">
+    <!-- Commandes récentes -->
+    <div class="col-lg-7">
+        <div class="widget-card">
+            <div class="widget-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>Commandes récentes</h5>
+                <a href="{% url 'commandes:commande_list' %}" class="small text-decoration-none">
+                    Voir tout <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+            <div class="widget-body p-0">
+                {% if recent_orders %}
+                <div class="recent-orders">
+                    {% for order in recent_orders %}
+                    <div class="order-row">
+                        <div class="order-avatar">
+                            {{ order.client.prenom|first|upper }}{{ order.client.nom|first|upper }}
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <div class="fw-bold">#{{ order.numero }}</div>
+                                <div class="badge" style="background: {{ order.get_status_color }}; color: white;">
+                                    {{ order.get_statut_display }}
+                                </div>
+                            </div>
+                            <div class="small text-muted mb-1">
+                                {{ order.client.prenom }} {{ order.client.nom }} • {{ order.habit.nom }}
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="small">
+                                    <i class="fas fa-calendar-alt me-1"></i>
+                                    Livraison: {{ order.date_livraison_prevue|date:"d/m/Y" }}
+                                </div>
+                                <div class="fw-bold">{{ order.prix_final|default:"0"|floatformat:0 }} FCFA</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                    <h6 class="text-muted">Aucune commande récente</h6>
+                    <p class="small text-muted mb-0">Commencez par créer votre première commande</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Actions rapides -->
+    <div class="col-lg-5">
+        <div class="widget-card">
+            <div class="widget-header">
+                <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Actions rapides</h5>
+            </div>
+            <div class="widget-body">
+                <div class="quick-actions-grid">
+                    <a href="{% url 'commandes:commande_create' %}" class="quick-action">
+                        <div class="quick-action-icon" style="--color-bg: #dbeafe; --color-bg-dark: #bfdbfe; --color-icon: #1d4ed8;">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                        <div class="quick-action-text">Nouvelle Commande</div>
+                    </a>
+                    
+                    <a href="{% url 'clients:client_create' %}" class="quick-action">
+                        <div class="quick-action-icon" style="--color-bg: #d1fae5; --color-bg-dark: #a7f3d0; --color-icon: #047857;">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <div class="quick-action-text">Nouveau Client</div>
+                    </a>
+                    
+                    <a href="{% url 'paiements:paiement_create' %}" class="quick-action">
+                        <div class="quick-action-icon" style="--color-bg: #fef3c7; --color-bg-dark: #fde68a; --color-icon: #b45309;">
+                            <i class="fas fa-euro-sign"></i>
+                        </div>
+                        <div class="quick-action-text">Enregistrer Paiement</div>
+                    </a>
+                    
+                    <a href="{% url 'mesures:mesure_create' %}" class="quick-action">
+                        <div class="quick-action-icon" style="--color-bg: #ede9fe; --color-bg-dark: #ddd6fe; --color-icon: #6d28d9;">
+                            <i class="fas fa-ruler-combined"></i>
+                        </div>
+                        <div class="quick-action-text">Prendre Mesures</div>
+                    </a>
+                    
+                    <a href="{% url 'formations:formation_create' %}" class="quick-action">
+                        <div class="quick-action-icon" style="--color-bg: #fce7f3; --color-bg-dark: #fbcfe8; --color-icon: #be185d;">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <div class="quick-action-text">Nouvelle Formation</div>
+                    </a>
+                    
+                    <a href="{% url 'catalogue:catalogue_create' %}" class="quick-action">
+                        <div class="quick-action-icon" style="--color-bg: #f0f9ff; --color-bg-dark: #e0f2fe; --color-icon: #0369a1;">
+                            <i class="fas fa-tshirt"></i>
+                        </div>
+                        <div class="quick-action-text">Nouveau Modèle</div>
+                    </a>
+                </div>
+                
+                <!-- Alertes importantes -->
+                <div class="mt-4">
+                    <div class="alert alert-warning small mb-3">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-exclamation-triangle fa-lg me-3"></i>
+                            <div>
+                                <div class="fw-bold mb-1">{{ commandes_retard|default:"0" }} commande(s) en retard</div>
+                                <div class="small">Vérifiez les délais de livraison</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info small">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-lightbulb fa-lg me-3"></i>
+                            <div>
+                                <div class="fw-bold mb-1">Conseil du jour</div>
+                                <div class="small">Prenez toujours les mesures avant de démarrer une commande importante</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quatrième ligne : Statistiques supplémentaires -->
+<div class="row g-4 mt-4">
+    <div class="col-md-6 col-lg-3">
+        <div class="stat-card" style="--color-primary: #06b6d4; --color-secondary: #0891b2; --color-bg: #cffafe; --color-bg-dark: #a5f3fc; --color-icon: #0e7490;">
+            <div class="stat-icon">
+                <i class="fas fa-user-tie"></i>
+            </div>
+            <div class="stat-value">{{ personnel_actifs|default:"0" }}/{{ total_personnel|default:"0" }}</div>
+            <div class="stat-label">Artisans actifs</div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="stat-card" style="--color-primary: #f97316; --color-secondary: #ea580c; --color-bg: #ffedd5; --color-bg-dark: #fed7aa; --color-icon: #c2410c;">
+            <div class="stat-icon">
+                <i class="fas fa-hourglass-half"></i>
+            </div>
+            <div class="stat-value">{{ delai_moyen|default:"0" }}</div>
+            <div class="stat-label">Délai moyen (jours)</div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="stat-card" style="--color-primary: #8b5cf6; --color-secondary: #7c3aed; --color-bg: #ede9fe; --color-bg-dark: #ddd6fe; --color-icon: #6d28d9;">
+            <div class="stat-icon">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+            <div class="stat-value">{{ formations_actives|default:"0" }}</div>
+            <div class="stat-label">Formations actives</div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="stat-card" style="--color-primary: #14b8a6; --color-secondary: #0d9488; --color-bg: #ccfbf1; --color-bg-dark: #99f6e4; --color-icon: #0f766e;">
+            <div class="stat-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-value">{{ satisfaction_rate|default:"0" }}%</div>
+            <div class="stat-label">Satisfaction clients</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animer les cercles de progression
+    const progressCircles = document.querySelectorAll('.progress-circle-fill');
+    progressCircles.forEach(circle => {
+        const length = circle.getTotalLength();
+        circle.style.strokeDasharray = length;
+        circle.style.strokeDashoffset = length;
+        
+        setTimeout(() => {
+            circle.style.transition = 'stroke-dashoffset 1s ease-in-out';
+            const target = circle.getAttribute('stroke-dashoffset');
+            circle.style.strokeDashoffset = target;
+        }, 500);
+    });
+    
+    // Mettre à jour l'heure en temps réel
+    function updateTime() {
+        const now = new Date();
+        const timeElement = document.querySelector('.dashboard-header .fw-bold');
+        if (timeElement) {
+            timeElement.textContent = now.toLocaleDateString('fr-FR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+    }
+    
+    setInterval(updateTime, 60000);
+    
+    // Animation des cartes statistiques
+    const statCards = document.querySelectorAll('.stat-card');
+    statCards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 100}ms`;
+        card.classList.add('animate__animated', 'animate__fadeInUp');
+    });
+    
+    // Rafraîchissement automatique des données
+    let refreshInterval;
+    
+    function startAutoRefresh() {
+        refreshInterval = setInterval(() => {
+            // Ici, vous pourriez ajouter une requête AJAX pour rafraîchir les données
+            console.log('Auto-refresh des données du dashboard');
+            
+            // Animation de pulsation pour indiquer le rafraîchissement
+            const timeElement = document.querySelector('.dashboard-header .fw-bold');
+            if (timeElement) {
+                timeElement.classList.add('animate__animated', 'animate__pulse');
+                setTimeout(() => {
+                    timeElement.classList.remove('animate__animated', 'animate__pulse');
+                }, 1000);
+            }
+        }, 300000); // Rafraîchir toutes les 5 minutes
+    }
+    
+    function stopAutoRefresh() {
+        if (refreshInterval) {
+            clearInterval(refreshInterval);
+        }
+    }
+    
+    // Démarrer le rafraîchissement automatique
+    startAutoRefresh();
+    
+    // Arrêter le rafraîchissement quand la page n'est plus visible
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            stopAutoRefresh();
+        } else {
+            startAutoRefresh();
+        }
+    });
+    
+    // Gestion des tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function(tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Animation de chargement
+    const timelineItems = document.querySelectorAll('.timeline-item');
+    timelineItems.forEach((item, index) => {
+        item.style.animationDelay = `${index * 200}ms`;
+        item.classList.add('animate__animated', 'animate__fadeInRight');
+    });
+});
+</script>
+
+<!-- Inclure animate.css -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
 {% endblock %}

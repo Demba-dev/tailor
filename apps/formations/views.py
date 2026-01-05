@@ -71,7 +71,7 @@ def formation_participants(request, pk):
         return redirect('formations:formation_participants', pk=pk)
     
     participants = formation.participants.all()
-    available_personnel = Personnel.objects.exclude(pk__in=participants.values('pk')).filter(actif=True)
+    available_personnel = Personnel.objects.exclude(pk__in=participants.values('pk')).filter(is_active=True)
     
     context = {
         'formation': formation,

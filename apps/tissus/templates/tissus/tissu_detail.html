@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ tissu.nom }} - Tissu{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="page-title">{{ tissu.nom }}</h1>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{% url 'tissus:tissu_update' tissu.id %}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Modifier
+            </a>
+            <a href="{% url 'tissus:tissu_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Retour
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            {% if tissu.image %}
+            <div class="card shadow-sm">
+                <img src="{{ tissu.image.url }}" class="card-img-top" alt="{{ tissu.nom }}">
+            </div>
+            {% else %}
+            <div class="card shadow-sm text-center p-4">
+                <i class="fas fa-image text-muted" style="font-size: 80px;"></i>
+                <p class="text-muted mt-3">Aucune image</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Informations</h5>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p>
+                                <strong>Matière:</strong>
+                                <span class="badge bg-info">{{ tissu.get_matiere_display }}</span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p>
+                                <strong>Motif:</strong>
+                                <span class="badge bg-secondary">{{ tissu.get_motif_display }}</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p>
+                                <strong>Couleur:</strong> 
+                                {% if tissu.couleur %}
+                                    <span style="display: inline-block; width: 20px; height: 20px; border-radius: 50%; border: 1px solid #ccc;" title="{{ tissu.couleur }}"></span>
+                                    {{ tissu.couleur }}
+                                {% else %}
+                                    <em class="text-muted">-</em>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p>
+                                <strong>Status:</strong>
+                                <span class="badge {% if tissu.actif %}bg-success{% else %}bg-danger{% endif %}">
+                                    {% if tissu.actif %}Actif{% else %}Inactif{% endif %}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p>
+                                <strong>Prix par mètre:</strong>
+                                <span class="text-success fs-5">{{ tissu.prix_metre }} €</span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p>
+                                <strong>Stock:</strong>
+                                <span class="badge {% if tissu.stock_metres > 10 %}bg-success{% elif tissu.stock_metres > 0 %}bg-warning{% else %}bg-danger{% endif %}">
+                                    {{ tissu.stock_metres }} m
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+
+                    {% if tissu.description %}
+                    <div class="mt-4">
+                        <h6>Description</h6>
+                        <p class="text-muted">{{ tissu.description }}</p>
+                    </div>
+                    {% endif %}
+
+                    <div class="mt-4">
+                        <p class="text-muted small">
+                            <strong>Ajouté le:</strong> {{ tissu.date_ajout|date:"d/m/Y H:i" }}
+                        </p>
+                    </div>
+
+                    <div class="mt-4">
+                        <a href="{% url 'tissus:tissu_delete' tissu.id %}" class="btn btn-danger" onclick="return confirm('Êtes-vous sûr?')">
+                            <i class="fas fa-trash"></i> Supprimer
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

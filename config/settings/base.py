@@ -45,6 +45,8 @@ INSTALLED_APPS = [
     'apps.core',
     'apps.clients',
     'apps.catalogue',   # <- bien ajouter ici
+    'apps.tissus',
+    'apps.modeles',
     'apps.mesures',
     'apps.commandes',
     'apps.paiements',
@@ -133,3 +135,4 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'

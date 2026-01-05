@@ -31,6 +31,8 @@ urlpatterns = [
     path('paiements/', include('apps.paiements.urls')),
     path('personnel/', include('apps.personnel.urls')),
     path('formations/', include('apps.formations.urls')),
+    path('tissus/', include('apps.tissus.urls')),
+    path('modeles/', include('apps.modeles.urls')),
     path('', include('apps.dashboard.urls')),
     path('catalogue/', include('apps.catalogue.urls')),
 ]
@@ -38,4 +40,8 @@ if settings.DEBUG:
     urlpatterns += static(
         settings.MEDIA_URL, 
         document_root=settings.MEDIA_ROOT
+    )
+    urlpatterns += static(
+        settings.STATIC_URL,
+        document_root=settings.BASE_DIR / 'static'
     )

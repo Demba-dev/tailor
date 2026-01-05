@@ -142,7 +142,7 @@
                     </div>
                     <div class="col-md-4">
                         <p><strong>Rôle :</strong> <span class="badge bg-info">{{ personnel.get_role_display }}</span></p>
-                        <p><strong>Statut :</strong> {% if personnel.actif %}<span class="badge bg-success">Actif</span>{% else %}<span class="badge bg-danger">Inactif</span>{% endif %}</p>
+                        <p><strong>Statut :</strong> {% if personnel.is_active %}<span class="badge bg-success">Actif</span>{% else %}<span class="badge bg-danger">Inactif</span>{% endif %}</p>
                     </div>
                     <div class="col-md-4">
                         <p><strong>Email :</strong> {{ personnel.email|default:"Non renseigné" }}</p>

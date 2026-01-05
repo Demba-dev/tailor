@@ -7,7 +7,7 @@ class FormationForm(forms.ModelForm):
         fields = ['titre', 'description', 'date_debut', 'date_fin', 'instructeur', 'participants', 'statut', 'note',
                   'prix_par_personne', 'nombre_places', 'materiel_requis', 'objectifs', 'certification_delivree',
                   'repas_inclus', 'materiel_fourni', 'support_pdf', 'image_couverture', 'duree_heures', 'duree_jours',
-                  'formateur', 'lieu', 'heure_debut', 'heure_fin', 'type_formation']
+                   'lieu', 'heure_debut', 'heure_fin', 'type_formation']
         widgets = {
             'date_debut': forms.DateInput(attrs={'type': 'date'}),
             'date_fin': forms.DateInput(attrs={'type': 'date'}),

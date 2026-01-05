@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Tissus{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="page-title">
+                <i class="fas fa-swatchbook"></i> Gestion des Tissus
+            </h1>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{% url 'tissus:tissu_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Ajouter un Tissu
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Rechercher un tissu...">
+                </div>
+                <div class="col-md-4">
+                    <select class="form-control" id="matiereFilter">
+                        <option value="">Tous les matériaux</option>
+                        {% for code, label in matieres %}
+                            <option value="{{ code }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <select class="form-control" id="motifFilter">
+                        <option value="">Tous les motifs</option>
+                        {% for code, label in motifs %}
+                            <option value="{{ code }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            {% if tissus %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nom</th>
+                            <th>Matière</th>
+                            <th>Motif</th>
+                            <th>Couleur</th>
+                            <th>Prix/m</th>
+                            <th>Stock (m)</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tissu in tissus %}
+                        <tr>
+                            <td>
+                                <strong>{{ tissu.nom }}</strong>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ tissu.get_matiere_display }}</span>
+                            </td>
+                            <td>{{ tissu.get_motif_display }}</td>
+                            <td>
+                                {% if tissu.couleur %}
+                                    <span style="display: inline-block; width: 20px; height: 20px; border-radius: 50%; border: 1px solid #ccc;" title="{{ tissu.couleur }}"></span>
+                                    {{ tissu.couleur }}
+                                {% else %}
+                                    <em class="text-muted">-</em>
+                                {% endif %}
+                            </td>
+                            <td>{{ tissu.prix_metre }} €</td>
+                            <td>
+                                <span class="badge {% if tissu.stock_metres > 10 %}bg-success{% elif tissu.stock_metres > 0 %}bg-warning{% else %}bg-danger{% endif %}">
+                                    {{ tissu.stock_metres }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{% url 'tissus:tissu_detail' tissu.id %}" class="btn btn-sm btn-info" title="Voir">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'tissus:tissu_update' tissu.id %}" class="btn btn-sm btn-warning" title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'tissus:tissu_delete' tissu.id %}" class="btn btn-sm btn-danger" title="Supprimer" onclick="return confirm('Êtes-vous sûr?')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle"></i> Aucun tissu trouvé. <a href="{% url 'tissus:tissu_create' %}">Ajouter un tissu</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('searchInput').addEventListener('keyup', function() {
+    location.href = `?search=${this.value}&matiere=${document.getElementById('matiereFilter').value}&motif=${document.getElementById('motifFilter').value}`;
+});
+document.getElementById('matiereFilter').addEventListener('change', function() {
+    location.href = `?search=${document.getElementById('searchInput').value}&matiere=${this.value}&motif=${document.getElementById('motifFilter').value}`;
+});
+document.getElementById('motifFilter').addEventListener('change', function() {
+    location.href = `?search=${document.getElementById('searchInput').value}&matiere=${document.getElementById('matiereFilter').value}&motif=${this.value}`;
+});
+</script>
+{% endblock %}

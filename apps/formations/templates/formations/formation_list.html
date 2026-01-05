@@ -566,9 +566,9 @@
                     
                     <div class="formation-instructor">
                         <div class="instructor-avatar">
-                            {{ formation.formateur.prenom|first|upper }}{{ formation.formateur.nom|first|upper }}
+                            {{ formation.instructeur.prenom|first|upper }}{{ formation.instructeur.nom|first|upper }}
                         </div>
-                        <span>{{ formation.formateur.prenom }} {{ formation.formateur.nom }}</span>
+                        <span>{{ formation.instructeur.prenom }} {{ formation.instructeur.nom }}</span>
                     </div>
                     
                     <div class="formation-dates">
@@ -641,7 +641,7 @@
                 <tr>
                     <th>Formation</th>
                     <th>Dates</th>
-                    <th>Formateur</th>
+                    <th>instructeur</th>
                     <th>Participants</th>
                     <th>Statut</th>
                     <th>Actions</th>
@@ -673,11 +673,11 @@
                     <td>
                         <div class="d-flex align-items-center gap-2">
                             <div class="instructor-avatar" style="width: 28px; height: 28px; font-size: 0.7rem;">
-                                {{ formation.formateur.prenom|first|upper }}{{ formation.formateur.nom|first|upper }}
+                                {{ formation.instructeur.prenom|first|upper }}{{ formation.instructeur.nom|first|upper }}
                             </div>
                             <div>
-                                <div class="small">{{ formation.formateur.prenom }} {{ formation.formateur.nom }}</div>
-                                <div class="xsmall text-muted">{{ formation.formateur.email|default:"-" }}</div>
+                                <div class="small">{{ formation.instructeur.prenom }} {{ formation.instructeur.nom }}</div>
+                                <div class="xsmall text-muted">{{ formation.instructeur.email|default:"-" }}</div>
                             </div>
                         </div>
                     </td>
@@ -770,31 +770,7 @@
     {% endif %}
 </div>
 
-<!-- Bouton d'action flottant -->
-<div class="quick-actions">
-    <button class="fab-btn" data-bs-toggle="dropdown">
-        <i class="fas fa-plus"></i>
-    </button>
-    <div class="dropdown-menu dropdown-menu-end" style="min-width: 200px;">
-        <h6 class="dropdown-header">Actions rapides</h6>
-        <a class="dropdown-item" href="{% url 'formations:formation_create' %}">
-            <i class="fas fa-plus-circle me-2"></i>Nouvelle formation
-        </a>
-        <a class="dropdown-item" href="{% url 'formations:formation_bulk_create' %}">
-            <i class="fas fa-copy me-2"></i>Créer en série
-        </a>
-        <a class="dropdown-item" href="{% url 'formations:formation_template' %}">
-            <i class="fas fa-file-alt me-2"></i>À partir d'un modèle
-        </a>
-        <div class="dropdown-divider"></div>
-        <a class="dropdown-item" href="#" onclick="generateReport()">
-            <i class="fas fa-chart-bar me-2"></i>Générer rapport
-        </a>
-        <a class="dropdown-item" href="#" onclick="sendReminders()">
-            <i class="fas fa-bell me-2"></i>Envoyer rappels
-        </a>
-    </div>
-</div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -1021,8 +997,8 @@ document.addEventListener('keydown', function(e) {
 </script>
 
 <!-- Bouton d'action flottant -->
-<div class="quick-actions">
-    <button class="fab-btn" data-bs-toggle="dropdown">
+<div class="quick-actions dropdown">
+    <button class="fab-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
         <i class="fas fa-plus"></i>
     </button>
     <div class="dropdown-menu dropdown-menu-end" style="min-width: 200px;">
@@ -1045,6 +1021,7 @@ document.addEventListener('keydown', function(e) {
         </a>
     </div>
 </div>
+
 
 <!-- Animation pour les cartes -->
 <style>

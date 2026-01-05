@@ -19,7 +19,6 @@ class Personnel(models.Model):
     telephone = models.CharField(max_length=20, blank=True, null=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
     date_embauche = models.DateField(blank=True, null=True)
-    actif = models.BooleanField(default=True)
     note = models.TextField(blank=True)
     genre = models.CharField(
         max_length=1,
@@ -69,3 +68,9 @@ class Personnel(models.Model):
 
     def __str__(self):
         return f"{self.nom} {self.prenom} ({self.role})"
+    
+    def get_specialite_display(self):
+        return self.specialites if self.specialites else "N/A" 
+    
+    def get_disponibilite_display(self):
+        return "Disponible" if self.disponibilites else "Occupé"
