@@ -79,6 +79,17 @@
                 </a>
             </li>
 
+            <!-- Ventes -->
+            <li class="nav-item">
+                <a href="{% url 'ventes:vente_list' %}" 
+                   class="nav-link {% if 'ventes' in request.resolver_match.app_names %}active{% endif %}">
+                    <span class="nav-icon">
+                        <i class="fas fa-cash-register"></i>
+                    </span>
+                    <span class="nav-text">Historique Ventes</span>
+                </a>
+            </li>
+
             <!-- Mesures -->
             <li class="nav-item">
                 <a href="{% url 'mesures:mesure_list' %}" 

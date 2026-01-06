@@ -35,6 +35,8 @@ urlpatterns = [
     path('modeles/', include('apps.modeles.urls')),
     path('', include('apps.dashboard.urls')),
     path('catalogue/', include('apps.catalogue.urls')),
+    path('panier/', include('apps.panier.urls')),
+    path('ventes/', include('apps.ventes.urls')),
 ]
 if settings.DEBUG:
     urlpatterns += static(

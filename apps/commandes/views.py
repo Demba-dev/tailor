@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Commande
 from .forms import CommandeForm
+from apps.panier.cart import Cart
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
@@ -16,9 +17,32 @@ def commande_create(request):
         form = CommandeForm(request.POST)
         if form.is_valid():
             form.save()
+            # Vider le panier si la commande vient du panier
+            if request.GET.get('from_cart'):
+                cart = Cart(request)
+                cart.clear()
             return redirect('commandes:commande_list')
     else:
-        form = CommandeForm()
+        initial = {}
+        
+        # Si on vient du panier, on pré-remplit avec les éléments du panier
+        if request.GET.get('from_cart'):
+            cart = Cart(request)
+            initial['prix_total'] = cart.get_total_price()
+            for item in cart:
+                if item['type'] == 'habit' and not initial.get('type_habit'):
+                    initial['type_habit'] = item['id']
+                elif item['type'] == 'modele' and not initial.get('modele'):
+                    initial['modele'] = item['id']
+                elif item['type'] == 'tissu' and not initial.get('tissu'):
+                    initial['tissu'] = item['id']
+        else:
+            # Sinon on utilise les paramètres GET classiques
+            for param in ['client', 'type_habit', 'modele', 'tissu', 'mesure']:
+                if request.GET.get(param):
+                    initial[param] = request.GET.get(param)
+                    
+        form = CommandeForm(initial=initial)
     return render(request, 'commandes/commande_form.html', {'form': form, 'title': 'Nouvelle commande'})
 
 

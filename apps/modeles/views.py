@@ -1,5 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Modele
+from .forms import ModeleForm
+from apps.catalogue.models import TypeHabit
 from django.contrib import messages
 
 
@@ -10,7 +12,7 @@ def modele_list(request):
     search = request.GET.get('search')
     
     if type_filter:
-        modeles = modeles.filter(type_habit=type_filter)
+        modeles = modeles.filter(type_habit__pk=type_filter)
     if difficulte_filter:
         modeles = modeles.filter(difficulte=difficulte_filter)
     if search:
@@ -19,6 +21,7 @@ def modele_list(request):
     context = {
         'modeles': modeles,
         'difficultes': Modele.DIFFICULTE_CHOICES,
+        'type_habits': TypeHabit.objects.all(),
     }
     return render(request, 'modeles/modele_list.html', context)
 
@@ -31,31 +34,17 @@ def modele_detail(request, pk):
 
 def modele_create(request):
     if request.method == 'POST':
-        nom = request.POST.get('nom')
-        description = request.POST.get('description')
-        difficulte = request.POST.get('difficulte')
-        type_habit = request.POST.get('type_habit')
-        temps_realisation_heures = request.POST.get('temps_realisation_heures')
-        prix_main_oeuvre = request.POST.get('prix_main_oeuvre')
-        description_technique = request.POST.get('description_technique')
-        image = request.FILES.get('image')
-        
-        if nom and type_habit and prix_main_oeuvre:
-            Modele.objects.create(
-                nom=nom,
-                description=description,
-                difficulte=difficulte or 'moyen',
-                type_habit=type_habit,
-                temps_realisation_heures=temps_realisation_heures or 4,
-                prix_main_oeuvre=prix_main_oeuvre,
-                description_technique=description_technique,
-                image=image,
-            )
+        form = ModeleForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
             messages.success(request, 'Modèle ajouté avec succès')
             return redirect('modeles:modele_list')
+    else:
+        form = ModeleForm()
     
     context = {
-        'difficultes': Modele.DIFFICULTE_CHOICES,
+        'form': form,
+        'title': 'Ajouter un modèle',
     }
     return render(request, 'modeles/modele_form.html', context)
 
@@ -64,24 +53,18 @@ def modele_update(request, pk):
     modele = get_object_or_404(Modele, pk=pk)
     
     if request.method == 'POST':
-        modele.nom = request.POST.get('nom', modele.nom)
-        modele.description = request.POST.get('description', modele.description)
-        modele.difficulte = request.POST.get('difficulte', modele.difficulte)
-        modele.type_habit = request.POST.get('type_habit', modele.type_habit)
-        modele.temps_realisation_heures = request.POST.get('temps_realisation_heures', modele.temps_realisation_heures)
-        modele.prix_main_oeuvre = request.POST.get('prix_main_oeuvre', modele.prix_main_oeuvre)
-        modele.description_technique = request.POST.get('description_technique', modele.description_technique)
-        
-        if request.FILES.get('image'):
-            modele.image = request.FILES['image']
-        
-        modele.save()
-        messages.success(request, 'Modèle modifié avec succès')
-        return redirect('modeles:modele_detail', pk=modele.pk)
+        form = ModeleForm(request.POST, request.FILES, instance=modele)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Modèle modifié avec succès')
+            return redirect('modeles:modele_detail', pk=modele.pk)
+    else:
+        form = ModeleForm(instance=modele)
     
     context = {
+        'form': form,
         'modele': modele,
-        'difficultes': Modele.DIFFICULTE_CHOICES,
+        'title': 'Modifier modèle',
     }
     return render(request, 'modeles/modele_form.html', context)
 

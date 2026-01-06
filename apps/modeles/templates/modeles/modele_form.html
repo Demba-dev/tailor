@@ -8,11 +8,8 @@
     <div class="row">
         <div class="col-md-8 mx-auto">
             <h1 class="page-title mb-4">
-                {% if modele %}
-                    <i class="fas fa-edit"></i> Modifier le Modèle
-                {% else %}
-                    <i class="fas fa-plus"></i> Ajouter un Modèle
-                {% endif %}
+                <i class="fas fa-{% if form.instance.pk %}edit{% else %}plus{% endif %}"></i>
+                {{ title }}
             </h1>
 
             <div class="card shadow-sm">
@@ -20,62 +17,102 @@
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
 
+                        {% if form.errors %}
+                        <div class="alert alert-danger">
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                    <div>{{ field }}: {{ error }}</div>
+                                {% endfor %}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label for="nom" class="form-label">Nom <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="nom" name="nom" value="{{ modele.nom }}" required>
+                                <label for="{{ form.nom.id_for_label }}" class="form-label">{{ form.nom.label }} <span class="text-danger">*</span></label>
+                                {{ form.nom }}
+                                {% for error in form.nom.errors %}
+                                    <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
                             </div>
                             <div class="col-md-6">
-                                <label for="type_habit" class="form-label">Type d'habit <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="type_habit" name="type_habit" value="{{ modele.type_habit }}" placeholder="Ex: Chemise, Pantalon..." required>
+                                <label for="{{ form.type_habit.id_for_label }}" class="form-label">{{ form.type_habit.label }} <span class="text-danger">*</span></label>
+                                {{ form.type_habit }}
+                                {% for error in form.type_habit.errors %}
+                                    <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
                             </div>
                         </div>
 
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label for="difficulte" class="form-label">Difficulté</label>
-                                <select class="form-control" id="difficulte" name="difficulte">
-                                    {% for code, label in difficultes %}
-                                        <option value="{{ code }}" {% if modele.difficulte == code %}selected{% endif %}>{{ label }}</option>
-                                    {% endfor %}
-                                </select>
+                                <label for="{{ form.difficulte.id_for_label }}" class="form-label">{{ form.difficulte.label }}</label>
+                                {{ form.difficulte }}
+                                {% for error in form.difficulte.errors %}
+                                    <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
                             </div>
                             <div class="col-md-6">
-                                <label for="temps_realisation_heures" class="form-label">Temps de réalisation (heures)</label>
-                                <input type="number" class="form-control" id="temps_realisation_heures" name="temps_realisation_heures" value="{{ modele.temps_realisation_heures }}">
+                                <label for="{{ form.temps_realisation_heures.id_for_label }}" class="form-label">{{ form.temps_realisation_heures.label }}</label>
+                                {{ form.temps_realisation_heures }}
+                                {% for error in form.temps_realisation_heures.errors %}
+                                    <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
                             </div>
                         </div>
 
                         <div class="row mb-3">
                             <div class="col-md-12">
-                                <label for="prix_main_oeuvre" class="form-label">Prix main d'œuvre (€) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="prix_main_oeuvre" name="prix_main_oeuvre" step="0.01" value="{{ modele.prix_main_oeuvre }}" required>
+                                <label for="{{ form.prix_main_oeuvre.id_for_label }}" class="form-label">{{ form.prix_main_oeuvre.label }} <span class="text-danger">*</span></label>
+                                {{ form.prix_main_oeuvre }}
+                                {% for error in form.prix_main_oeuvre.errors %}
+                                    <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label for="description" class="form-label">Description</label>
-                            <textarea class="form-control" id="description" name="description" rows="3">{{ modele.description }}</textarea>
+                            <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
+                            {{ form.description }}
+                            {% for error in form.description.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
                         </div>
 
                         <div class="mb-3">
-                            <label for="description_technique" class="form-label">Détails Techniques</label>
-                            <textarea class="form-control" id="description_technique" name="description_technique" rows="4" placeholder="Mesures, instructions de confection...">{{ modele.description_technique }}</textarea>
+                            <label for="{{ form.description_technique.id_for_label }}" class="form-label">{{ form.description_technique.label }}</label>
+                            {{ form.description_technique }}
+                            {% for error in form.description_technique.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
                         </div>
 
                         <div class="mb-3">
-                            <label for="image" class="form-label">Image</label>
-                            {% if modele.image %}
+                            <label for="{{ form.image.id_for_label }}" class="form-label">{{ form.image.label }}</label>
+                            {% if form.instance.image %}
                                 <div class="mb-2">
-                                    <img src="{{ modele.image.url }}" alt="{{ modele.nom }}" style="max-width: 150px;">
+                                    <img src="{{ form.instance.image.url }}" alt="{{ form.instance.nom }}" style="max-width: 150px;">
                                 </div>
                             {% endif %}
-                            <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                            {{ form.image }}
+                            {% for error in form.image.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.actif.id_for_label }}" class="form-check-label">
+                                {{ form.actif }}
+                                {{ form.actif.label }}
+                            </label>
+                            {% for error in form.actif.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
                         </div>
 
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> {% if modele %}Modifier{% else %}Ajouter{% endif %}
+                                <i class="fas fa-save"></i> {% if form.instance.pk %}Modifier{% else %}Ajouter{% endif %}
                             </button>
                             <a href="{% url 'modeles:modele_list' %}" class="btn btn-secondary">
                                 <i class="fas fa-times"></i> Annuler

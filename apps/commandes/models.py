@@ -3,6 +3,8 @@ from django.db.models import Sum
 from apps.clients.models import Client
 from apps.mesures.models import Mesure
 from apps.catalogue.models import TypeHabit
+from apps.modeles.models import Modele
+from apps.tissus.models import Tissu
 from decimal import Decimal
 
 class Commande(models.Model):
@@ -16,7 +18,9 @@ class Commande(models.Model):
     id = models.AutoField(primary_key=True)
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='commandes')
     mesure = models.ForeignKey(Mesure, on_delete=models.SET_NULL, null=True, blank=True)
-    type_habit = models.ForeignKey(TypeHabit, on_delete=models.SET_NULL, null=True)
+    type_habit = models.ForeignKey(TypeHabit, on_delete=models.SET_NULL, null=True, blank=True)
+    modele = models.ForeignKey(Modele, on_delete=models.SET_NULL, null=True, blank=True)
+    tissu = models.ForeignKey(Tissu, on_delete=models.SET_NULL, null=True, blank=True)
     date_commande = models.DateField(auto_now_add=True)
     date_livraison = models.DateField(null=True, blank=True)
     statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='encours')

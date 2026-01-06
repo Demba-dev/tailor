@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Détails de la Vente #{{ vente.id }} - TAILOR{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-file-invoice-dollar text-primary me-2"></i>Vente #{{ vente.id }}
+{% endblock %}
+
+{% block page_subtitle %}Détails de la transaction du {{ vente.date_vente|date:"d/m/Y" }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold">Informations</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="text-muted small d-block">Client</label>
+                    <span class="fw-bold">
+                        {% if vente.client %}
+                        {{ vente.client.prenom }} {{ vente.client.nom }}
+                        {% else %}
+                        Passant
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="mb-3">
+                    <label class="text-muted small d-block">Date et Heure</label>
+                    <span>{{ vente.date_vente|date:"d/m/Y H:i" }}</span>
+                </div>
+                <div class="mb-3">
+                    <label class="text-muted small d-block">Montant Total</label>
+                    <span class="h4 fw-bold text-primary">{{ vente.montant_total }} FCFA</span>
+                </div>
+                {% if vente.note %}
+                <div class="mb-0">
+                    <label class="text-muted small d-block">Note</label>
+                    <p class="mb-0 small">{{ vente.note }}</p>
+                </div>
+                {% endif %}
+                <hr>
+                <div class="d-grid">
+                    <button class="btn btn-outline-secondary" onclick="window.print()">
+                        <i class="fas fa-print me-2"></i>Imprimer le reçu
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold">Articles vendus</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Désignation</th>
+                                <th class="text-center">Type</th>
+                                <th class="text-center">Prix Unitaire</th>
+                                <th class="text-center">Quantité</th>
+                                <th class="text-end pe-4">Sous-total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ligne in vente.lignes.all %}
+                            <tr>
+                                <td class="ps-4 fw-medium">{{ ligne.article_nom }}</td>
+                                <td class="text-center">
+                                    <span class="badge bg-light text-dark">{{ ligne.article_type|capfirst }}</span>
+                                </td>
+                                <td class="text-center">{{ ligne.prix_unitaire }} FCFA</td>
+                                <td class="text-center">{{ ligne.quantite }}</td>
+                                <td class="text-end pe-4 fw-bold">{{ ligne.sous_total }} FCFA</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <td colspan="4" class="text-end fw-bold">TOTAL</td>
+                                <td class="text-end pe-4 fw-bold text-primary h5 mb-0">{{ vente.montant_total }} FCFA</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

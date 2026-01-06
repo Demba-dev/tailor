@@ -21,14 +21,22 @@
     <div class="card shadow-sm">
         <div class="card-body">
             <div class="row mb-3">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <input type="text" class="form-control" id="searchInput" placeholder="Rechercher un modèle...">
                 </div>
-                <div class="col-md-4">
-                    <select class="form-control" id="difficulteFilter">
+                <div class="col-md-3">
+                    <select class="form-control" id="typeFilter" onchange="filterModeles()">
+                        <option value="">Tous les types</option>
+                        {% for type_habit in type_habits %}
+                            <option value="{{ type_habit.pk }}" {% if request.GET.type == type_habit.pk|stringformat:"s" %}selected{% endif %}>{{ type_habit.nom }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-control" id="difficulteFilter" onchange="filterModeles()">
                         <option value="">Toutes les difficultés</option>
                         {% for code, label in difficultes %}
-                            <option value="{{ code }}">{{ label }}</option>
+                            <option value="{{ code }}" {% if request.GET.difficulte == code %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -53,7 +61,7 @@
                             <td>
                                 <strong>{{ modele.nom }}</strong>
                             </td>
-                            <td>{{ modele.type_habit }}</td>
+                            <td>{{ modele.type_habit.nom }}</td>
                             <td>
                                 <span class="badge {% if modele.difficulte == 'facile' %}bg-success{% elif modele.difficulte == 'moyen' %}bg-warning{% else %}bg-danger{% endif %}">
                                     {{ modele.get_difficulte_display }}
@@ -62,6 +70,12 @@
                             <td>{{ modele.temps_realisation_heures }}</td>
                             <td>{{ modele.prix_main_oeuvre }} €</td>
                             <td>
+                                <form action="{% url 'panier:cart_add' 'modele' modele.id %}" method="post" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-primary" title="Ajouter au panier">
+                                        <i class="fas fa-cart-plus"></i>
+                                    </button>
+                                </form>
                                 <a href="{% url 'modeles:modele_detail' modele.id %}" class="btn btn-sm btn-info" title="Voir">
                                     <i class="fas fa-eye"></i>
                                 </a>

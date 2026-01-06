@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Panier des choix - TAILOR{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-shopping-basket text-primary me-2"></i>Panier des choix
+{% endblock %}
+
+{% block page_subtitle %}Consultez et validez les sélections du client{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold">Articles sélectionnés</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Article</th>
+                                <th class="text-center">Type</th>
+                                <th class="text-center">Prix Unit.</th>
+                                <th class="text-center">Quantité</th>
+                                <th class="text-center">Sous-total</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in cart %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        {% if item.obj.image %}
+                                        <img src="{{ item.obj.image.url }}" class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                                        {% else %}
+                                        <div class="rounded bg-light d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                            <i class="fas fa-image text-muted"></i>
+                                        </div>
+                                        {% endif %}
+                                        <div>
+                                            <h6 class="mb-0 fw-bold">{{ item.obj.nom }}</h6>
+                                            {% if item.type == 'habit' %}
+                                            <small class="text-muted">{{ item.obj.categorie.nom }}</small>
+                                            {% elif item.type == 'modele' %}
+                                            <small class="text-muted">{{ item.obj.type_habit.nom }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-info">{{ item.type|capfirst }}</span>
+                                </td>
+                                <td class="text-center">{{ item.price }} FCFA</td>
+                                <td class="text-center">
+                                    <span class="badge bg-secondary">{{ item.quantity }}</span>
+                                </td>
+                                <td class="text-center fw-bold text-primary">{{ item.total_price }} FCFA</td>
+                                <td class="text-center">
+                                    <a href="{% url 'panier:cart_remove' item.key %}" class="btn btn-sm btn-outline-danger border-0">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-5">
+                                    <div class="text-muted">
+                                        <i class="fas fa-shopping-basket fa-3x mb-3 opacity-25"></i>
+                                        <p>Votre panier est vide</p>
+                                        <a href="{% url 'catalogue:catalogue_list' %}" class="btn btn-primary btn-sm mt-2">
+                                            Parcourir le catalogue
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold">Résumé</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-3">
+                    <span class="text-muted">Nombre d'articles</span>
+                    <span class="fw-bold">{{ cart|length }}</span>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between mb-4">
+                    <span class="h5 mb-0">Total estimé</span>
+                    <span class="h5 mb-0 fw-bold text-primary">{{ cart.get_total_price }} FCFA</span>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <a href="{% url 'ventes:valider_vente' %}" class="btn btn-success btn-lg {% if not cart|length %}disabled{% endif %}">
+                        <i class="fas fa-cash-register me-2"></i>Valider la vente
+                    </a>
+                    <a href="{% url 'commandes:commande_create' %}?from_cart=1" class="btn btn-outline-primary {% if not cart|length %}disabled{% endif %}">
+                        <i class="fas fa-cut me-2"></i>Créer une commande
+                    </a>
+                    <a href="{% url 'panier:cart_clear' %}" class="btn btn-outline-secondary btn-sm">
+                        Vider le panier
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

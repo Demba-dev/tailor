@@ -8,6 +8,8 @@ class CommandeForm(forms.ModelForm):
             'client',
             'mesure',
             'type_habit',
+            'modele',
+            'tissu',
             'date_livraison',
             'statut',
             'prix_total',
