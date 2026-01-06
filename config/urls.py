@@ -37,6 +37,8 @@ urlpatterns = [
     path('catalogue/', include('apps.catalogue.urls')),
     path('panier/', include('apps.panier.urls')),
     path('ventes/', include('apps.ventes.urls')),
+    path('users/', include('apps.users.urls')),
+    path('settings/', include('apps.settings.urls')),
 ]
 if settings.DEBUG:
     urlpatterns += static(

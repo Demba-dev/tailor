@@ -34,6 +34,15 @@ class Commande(models.Model):
     class Meta:
         ordering = ['-date_commande']
 
+    def get_status_color(self):
+        colors = {
+            'encours': '#3b82f6',  # bleu
+            'termine': '#10b981',  # vert
+            'livre': '#6366f1',    # indigo
+            'annule': '#ef4444',   # rouge
+        }
+        return colors.get(self.statut, '#64748b')
+
     def __str__(self):
         return f"Commande #{self.id} - {self.client}"
 

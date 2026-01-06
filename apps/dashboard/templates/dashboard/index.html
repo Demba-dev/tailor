@@ -510,20 +510,20 @@
                         </div>
                         <div class="flex-grow-1">
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <div class="fw-bold">#{{ order.numero }}</div>
+                                <div class="fw-bold">#{{ order.id }}</div>
                                 <div class="badge" style="background: {{ order.get_status_color }}; color: white;">
                                     {{ order.get_statut_display }}
                                 </div>
                             </div>
                             <div class="small text-muted mb-1">
-                                {{ order.client.prenom }} {{ order.client.nom }} • {{ order.habit.nom }}
+                                {{ order.client.prenom }} {{ order.client.nom }} • {{ order.type_habit.nom }}
                             </div>
                             <div class="d-flex justify-content-between align-items-center">
                                 <div class="small">
                                     <i class="fas fa-calendar-alt me-1"></i>
-                                    Livraison: {{ order.date_livraison_prevue|date:"d/m/Y" }}
+                                    Livraison: {{ order.date_livraison|date:"d/m/Y" }}
                                 </div>
-                                <div class="fw-bold">{{ order.prix_final|default:"0"|floatformat:0 }} FCFA</div>
+                                <div class="fw-bold">{{ order.prix_total|default:"0"|floatformat:0 }} FCFA</div>
                             </div>
                         </div>
                     </div>

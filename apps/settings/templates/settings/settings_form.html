@@ -1,0 +1,891 @@
+{% extends 'base.html' %}
+{% load static widget_tweaks %}
+
+{% block title %}Paramètres de l'Atelier - ATELIER TAILOR{% endblock %}
+
+{% block extra_css %}
+<style>
+    .settings-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .settings-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        padding: 3rem 2rem;
+        margin-bottom: 2rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .settings-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+        background-size: 30px 30px;
+        opacity: 0.3;
+    }
+    
+    .settings-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        position: relative;
+    }
+    
+    .settings-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+    
+    .settings-card {
+        background: white;
+        border-radius: 20px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+        margin-bottom: 2rem;
+        overflow: hidden;
+    }
+    
+    .settings-card-header {
+        padding: 1.5rem 2rem;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .settings-card-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+    
+    .settings-card-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0;
+    }
+    
+    .settings-card-body {
+        padding: 2rem;
+    }
+    
+    .form-section {
+        margin-bottom: 2.5rem;
+    }
+    
+    .form-section:last-child {
+        margin-bottom: 0;
+    }
+    
+    .form-section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #475569;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .form-section-title i {
+        color: #667eea;
+    }
+    
+    .form-group-enhanced {
+        margin-bottom: 1.5rem;
+        position: relative;
+    }
+    
+    .form-label-enhanced {
+        font-weight: 600;
+        color: #475569;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.95rem;
+    }
+    
+    .form-label-enhanced i {
+        color: #94a3b8;
+        width: 20px;
+    }
+    
+    .form-control-enhanced {
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    .form-control-enhanced:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    .form-control-enhanced.is-invalid {
+        border-color: #f56565;
+    }
+    
+    .form-helper {
+        font-size: 0.85rem;
+        color: #64748b;
+        margin-top: 0.5rem;
+    }
+    
+    .logo-preview-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        padding: 2rem;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 16px;
+        border: 2px dashed #cbd5e1;
+        margin-top: 1rem;
+    }
+    
+    .logo-preview {
+        width: 120px;
+        height: 120px;
+        border-radius: 20px;
+        overflow: hidden;
+        border: 3px solid white;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .logo-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .logo-placeholder {
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2rem;
+        font-weight: bold;
+    }
+    
+    .file-upload-enhanced {
+        position: relative;
+        display: inline-block;
+        cursor: pointer;
+    }
+    
+    .file-upload-enhanced input[type="file"] {
+        position: absolute;
+        left: 0;
+        top: 0;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+    
+    .file-upload-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+    }
+    
+    .file-upload-label:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+    }
+    
+    .info-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        color: #0369a1;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        margin-top: 0.5rem;
+        border: 1px solid #bae6fd;
+    }
+    
+    .settings-tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+        border-bottom: 2px solid #f1f5f9;
+        padding-bottom: 0;
+        overflow-x: auto;
+    }
+    
+    .settings-tab {
+        padding: 1rem 1.5rem;
+        font-weight: 600;
+        color: #64748b;
+        text-decoration: none;
+        border-radius: 10px 10px 0 0;
+        border: 2px solid transparent;
+        border-bottom: none;
+        white-space: nowrap;
+        transition: all 0.3s ease;
+    }
+    
+    .settings-tab:hover {
+        color: #475569;
+        background: #f8fafc;
+    }
+    
+    .settings-tab.active {
+        color: #667eea;
+        background: white;
+        border-color: #f1f5f9;
+        border-bottom: 2px solid white;
+        margin-bottom: -2px;
+    }
+    
+    .form-actions {
+        position: sticky;
+        bottom: 0;
+        background: white;
+        padding: 1.5rem 0;
+        border-top: 1px solid #e2e8f0;
+        margin-top: 3rem;
+        z-index: 100;
+    }
+    
+    .btn-save {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.25);
+        width: 100%;
+    }
+    
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.35);
+        color: white;
+    }
+    
+    .btn-save:active {
+        transform: translateY(0);
+    }
+    
+    .btn-reset {
+        background: white;
+        color: #64748b;
+        border: 2px solid #e2e8f0;
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+    
+    .btn-reset:hover {
+        background: #f8fafc;
+        color: #475569;
+        border-color: #cbd5e1;
+    }
+    
+    @media (max-width: 768px) {
+        .settings-header {
+            padding: 2rem 1.5rem;
+            text-align: center;
+        }
+        
+        .settings-title {
+            font-size: 2rem;
+        }
+        
+        .settings-card-body {
+            padding: 1.5rem;
+        }
+        
+        .settings-tabs {
+            justify-content: flex-start;
+            padding-bottom: 0;
+        }
+        
+        .settings-tab {
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+        }
+    }
+    
+    /* Animation pour les sections */
+    .form-section {
+        animation: slideUp 0.5s ease forwards;
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    
+    @keyframes slideUp {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Délai d'animation pour chaque section */
+    .form-section:nth-child(1) { animation-delay: 0.1s; }
+    .form-section:nth-child(2) { animation-delay: 0.2s; }
+    .form-section:nth-child(3) { animation-delay: 0.3s; }
+    .form-section:nth-child(4) { animation-delay: 0.4s; }
+    .form-section:nth-child(5) { animation-delay: 0.5s; }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'admin:index' %}">Administration</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Paramètres</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <!-- En-tête Premium -->
+    <div class="settings-header">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="settings-title">Paramètres de l'Atelier</h1>
+                <p class="settings-subtitle">
+                    Personnalisez et gérez les paramètres de votre atelier de couture d'excellence
+                </p>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <div class="d-inline-flex align-items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Configuration sécurisée</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Onglets de navigation -->
+    <div class="settings-tabs">
+        <a href="#" class="settings-tab active">
+            <i class="fas fa-cog me-2"></i>Général
+        </a>
+        <a href="{% url 'clients:client_list' %}" class="settings-tab">
+            <i class="fas fa-users me-2"></i>Clients
+        </a>
+        <a href="{% url 'commandes:commande_list' %}" class="settings-tab">
+            <i class="fas fa-shopping-cart me-2"></i>Commandes
+        </a>
+        <a href="#" class="settings-tab">
+            <i class="fas fa-chart-bar me-2"></i>Finances
+        </a>
+        <a href="#" class="settings-tab">
+            <i class="fas fa-bell me-2"></i>Notifications
+        </a>
+    </div>
+
+    <!-- Carte principale des paramètres -->
+    <div class="settings-card">
+        <div class="settings-card-header">
+            <div class="settings-card-icon">
+                <i class="fas fa-cogs"></i>
+            </div>
+            <div>
+                <h2 class="settings-card-title">Paramètres Généraux</h2>
+                <p class="text-muted mb-0">Configurez les informations de base de votre atelier</p>
+            </div>
+        </div>
+        
+        <form method="post" enctype="multipart/form-data" class="settings-card-body">
+            {% csrf_token %}
+            
+            <!-- Section 1 : Identité de l'atelier -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="fas fa-store"></i> Identité de l'Atelier
+                </h3>
+                
+                <div class="row">
+                    <!-- Logo -->
+                    <div class="col-lg-4 mb-4">
+                        <div class="logo-preview-container">
+                            <div class="logo-preview">
+                                {% if settings_obj.logo %}
+                                    <img src="{{ settings_obj.logo.url }}" alt="Logo {{ settings_obj.nom_atelier }}" 
+                                         id="logoPreview" onerror="this.src='{% static 'img/default-logo.svg' %}'">
+                                {% else %}
+                                    <div class="logo-placeholder">
+                                        {{ settings_obj.nom_atelier|first|default:"T" }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="file-upload-enhanced">
+                                <input type="file" id="id_logo" name="logo" accept="image/*" 
+                                       onchange="previewLogo(event)">
+                                <label for="id_logo" class="file-upload-label">
+                                    <i class="fas fa-camera"></i>
+                                    Changer le logo
+                                </label>
+                            </div>
+                            
+                            <div class="info-badge">
+                                <i class="fas fa-info-circle"></i>
+                                PNG, JPG - Max 2MB
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Informations de base -->
+                    <div class="col-lg-8">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group-enhanced">
+                                    <label class="form-label-enhanced">
+                                        <i class="fas fa-signature"></i>
+                                        Nom de l'Atelier
+                                    </label>
+                                    {% render_field form.nom_atelier class="form-control-enhanced" placeholder="Ex: Atelier de Couture Excellence" %}
+                                    <div class="form-helper">
+                                        Le nom qui apparaîtra sur tous vos documents
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group-enhanced">
+                                    <label class="form-label-enhanced">
+                                        <i class="fas fa-envelope"></i>
+                                        Email de contact
+                                    </label>
+                                    {% render_field form.email class="form-control-enhanced" placeholder="contact@atelier.com" %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group-enhanced">
+                            <label class="form-label-enhanced">
+                                <i class="fas fa-map-marker-alt"></i>
+                                Adresse complète
+                            </label>
+                            {% render_field form.adresse class="form-control-enhanced" rows="3" placeholder="Adresse complète de votre atelier" %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2 : Informations de contact -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="fas fa-phone-alt"></i> Informations de Contact
+                </h3>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group-enhanced">
+                            <label class="form-label-enhanced">
+                                <i class="fas fa-phone"></i>
+                                Téléphone principal
+                            </label>
+                            {% render_field form.telephone class="form-control-enhanced" placeholder="+33 1 23 45 67 89" %}
+                            <div class="form-helper">
+                                Numéro affiché aux clients
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group-enhanced">
+                            <label class="form-label-enhanced">
+                                <i class="fas fa-clock"></i>
+                                Heures d'ouverture
+                            </label>
+                            <input type="text" class="form-control-enhanced" placeholder="Lun-Ven: 9h-18h, Sam: 10h-16h">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3 : Paramètres métier -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="fas fa-cut"></i> Paramètres Métier
+                </h3>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group-enhanced">
+                            <label class="form-label-enhanced">
+                                <i class="fas fa-money-bill-wave"></i>
+                                Devise principale
+                            </label>
+                            {% render_field form.devise class="form-control-enhanced" %}
+                            <div class="form-helper">
+                                Devise utilisée pour les prix
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="form-group-enhanced">
+                            <label class="form-label-enhanced">
+                                <i class="fas fa-percentage"></i>
+                                Taux de TVA (%)
+                            </label>
+                            {% render_field form.tva class="form-control-enhanced" placeholder="20" %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="form-group-enhanced">
+                            <label class="form-label-enhanced">
+                                <i class="fas fa-calendar-alt"></i>
+                                Délai standard (jours)
+                            </label>
+                            {% render_field form.delai_confection_standard class="form-control-enhanced" placeholder="7" %}
+                            <div class="form-helper">
+                                Délai moyen de confection
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="form-group-enhanced">
+                            <label class="form-label-enhanced">
+                                <i class="fas fa-boxes"></i>
+                                Seuil d'alerte stock
+                            </label>
+                            {% render_field form.seuil_stock_bas class="form-control-enhanced" placeholder="10" %}
+                            <div class="form-helper">
+                                Alerte quand le stock est inférieur à cette valeur
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group-enhanced">
+                            <label class="form-label-enhanced">
+                                <i class="fas fa-tag"></i>
+                                Marge standard (%)
+                            </label>
+                            <input type="number" class="form-control-enhanced" placeholder="40" min="0" max="100" step="5">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 4 : Paramètres supplémentaires -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="fas fa-sliders-h"></i> Paramètres Avancés
+                </h3>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group-enhanced">
+                            <label class="form-label-enhanced">
+                                <i class="fas fa-language"></i>
+                                Langue par défaut
+                            </label>
+                            {% render_field form.langue class="form-control-enhanced" %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group-enhanced">
+                            <label class="form-label-enhanced">
+                                <i class="fas fa-palette"></i>
+                                Thème de l'interface
+                            </label>
+                            {% render_field form.theme class="form-control-enhanced" %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group-enhanced mt-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="autoSave" checked>
+                        <label class="form-check-label form-label-enhanced" for="autoSave">
+                            <i class="fas fa-save"></i>
+                            Sauvegarde automatique des modifications
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions du formulaire -->
+            <div class="form-actions">
+                <div class="row">
+                    <div class="col-md-8 offset-md-2">
+                        <div class="d-grid gap-3">
+                            <button type="submit" class="btn-save">
+                                <i class="fas fa-save"></i>
+                                Enregistrer toutes les modifications
+                            </button>
+                            <button type="reset" class="btn-reset">
+                                <i class="fas fa-undo"></i>
+                                Réinitialiser les modifications
+                            </button>
+                        </div>
+                        
+                        <div class="text-center mt-3">
+                            <div class="info-badge">
+                                <i class="fas fa-lightbulb"></i>
+                                Les modifications prennent effet immédiatement après enregistrement
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Section d'aide et support -->
+    <div class="settings-card">
+        <div class="settings-card-header">
+            <div class="settings-card-icon">
+                <i class="fas fa-question-circle"></i>
+            </div>
+            <div>
+                <h2 class="settings-card-title">Besoin d'aide ?</h2>
+                <p class="text-muted mb-0">Ressources utiles pour configurer votre atelier</p>
+            </div>
+        </div>
+        
+        <div class="settings-card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="rounded-circle bg-primary bg-opacity-10 p-3">
+                            <i class="fas fa-book text-primary"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Documentation</h6>
+                            <p class="small text-muted mb-0">Guide détaillé des paramètres</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="rounded-circle bg-success bg-opacity-10 p-3">
+                            <i class="fas fa-video text-success"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Tutoriels vidéo</h6>
+                            <p class="small text-muted mb-0">Configurer votre atelier en 5 min</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="rounded-circle bg-warning bg-opacity-10 p-3">
+                            <i class="fas fa-headset text-warning"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Support</h6>
+                            <p class="small text-muted mb-0">Assistance 24/7 disponible</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function previewLogo(event) {
+    const input = event.target;
+    const preview = document.getElementById('logoPreview');
+    const placeholder = document.querySelector('.logo-placeholder');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            if (preview) {
+                preview.src = e.target.result;
+            } else if (placeholder) {
+                placeholder.style.backgroundImage = `url(${e.target.result})`;
+                placeholder.style.backgroundSize = 'cover';
+                placeholder.style.backgroundPosition = 'center';
+                placeholder.textContent = '';
+            }
+        };
+        
+        reader.readAsDataURL(input.files[0]);
+        
+        // Animation de feedback
+        const container = document.querySelector('.logo-preview-container');
+        container.classList.add('animate__animated', 'animate__pulse');
+        setTimeout(() => {
+            container.classList.remove('animate__animated', 'animate__pulse');
+        }, 1000);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion des onglets
+    const tabs = document.querySelectorAll('.settings-tab');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function(e) {
+            e.preventDefault();
+            tabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Animation de transition
+            this.classList.add('animate__animated', 'animate__fadeIn');
+            setTimeout(() => {
+                this.classList.remove('animate__animated', 'animate__fadeIn');
+            }, 500);
+        });
+    });
+    
+    // Validation en temps réel
+    const formControls = document.querySelectorAll('.form-control-enhanced');
+    formControls.forEach(control => {
+        control.addEventListener('blur', function() {
+            if (this.value.trim()) {
+                this.classList.add('is-valid');
+                this.classList.remove('is-invalid');
+            } else if (this.hasAttribute('required')) {
+                this.classList.add('is-invalid');
+                this.classList.remove('is-valid');
+            }
+        });
+    });
+    
+    // Auto-save simulation
+    const autoSaveCheckbox = document.getElementById('autoSave');
+    if (autoSaveCheckbox) {
+        formControls.forEach(control => {
+            control.addEventListener('change', function() {
+                if (autoSaveCheckbox.checked) {
+                    showSaveIndicator();
+                }
+            });
+        });
+    }
+    
+    function showSaveIndicator() {
+        const indicator = document.createElement('div');
+        indicator.className = 'position-fixed bottom-0 end-0 m-3 p-3 bg-success text-white rounded shadow-lg';
+        indicator.innerHTML = `
+            <div class="d-flex align-items-center gap-2">
+                <i class="fas fa-check-circle"></i>
+                <span>Modifications sauvegardées</span>
+            </div>
+        `;
+        document.body.appendChild(indicator);
+        
+        setTimeout(() => {
+            indicator.classList.add('animate__animated', 'animate__fadeOutDown');
+            setTimeout(() => indicator.remove(), 500);
+        }, 2000);
+    }
+    
+    // Confirmation avant réinitialisation
+    const resetBtn = document.querySelector('button[type="reset"]');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', function(e) {
+            if (!confirm('Êtes-vous sûr de vouloir réinitialiser toutes les modifications non enregistrées ?')) {
+                e.preventDefault();
+            }
+        });
+    }
+    
+    // Animation d'entrée
+    const sections = document.querySelectorAll('.form-section');
+    sections.forEach((section, index) => {
+        section.style.animationDelay = `${index * 0.1}s`;
+    });
+    
+    // Bouton save sticky
+    const saveBtn = document.querySelector('.btn-save');
+    const formActions = document.querySelector('.form-actions');
+    
+    if (saveBtn && formActions) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) {
+                    saveBtn.classList.add('position-fixed', 'bottom-3', 'start-50', 'translate-middle-x');
+                    saveBtn.style.zIndex = '1000';
+                    saveBtn.style.width = '300px';
+                    saveBtn.style.boxShadow = '0 10px 25px rgba(102, 126, 234, 0.3)';
+                } else {
+                    saveBtn.classList.remove('position-fixed', 'bottom-3', 'start-50', 'translate-middle-x');
+                    saveBtn.style.width = '';
+                    saveBtn.style.boxShadow = '';
+                }
+            });
+        }, { threshold: 0.1 });
+        
+        observer.observe(formActions);
+    }
+});
+
+// Inclure animate.css
+const animateCSS = document.createElement('link');
+animateCSS.rel = 'stylesheet';
+animateCSS.href = 'https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css';
+document.head.appendChild(animateCSS);
+</script>
+{% endblock %}

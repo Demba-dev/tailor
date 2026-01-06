@@ -3,7 +3,8 @@ from apps.personnel.models import Personnel
 
 class Formation(models.Model):
     STATUT_CHOICES = (
-        ('prevu', 'Prévue'),
+        ('planifiee', 'Planifiée'),
+        ('encours', 'En cours'),
         ('terminee', 'Terminée'),
         ('annulee', 'Annulée'),
     )
@@ -14,7 +15,7 @@ class Formation(models.Model):
     date_fin = models.DateField()
     instructeur = models.ForeignKey(Personnel, on_delete=models.SET_NULL, null=True, blank=True, limit_choices_to={'is_active': True})
     participants = models.ManyToManyField(Personnel, related_name='formations', blank=True)
-    statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='prevu')
+    statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='planifiee')
     note = models.TextField(blank=True)
     prix_par_personne = models.DecimalField(max_digits=10, decimal_places=0, blank=True, null=True)
     nombre_places = models.IntegerField(blank=True, null=True)

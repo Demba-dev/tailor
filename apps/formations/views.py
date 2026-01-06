@@ -7,7 +7,14 @@ from apps.personnel.models import Personnel
 
 def formation_list(request):
     formations = Formation.objects.all()
-    return render(request, 'formations/formation_list.html', {'formations': formations})
+    context = {
+        'formations': formations,
+        'formations_planifiees': formations.filter(statut='prevu'),
+        'formations_encours': formations.filter(statut='encours'), # Au cas où on ajoute ce statut
+        'formations_terminees': formations.filter(statut='terminee'),
+        'formations_annulees': formations.filter(statut='annulee'),
+    }
+    return render(request, 'formations/formation_list.html', context)
 
 
 def formation_create(request):

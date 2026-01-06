@@ -5,9 +5,59 @@ from apps.commandes.models import Commande
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 
+from django.db.models import Sum, Avg
+from django.utils import timezone
+from datetime import timedelta
+
 def paiement_list(request):
     paiements = Paiement.objects.all()
-    return render(request, 'paiements/paiement_list.html', {'paiements': paiements})
+    today = timezone.now()
+    
+    # Statistiques de base
+    total_paiements = paiements.aggregate(Sum('montant'))['montant__sum'] or 0
+    
+    # Ce mois-ci
+    paiements_mois = paiements.filter(date_paiement__month=today.month, date_paiement__year=today.year)
+    paiements_du_mois = paiements_mois.aggregate(Sum('montant'))['montant__sum'] or 0
+    paiements_mois_count = paiements_mois.count()
+    
+    # Mois dernier (pour évolution)
+    first_day_this_month = today.replace(day=1)
+    last_day_last_month = first_day_this_month - timedelta(days=1)
+    paiements_mois_dernier = paiements.filter(
+        date_paiement__month=last_day_last_month.month, 
+        date_paiement__year=last_day_last_month.year
+    ).aggregate(Sum('montant'))['montant__sum'] or 0
+    
+    if paiements_mois_dernier > 0:
+        evolution_mensuelle = ((paiements_du_mois - paiements_mois_dernier) / paiements_mois_dernier) * 100
+    else:
+        evolution_mensuelle = 100 if paiements_du_mois > 0 else 0
+
+    # Impayés
+    commandes = Commande.objects.all()
+    impayes = commandes.aggregate(Sum('reste_a_payer'))['reste_a_payer__sum'] or 0
+    commandes_impayees = commandes.filter(reste_a_payer__gt=0).count()
+    
+    # Moyennes et Taux
+    moyenne_paiement = paiements.aggregate(Avg('montant'))['montant__avg'] or 0
+    total_commandes = commandes.count()
+    commandes_payees = commandes.filter(reste_a_payer__lte=0).count()
+    
+    taux_paiement_complet = (commandes_payees / total_commandes * 100) if total_commandes > 0 else 0
+
+    context = {
+        'paiements': paiements,
+        'total_paiements': total_paiements,
+        'paiements_du_mois': paiements_du_mois,
+        'paiements_mois_count': paiements_mois_count,
+        'evolution_mensuelle': evolution_mensuelle,
+        'impayes': impayes,
+        'commandes_impayees': commandes_impayees,
+        'moyenne_paiement': moyenne_paiement,
+        'taux_paiement_complet': int(taux_paiement_complet),
+    }
+    return render(request, 'paiements/paiement_list.html', context)
 
 
 

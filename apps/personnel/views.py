@@ -5,9 +5,28 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import Personnel
 from .forms import PersonnelForm
 
+from apps.commandes.models import Commande
+
 def personnel_list(request):
     personnels = Personnel.objects.all()
-    return render(request, 'personnel/personnel_list.html', {'personnels': personnels})
+    couturiers_count = personnels.filter(role='couturier').count()
+    apprentis_count = personnels.filter(role='apprenti').count()
+    active_personnel = personnels.filter(is_active=True).count()
+    
+    total_commandes = Commande.objects.count()
+    if active_personnel > 0:
+        commandes_moyennes = total_commandes / active_personnel
+    else:
+        commandes_moyennes = 0
+
+    context = {
+        'personnels': personnels,
+        'couturiers_count': couturiers_count,
+        'apprentis_count': apprentis_count,
+        'active_personnel': active_personnel,
+        'commandes_moyennes': commandes_moyennes,
+    }
+    return render(request, 'personnel/personnel_list.html', context)
 
 
 

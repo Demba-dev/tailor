@@ -68,7 +68,7 @@
                                 </span>
                             </td>
                             <td>{{ modele.temps_realisation_heures }}</td>
-                            <td>{{ modele.prix_main_oeuvre }} €</td>
+                            <td>{{ modele.prix_main_oeuvre }} CFA</td>
                             <td>
                                 <form action="{% url 'panier:cart_add' 'modele' modele.id %}" method="post" style="display: inline;">
                                     {% csrf_token %}

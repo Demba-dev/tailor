@@ -23,4 +23,5 @@ class MesureForm(forms.ModelForm):
         ]
         widgets = {
             'note': forms.Textarea(attrs={'rows': 2}),
+            'date_prise_mesure': forms.DateInput(attrs={'type': 'date'}),
         }

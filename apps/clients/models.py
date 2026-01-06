@@ -73,3 +73,7 @@ class Client(models.Model):
         
         return total_commandes - total_paye
 
+
+    def get_status_actif(self):
+        return "Actif" if self.is_active else "Inactif"
+    

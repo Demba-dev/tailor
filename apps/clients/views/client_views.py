@@ -1,14 +1,38 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib import messages
+from datetime import date
 from apps.clients.models import Client
 from apps.clients.forms import ClientForm
 
 
+from django.db.models import Sum, Avg
+from apps.commandes.models import Commande
+
 def client_list(request):
-    """Liste des clients actifs."""
+    """Liste des clients actifs avec statistiques globales."""
     clients = Client.objects.filter(is_active=True)
-    return render(request, 'clients/client_list.html', {'clients': clients})
+    today = date.today()
+    
+    # Clients ayant commandé ce mois-ci
+    clients_actifs_mois = clients.filter(
+        commandes__date_commande__month=today.month,
+        commandes__date_commande__year=today.year
+    ).distinct()
+
+    # Statistiques globales pour les cartes
+    total_commandes_encours = Commande.objects.filter(statut='encours').count()
+    
+    # Calcul du CA moyen (somme des prix_total / nombre de clients)
+    total_ca = Commande.objects.aggregate(total=Sum('prix_total'))['total'] or 0
+    ca_moyen = total_ca / clients.count() if clients.exists() else 0
+
+    return render(request, 'clients/client_list.html', {
+        'clients': clients,
+        'clients_actifs_mois': clients_actifs_mois,
+        'total_commandes_encours': total_commandes_encours,
+        'ca_moyen': ca_moyen
+    })
 
 
 def client_detail(request, pk):

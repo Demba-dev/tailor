@@ -55,6 +55,8 @@ INSTALLED_APPS = [
     'apps.dashboard',
     'apps.panier',
     'apps.ventes',
+    'apps.users',
+    'apps.settings',
 ]
 
 MIDDLEWARE = [
@@ -82,6 +84,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'apps.panier.context_processors.cart',
+                'apps.settings.context_processors.site_settings',
             ],
         },
     },

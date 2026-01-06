@@ -9,10 +9,14 @@
         <!-- Logo et nom -->
         <a class="navbar-brand-custom d-flex align-items-center me-4" href="{% url 'dashboard:index' %}">
             <div class="brand-logo-icon">
-                <i class="fas fa-scissors"></i>
+                {% if site_settings.logo %}
+                    <img src="{{ site_settings.logo.url }}" alt="Logo" style="height: 30px; width: auto;">
+                {% else %}
+                    <i class="fas fa-scissors"></i>
+                {% endif %}
             </div>
             <div class="brand-text-wrapper">
-                <span class="brand-logo-text">TAILOR</span>
+                <span class="brand-logo-text">{{ site_settings.nom_atelier|upper }}</span>
                 <small class="brand-logo-subtitle">Atelier de Couture</small>
             </div>
         </a>
@@ -151,8 +155,8 @@
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2" style="min-width: 220px; border-radius: 12px;">
                     <li><h6 class="dropdown-header text-muted fw-bold">Compte</h6></li>
-                    <li><a class="dropdown-item" href="#"><i class="fas fa-user-circle me-2 text-primary"></i>Mon profil</a></li>
-                    <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2 text-secondary"></i>Paramètres</a></li>
+                    <li><a class="dropdown-item" href="{% url 'users:user_profile' %}"><i class="fas fa-user-circle me-2 text-primary"></i>Mon profil</a></li>
+                    <li><a class="dropdown-item" href="{% url 'settings:settings_detail' %}"><i class="fas fa-cog me-2 text-secondary"></i>Paramètres</a></li>
                     <li><a class="dropdown-item" href="{% url 'admin:index' %}"><i class="fas fa-shield-alt me-2 text-warning"></i>Admin</a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item text-danger" href="{% url 'admin:logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Déconnexion</a></li>

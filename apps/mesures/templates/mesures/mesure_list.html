@@ -243,8 +243,8 @@
                                         <div class="fw-bold">{{ mesure.longueur_bras|default:"-" }} cm</div>
                                     </div>
                                     <div class="col-6">
-                                        <div class="small text-muted">Tour hanches</div>
-                                        <div class="fw-bold">{{ mesure.tour_hanches|default:"-" }} cm</div>
+                                        <div class="small text-muted">Tour hanche</div>
+                                        <div class="fw-bold">{{ mesure.tour_hanche|default:"-" }} cm</div>
                                     </div>
                                 </div>
                                 
@@ -252,7 +252,7 @@
                                     <div>
                                         <small class="text-muted">
                                             <i class="fas fa-calendar-alt me-1"></i>
-                                            {{ mesure.date_prise|date:"d/m/Y" }}
+                                            {{ mesure.date_prise_mesure }}
                                         </small>
                                         {% if mesure.est_recente %}
                                         <span class="badge bg-success ms-2">Récente</span>
@@ -338,7 +338,7 @@
                                 <th class="text-center">Tour taille</th>
                                 <th class="text-center">Longueur</th>
                                 <th>Date mesure</th>
-                                <th>Âge mesure</th>
+                               
                                 <th class="text-end">Actions</th>
                             </tr>
                         </thead>
@@ -379,14 +379,10 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {{ mesure.date_prise|date:"d/m/Y" }}
-                                    <div class="small text-muted">{{ mesure.date_prise|timesince }}</div>
+                                    {{ mesure.date_prise_mesure }}
+                                    <div class="small text-muted">{{ mesure.date_prise_mesure|timesince }}</div>
                                 </td>
-                                <td>
-                                    <span class="badge bg-{{ mesure.get_age_color }}">
-                                        {{ mesure.get_age_display }}
-                                    </span>
-                                </td>
+                                
                                 <td class="text-end">
                                     <div class="btn-group btn-group-sm">
                                         <a href="{% url 'mesures:mesure_detail' mesure.id %}" 

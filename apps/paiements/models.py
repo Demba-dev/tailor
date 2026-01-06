@@ -25,3 +25,20 @@ class Paiement(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         self.commande.calculer_reste()
+
+    def get_mode_display(self):
+        modes = {
+            'espece': 'Espèces',
+            'carte': 'Carte bancaire',
+            'mobile': 'Paiement mobile'
+        }
+        return modes.get(self.mode_paiement, self.mode_paiement)
+
+    @property
+    def get_mode_icon(self):
+        icons = {
+            'espece': 'money-bill-wave',
+            'carte': 'credit-card',
+            'mobile': 'mobile-alt'
+        }
+        return icons.get(self.mode_paiement, 'coins')

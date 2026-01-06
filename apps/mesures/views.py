@@ -2,13 +2,31 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import Mesure
 from .forms import MesureForm
 from django.contrib import messages
+from django.utils import timezone
 
 def mesure_list(request, client_id=None):
+    unique_clients = 0
+    last_measure_date = 0
+    avg_per_month = 0
     if client_id:
         mesures = Mesure.objects.filter(client_id=client_id)
     else:
         mesures = Mesure.objects.all()
-    return render(request, 'mesures/mesure_list.html', {'mesures': mesures})
+        unique_clients = Mesure.objects.values('client').distinct().count()
+        derniere_mesure = Mesure.objects.exclude(date_prise_mesure=None).order_by('-date_prise_mesure').first()
+        if derniere_mesure:
+            last_measure_date = derniere_mesure.date_prise_mesure
+
+        current_year = timezone.now().year
+        count_year = Mesure.objects.filter(date_prise_mesure__year=current_year).count()
+        avg_per_month = round(count_year / 12, 2)
+    return render(request, 'mesures/mesure_list.html', 
+        {
+        'mesures': mesures, 
+        'unique_clients': unique_clients, 
+        'last_measure_date': last_measure_date, 
+        'avg_per_month': avg_per_month
+        })
 
 def mesure_create(request, client_id=None):
     if request.method == 'POST':

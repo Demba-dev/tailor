@@ -7,6 +7,9 @@ from apps.formations.models import Formation
 from django.db.models import Sum
 from datetime import date
 
+from django.urls import reverse
+from apps.ventes.models import Vente
+
 def index(request):
     commandes_encours = Commande.objects.filter(statut='encours').count()
     commandes_terminees = Commande.objects.filter(statut='termine').count()
@@ -22,6 +25,30 @@ def index(request):
     formations_a_venir = Formation.objects.filter(statut='prevu').count()
     formations_actives = Formation.objects.exclude(statut='annulee').count()
     
+    # Activités récentes
+    recent_activities = []
+    
+    
+    
+    # 5 Dernières ventes
+    for v in Vente.objects.order_by('-date_vente')[:5]:
+        recent_activities.append({
+            'title': f"Vente #{v.pk}",
+            'time': v.date_vente,
+            'description': f"Montant: {v.montant_total} CFA",
+            'badge': 'Vente',
+            'badge_color': '#10b981',
+            'link': reverse('ventes:vente_detail', args=[v.pk])
+        })
+
+    # Tri par date (on convertit tout en date pour la comparaison si nécessaire)
+    from datetime import datetime
+    recent_activities.sort(
+        key=lambda x: x['time'].date() if isinstance(x['time'], datetime) else x['time'], 
+        reverse=True
+    )
+    recent_activities = recent_activities[:8] # On garde les 8 derniers
+
     # Calculer le taux de satisfaction (pourcentage de commandes terminées)
     taux_satisfaction = round((commandes_terminees / commandes_total * 100) if commandes_total > 0 else 0)
     
@@ -57,10 +84,21 @@ def index(request):
     else:
         satisfaction_rate = 100
 
+    # Commandes en retard (En cours et date livraison dépassée)
+    commandes_retard = Commande.objects.filter(
+        statut='encours', 
+        date_livraison__lt=date.today()
+    ).count()
+
+    # 5 Dernières commandes pour le tableau
+    recent_orders = Commande.objects.order_by('-date_commande')[:5]
+
     context = {
         'commandes_encours': commandes_encours,
         'commandes_terminees': commandes_terminees,
         'commandes_annulees': commandes_annulees,
+        'commandes_retard': commandes_retard,
+        'recent_orders': recent_orders,
         'total_paiements': total_paiements,
         'reste_total': reste_total,
         'total_clients': total_clients,
@@ -72,8 +110,10 @@ def index(request):
         'stroke_dashoffset': round(stroke_dashoffset, 2),
         'delai_moyen': delai_moyen,
         'satisfaction_rate': satisfaction_rate,
+        'recent_activities': recent_activities,
     }
     return render(request, 'dashboard/index.html', context)
+    
 
 def ventes_mensuelles(request):
     today = date.today()

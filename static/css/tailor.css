@@ -448,3 +448,51 @@ body {
 .dropdown-link:hover i {
     color: var(--color-primary);
 }
+
+/* ===== DARK MODE STYLES ===== */
+body.theme-dark {
+    background-color: #0f172a !important;
+    color: #f1f5f9 !important;
+}
+
+body.theme-dark #wrapper,
+body.theme-dark #main-content {
+    background-color: #0f172a !important;
+}
+
+body.theme-dark .sidebar-wrapper {
+    background: #1e293b !important;
+    border-right-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body.theme-dark .main-navbar-custom {
+    background: #1e293b !important;
+    border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body.theme-dark .card {
+    background-color: #1e293b;
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #f1f5f9;
+}
+
+body.theme-dark .text-muted {
+    color: #94a3b8 !important;
+}
+
+body.theme-dark .form-control, 
+body.theme-dark .form-select,
+body.theme-dark .form-control-enhanced {
+    background-color: #0f172a;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+
+body.theme-dark .settings-card-header {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+body.theme-dark .settings-card-title {
+    color: #f1f5f9;
+}

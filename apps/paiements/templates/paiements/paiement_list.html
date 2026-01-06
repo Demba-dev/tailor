@@ -346,7 +346,7 @@
         <div class="row g-3 mb-4">
             <div class="col-xl-3 col-md-6">
                 <div class="stat-card">
-                    <div class="stat-number text-primary">{{ total_paiements|floatformat:0 }}€</div>
+                    <div class="stat-number text-primary">{{ total_paiements|floatformat:0 }}CFA</div>
                     <div class="stat-label">Total perçu</div>
                     <div class="small text-muted">
                         <i class="fas fa-arrow-up text-success me-1"></i>
@@ -356,7 +356,7 @@
             </div>
             <div class="col-xl-3 col-md-6">
                 <div class="stat-card">
-                    <div class="stat-number text-success">{{ paiements_du_mois|floatformat:0 }}€</div>
+                    <div class="stat-number text-success">{{ paiements_du_mois|floatformat:0 }}CFA</div>
                     <div class="stat-label">Ce mois</div>
                     <div class="small text-muted">
                         {{ paiements_mois_count }} paiement{{ paiements_mois_count|pluralize }}
@@ -365,7 +365,7 @@
             </div>
             <div class="col-xl-3 col-md-6">
                 <div class="stat-card">
-                    <div class="stat-number text-warning">{{ impayes|floatformat:0 }}€</div>
+                    <div class="stat-number text-warning">{{ impayes|floatformat:0 }}CFA</div>
                     <div class="stat-label">Impayés</div>
                     <div class="small text-muted">
                         {{ commandes_impayees }} commande{{ commandes_impayees|pluralize }} en attente
@@ -374,7 +374,7 @@
             </div>
             <div class="col-xl-3 col-md-6">
                 <div class="stat-card">
-                    <div class="stat-number text-info">{{ moyenne_paiement|floatformat:0 }}€</div>
+                    <div class="stat-number text-info">{{ moyenne_paiement|floatformat:0 }}CFA</div>
                     <div class="stat-label">Moyenne/paiement</div>
                     <div class="small text-muted">
                         {{ taux_paiement_complet }}% de paiements complets
@@ -424,7 +424,7 @@
                 </div>
                 <div class="col-md-4">
                     <label class="form-label small">Montant minimum</label>
-                    <input type="number" class="form-control form-control-sm" id="filterMinAmount" placeholder="0€">
+                    <input type="number" class="form-control form-control-sm" id="filterMinAmount" placeholder="0CFA">
                 </div>
                 <div class="col-md-4">
                     <label class="form-label small">Tri par</label>
@@ -465,7 +465,7 @@
                             </div>
                             
                             <div class="payment-amount">
-                                {{ paiement.montant|floatformat:2 }}€
+                                {{ paiement.montant|floatformat:2 }}CFA
                             </div>
                             
                             <div class="d-flex justify-content-between align-items-center">
@@ -501,8 +501,8 @@
                                 </div>
                                 <div class="small text-muted mb-2">{{ paiement.commande.habit.nom }}</div>
                                 <div class="d-flex justify-content-between small">
-                                    <span>Total : {{ paiement.commande.prix_final|floatformat:2 }}€</span>
-                                    <span class="text-success">Payé : {{ paiement.commande.get_montant_paye|floatformat:2 }}€</span>
+                                    <span>Total : {{ paiement.commande.prix_total|floatformat:2 }}CFA</span>
+                                    <span class="text-success">Payé : {{ paiement.commande.get_montant_paye|floatformat:2 }}CFA</span>
                                 </div>
                             </div>
                             
@@ -592,7 +592,7 @@
                                 </div>
                             </div>
                             <div class="text-end">
-                                <div class="fw-bold text-success">{{ paiement.montant|floatformat:2 }}€</div>
+                                <div class="fw-bold text-success">{{ paiement.montant|floatformat:2 }}CFA</div>
                                 <span class="badge bg-{{ paiement.get_statut_color }}">
                                     {{ paiement.get_statut_display }}
                                 </span>
@@ -652,8 +652,7 @@
                                 <th>Client</th>
                                 <th>Commande</th>
                                 <th class="text-end">Montant</th>
-                                <th>Mode</th>
-                                <th>Statut</th>
+                                <th>Mode</th>                                
                                 <th class="text-end">Actions</th>
                             </tr>
                         </thead>
@@ -686,9 +685,9 @@
                                     <div class="small text-muted">{{ paiement.commande.type_habit.nom }}</div>
                                 </td>
                                 <td class="text-end">
-                                    <div class="fw-bold text-success">{{ paiement.montant|floatformat:2 }}€</div>
+                                    <div class="fw-bold text-success">{{ paiement.montant|floatformat:2 }}CFA</div>
                                     <div class="small text-muted">
-                                        Sur {{ paiement.commande.prix_final|floatformat:2 }}€
+                                        Sur {{ paiement.commande.prix_final|floatformat:2 }}CFA
                                     </div>
                                 </td>
                                 <td>
@@ -697,11 +696,7 @@
                                         {{ paiement.get_mode_display }}
                                     </span>
                                 </td>
-                                <td>
-                                    <span class="badge bg-{{ paiement.get_statut_color }}">
-                                        {{ paiement.get_statut_display }}
-                                    </span>
-                                </td>
+                                
                                 <td class="text-end">
                                     <div class="btn-group btn-group-sm">
                                         <a href="{% url 'paiements:paiement_detail' paiement.id %}" 
@@ -870,7 +865,7 @@
             <div class="alert alert-danger">
                 <div class="fw-bold mb-2">{{ commandes_impayees }} commande{{ commandes_impayees|pluralize }} en attente</div>
                 <div class="small">
-                    Total impayé : <span class="fw-bold">{{ impayes|floatformat:2 }}€</span>
+                    Total impayé : <span class="fw-bold">{{ impayes|floatformat:2 }}CFA</span>
                 </div>
             </div>
             <a href="{% url 'commandes:commande_list' %}?statut=confirmee" class="btn btn-sm btn-outline-danger w-100">
@@ -1129,7 +1124,7 @@ function initPaymentsChart() {
     const data = {
         labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
         datasets: [{
-            label: 'Paiements (€)',
+            label: 'Paiements (CFA)',
             data: [450, 520, 480, 600, 750, 300, 420],
             borderColor: '#48bb78',
             backgroundColor: 'rgba(72, 187, 120, 0.1)',
@@ -1154,7 +1149,7 @@ function initPaymentsChart() {
                     beginAtZero: true,
                     ticks: {
                         callback: function(value) {
-                            return value + '€';
+                            return value + 'CFA';
                         }
                     }
                 }
