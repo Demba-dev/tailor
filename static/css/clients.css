@@ -232,6 +232,10 @@
     border-radius: 17px;
 }
 
+.photo-input-hidden {
+    display: none;
+}
+
 /* Boutons style Sidebar */
 .btn {
     border-radius: 10px;
@@ -2578,4 +2582,31 @@
 
 .toast.bg-info {
     background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%) !important;
+}
+.profile-photo-wrapper {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 1rem;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(30, 41, 59, 0.12);
+    transition: all 0.3s ease;
+    display: inline-block;
+}
+
+.profile-photo-wrapper:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(30, 41, 59, 0.16);
+}
+
+.profile-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    border: 4px solid white;
+    box-sizing: border-box;
+    display: block;
+    border-radius: 16px;
 }

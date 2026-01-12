@@ -311,14 +311,14 @@
 {% block page_title %}
 <div class="order-header">
     <div class="order-status">
-        <span class="status-badge bg-{{ commande.get_statut_color }}">
+        <span class="status-badge" style="background: {{ commande.get_statut_color }}; color: white; padding: 0.5rem 1.5rem; border-radius: 20px; font-weight: 600;">
             <i class="fas fa-{{ commande.get_statut_icon }} me-2"></i>{{ commande.get_statut_display }}
         </span>
     </div>
     
     <div class="d-flex justify-content-between align-items-center">
         <div>
-            <h1 class="order-number mb-2">Commande {{ commande.numero }}</h1>
+            <h1 class="order-number mb-2">Commande #{{ commande.id }}</h1>
             <div class="d-flex align-items-center gap-3">
                 <div>
                     <i class="fas fa-user text-primary me-2"></i>
@@ -326,25 +326,18 @@
                         {{ commande.client.prenom }} {{ commande.client.nom }}
                     </a>
                 </div>
+                {% if commande.type_habit %}
                 <div>
                     <i class="fas fa-tshirt text-success me-2"></i>
-                    <span class="fw-bold">{{ commande.habit.nom }}</span>
+                    <span class="fw-bold">{{ commande.type_habit.nom }}</span>
                 </div>
+                {% endif %}
                 <div>
                     <i class="fas fa-calendar-alt text-warning me-2"></i>
                     <span>Commande du {{ commande.date_commande|date:"d/m/Y" }}</span>
                 </div>
             </div>
         </div>
-        
-        {% if commande.priorite == 'urgent' %}
-        <div class="text-end">
-            <div class="badge bg-danger p-2 fs-6">
-                <i class="fas fa-bolt me-1"></i>URGENT
-            </div>
-            <div class="small text-danger mt-1">À traiter en priorité</div>
-        </div>
-        {% endif %}
     </div>
 </div>
 {% endblock %}
@@ -354,15 +347,15 @@
     <!-- Colonne principale -->
     <div class="col-lg-8">
         <!-- Alerte retard -->
-        {% if commande.est_en_retard %}
+        {% if commande.is_late %}
         <div class="alert-custom alert-danger">
             <div class="d-flex align-items-center">
                 <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
                 <div>
                     <h5 class="alert-heading mb-1">Commande en retard !</h5>
                     <p class="mb-0">
-                        La date de livraison prévue était le {{ commande.date_livraison_prevue|date:"d/m/Y" }}
-                        ({{ commande.get_jours_retard }} jour{{ commande.get_jours_retard|pluralize }} de retard)
+                        La date de livraison prévue était le {{ commande.date_livraison|date:"d/m/Y" }}
+                        ({{ commande.days_late }} jour{{ commande.days_late|pluralize }} de retard)
                     </p>
                 </div>
             </div>
@@ -370,14 +363,14 @@
         {% endif %}
         
         <!-- Alerte paiement -->
-        {% if not commande.est_soldee %}
+        {% if not commande.is_paid %}
         <div class="alert-custom alert-warning">
             <div class="d-flex align-items-center">
-                <i class="fas fa-euro-sign fa-2x me-3"></i>
+                <i class="fas fa-money-bill-wave fa-2x me-3"></i>
                 <div>
                     <h5 class="alert-heading mb-1">Paiement incomplet</h5>
                     <p class="mb-0">
-                        Il reste {{ commande.get_reste_a_payer|floatformat:2 }}CFA à payer sur {{ commande.prix_final|floatformat:2 }}CFA
+                        Il reste {{ commande.get_reste_a_payer|floatformat:2 }} CFA à payer sur {{ commande.prix_total|floatformat:2 }} CFA
                     </p>
                 </div>
             </div>
@@ -397,73 +390,40 @@
                     <div class="timeline-track"></div>
                     
                     <!-- Étape 1: Commande validée -->
-                    <div class="timeline-step {% if commande.statut != 'brouillon' %}completed{% endif %} {% if commande.statut == 'confirmee' %}active{% endif %}">
+                    <div class="timeline-step {% if commande.statut != 'en_attente' %}completed{% endif %} {% if commande.statut == 'en_attente' %}active{% endif %}">
                         <div class="step-icon">
                             <i class="fas fa-clipboard-check"></i>
                         </div>
                         <div class="step-content">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h6 class="mb-0">Commande validée</h6>
+                                <h6 class="mb-0">Commande reçue</h6>
                                 <span class="badge bg-success">Terminé</span>
                             </div>
                             <p class="text-muted small mb-0">
-                                Commande confirmée le {{ commande.date_commande|date:"d/m/Y" }}
-                                {% if commande.validee_par %}
-                                par {{ commande.validee_par.get_full_name }}
-                                {% endif %}
+                                Commande enregistrée le {{ commande.date_commande|date:"d/m/Y" }}
                             </p>
                         </div>
                     </div>
                     
-                    <!-- Étape 2: Prise de mesures -->
-                    <div class="timeline-step {% if commande.statut in 'en_mesures,en_decoupe,en_assemblage,en_finition,terminee,livree' %}completed{% endif %} {% if commande.statut == 'en_mesures' %}active{% endif %}">
+                    <!-- Étape 2: En cours -->
+                    <div class="timeline-step {% if commande.statut in 'encours,termine,livre' %}completed{% endif %} {% if commande.statut == 'encours' %}active{% endif %}">
                         <div class="step-icon">
-                            <i class="fas fa-ruler-combined"></i>
+                            <i class="fas fa-tools"></i>
                         </div>
                         <div class="step-content">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h6 class="mb-0">Prise de mesures</h6>
-                                {% if commande.statut in 'en_mesures,en_decoupe,en_assemblage,en_finition,terminee,livree' %}
+                                <h6 class="mb-0">Production en cours</h6>
+                                {% if commande.statut in 'encours,termine,livre' %}
                                 <span class="badge bg-success">Terminé</span>
                                 {% else %}
                                 <span class="badge bg-secondary">En attente</span>
                                 {% endif %}
                             </div>
-                            {% if commande.mesures %}
+                            {% if commande.mesure %}
                             <p class="text-muted small mb-0">
-                                Mesures prises le {{ commande.mesures.date_prise|date:"d/m/Y" }}
+                                Mesures : {{ commande.mesure.poitrine }} x {{ commande.mesure.taille }}
                             </p>
-                            <button class="btn btn-sm btn-outline-primary mt-2" data-bs-toggle="modal" data-bs-target="#mesuresModal">
-                                <i class="fas fa-eye me-1"></i>Voir les mesures
-                            </button>
-                            {% else %}
-                            <p class="text-muted small mb-0">
-                                Aucune mesure enregistrée pour cette commande
-                            </p>
-                            <a href="{% url 'mesures:mesure_create' %}?commande={{ commande.id }}" class="btn btn-sm btn-primary mt-2">
-                                <i class="fas fa-plus me-1"></i>Prendre des mesures
-                            </a>
                             {% endif %}
-                        </div>
-                    </div>
-                    
-                    <!-- Étape 3: Découpe -->
-                    <div class="timeline-step {% if commande.statut in 'en_decoupe,en_assemblage,en_finition,terminee,livree' %}completed{% endif %} {% if commande.statut == 'en_decoupe' %}active{% endif %}">
-                        <div class="step-icon">
-                            <i class="fas fa-cut"></i>
-                        </div>
-                        <div class="step-content">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h6 class="mb-0">Découpe du tissu</h6>
-                                {% if commande.statut in 'en_decoupe,en_assemblage,en_finition,terminee,livree' %}
-                                <span class="badge bg-success">Terminé</span>
-                                {% else %}
-                                <span class="badge bg-secondary">En attente</span>
-                                {% endif %}
-                            </div>
-                            <p class="text-muted small mb-0">
-                                Découpe du tissu selon le patron
-                            </p>
                             {% if commande.tissu %}
                             <div class="mt-2">
                                 <span class="badge bg-light text-dark">
@@ -474,65 +434,15 @@
                         </div>
                     </div>
                     
-                    <!-- Étape 4: Assemblage -->
-                    <div class="timeline-step {% if commande.statut in 'en_assemblage,en_finition,terminee,livree' %}completed{% endif %} {% if commande.statut == 'en_assemblage' %}active{% endif %}">
-                        <div class="step-icon">
-                            <i class="fas fa-people-carry"></i>
-                        </div>
-                        <div class="step-content">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h6 class="mb-0">Assemblage</h6>
-                                {% if commande.statut in 'en_assemblage,en_finition,terminee,livree' %}
-                                <span class="badge bg-success">Terminé</span>
-                                {% else %}
-                                <span class="badge bg-secondary">En attente</span>
-                                {% endif %}
-                            </div>
-                            <p class="text-muted small mb-0">
-                                Assemblage des différentes parties de l'habit
-                            </p>
-                            {% if commande.personnel_assigne.exists %}
-                            <div class="mt-2">
-                                <small class="text-muted">Assigné à :</small>
-                                {% for personnel in commande.personnel_assigne.all %}
-                                <span class="badge bg-info me-1">
-                                    {{ personnel.prenom }}
-                                </span>
-                                {% endfor %}
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    
-                    <!-- Étape 5: Finition -->
-                    <div class="timeline-step {% if commande.statut in 'en_finition,terminee,livree' %}completed{% endif %} {% if commande.statut == 'en_finition' %}active{% endif %}">
-                        <div class="step-icon">
-                            <i class="fas fa-magic"></i>
-                        </div>
-                        <div class="step-content">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h6 class="mb-0">Finition</h6>
-                                {% if commande.statut in 'en_finition,terminee,livree' %}
-                                <span class="badge bg-success">Terminé</span>
-                                {% else %}
-                                <span class="badge bg-secondary">En attente</span>
-                                {% endif %}
-                            </div>
-                            <p class="text-muted small mb-0">
-                                Finitions, boutons, ourlets, repassage
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <!-- Étape 6: Terminée -->
-                    <div class="timeline-step {% if commande.statut in 'terminee,livree' %}completed{% endif %} {% if commande.statut == 'terminee' %}active{% endif %}">
+                    <!-- Étape 3: Terminée -->
+                    <div class="timeline-step {% if commande.statut in 'termine,livre' %}completed{% endif %} {% if commande.statut == 'termine' %}active{% endif %}">
                         <div class="step-icon">
                             <i class="fas fa-check-circle"></i>
                         </div>
                         <div class="step-content">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h6 class="mb-0">Commande terminée</h6>
-                                {% if commande.statut in 'terminee,livree' %}
+                                <h6 class="mb-0">Production terminée</h6>
+                                {% if commande.statut in 'terminee,livre' %}
                                 <span class="badge bg-success">Terminé</span>
                                 {% else %}
                                 <span class="badge bg-secondary">En attente</span>
@@ -544,34 +454,34 @@
                         </div>
                     </div>
                     
-                    <!-- Étape 7: Livrée -->
-                    <div class="timeline-step {% if commande.statut == 'livree' %}completed active{% endif %}">
+                    <!-- Étape 4: Livrée -->
+                    <div class="timeline-step {% if commande.statut == 'livre' %}completed active{% endif %}">
                         <div class="step-icon">
                             <i class="fas fa-truck"></i>
                         </div>
                         <div class="step-content">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <h6 class="mb-0">Livraison</h6>
-                                {% if commande.statut == 'livree' %}
+                                {% if commande.statut == 'livre' %}
                                 <span class="badge bg-success">Terminé</span>
                                 {% else %}
                                 <span class="badge bg-secondary">En attente</span>
                                 {% endif %}
                             </div>
-                            {% if commande.statut == 'livree' %}
+                            {% if commande.date_livraison %}
                             <p class="text-muted small mb-0">
-                                Livrée le {{ commande.date_livraison_reelle|date:"d/m/Y" }}
+                                Date prévue : {{ commande.date_livraison|date:"d/m/Y" }}
                             </p>
-                            {% else %}
-                            <p class="text-muted small mb-0">
-                                Date prévue : {{ commande.date_livraison_prevue|date:"d/m/Y" }}
-                            </p>
-                            {% if commande.est_en_retard %}
+                            {% if commande.is_late %}
                             <div class="alert alert-danger small mt-2">
                                 <i class="fas fa-exclamation-triangle me-1"></i>
-                                {{ commande.get_jours_retard }} jour{{ commande.get_jours_retard|pluralize }} de retard
+                                {{ commande.days_late }} jour{{ commande.days_late|pluralize }} de retard
                             </div>
                             {% endif %}
+                            {% else %}
+                            <p class="text-muted small mb-0">
+                                Aucune date de livraison définie
+                            </p>
                             {% endif %}
                         </div>
                     </div>
@@ -589,7 +499,7 @@
         <!-- Section financière -->
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="fas fa-euro-sign me-2"></i>Informations financières</h5>
+                <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Informations financières</h5>
                 <span class="payment-status bg-{{ commande.get_paiement_status_color }}">
                     <i class="fas fa-{{ commande.get_paiement_icon }} me-1"></i>
                     {{ commande.get_paiement_status }}
@@ -600,7 +510,7 @@
                     <!-- Détail des coûts -->
                     <div class="financial-row">
                         <span class="text-muted">Prix de l'habit</span>
-                        <span class="fw-bold">{{ commande.prix_habit|floatformat:2 }}CFA</span>
+                        <span class="fw-bold">{{ commande.prix_total|floatformat:2 }}CFA</span>
                     </div>
                     
                     {% if commande.prix_tissu > 0 %}
@@ -650,7 +560,7 @@
                         {% endfor %}
                         {% else %}
                         <div class="text-center py-4">
-                            <i class="fas fa-euro-sign fa-3x text-muted mb-3"></i>
+                            <i class="fas fa-money-bill-wave fa-3x text-muted mb-3"></i>
                             <p class="text-muted mb-0">Aucun paiement enregistré</p>
                         </div>
                         {% endif %}
@@ -762,7 +672,7 @@
                 
                 {% if not commande.est_soldee %}
                 <a href="{% url 'paiements:paiement_create' %}?commande={{ commande.id }}" class="action-button btn btn-success">
-                    <i class="fas fa-euro-sign"></i> Enregistrer un paiement
+                    <i class="fas fa-money-bill-wave"></i> Enregistrer un paiement
                 </a>
                 {% endif %}
                 

@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('date_paiement', models.DateField(auto_now_add=True)),
-                ('montant', models.DecimalField(decimal_places=2, max_digits=10)),
+                ('montant', models.DecimalField(decimal_places=0, max_digits=10)),
                 ('mode_paiement', models.CharField(choices=[('espece', 'Espèces'), ('carte', 'Carte bancaire'), ('mobile', 'Paiement mobile')], default='espece', max_length=50)),
                 ('note', models.TextField(blank=True)),
                 ('commande', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='paiements', to='commandes.commande')),

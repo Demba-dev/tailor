@@ -10,7 +10,18 @@ from django.contrib.auth.decorators import login_required
 @login_required
 def commande_list(request):
     commandes = Commande.objects.all()
-    return render(request, 'commandes/commande_list.html', {'commandes': commandes})
+    
+    context = {
+        'commandes': commandes,
+        'commandes_count': commandes.count(),
+        'commandes_en_attente': commandes.filter(statut='en_attente').count(),
+        'commandes_encours': commandes.filter(statut='encours').count(),
+        'commandes_termine': commandes.filter(statut='termine').count(),
+        'commandes_livre': commandes.filter(statut='livre').count(),
+        'commandes_annule': commandes.filter(statut='annule').count(),
+    }
+    
+    return render(request, 'commandes/commande_list.html', context)
 
 
 
@@ -98,7 +109,7 @@ def get_commande_details(request, pk):
             'success': True,
             'client_prenom': commande.client.prenom,
             'client_nom': commande.client.nom,
-            'habit_nom': commande.type_habit.nom, # type: ignore
+            'habit_nom': commande.type_habit.nom,
             'prix_total': float(commande.prix_total),
             'montant_paye': float(commande.get_montant_paye()),
             'reste_a_payer': float(commande.get_reste_a_payer()),
@@ -108,3 +119,16 @@ def get_commande_details(request, pk):
         return JsonResponse({'success': False, 'error': 'Commande non trouvée'})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+def commande_livraison(request, pk):
+    commande = get_object_or_404(Commande, pk=pk)
+    if request.method == 'POST':
+        date_livraison = request.POST.get('date_livraison')
+        if date_livraison:
+            commande.date_livraison = date_livraison
+        commande.statut = 'livre'
+        commande.save()
+        messages.success(request, 'Commande marquée comme livrée')
+        return redirect('commandes:commande_detail', pk=commande.pk)
+    return render(request, 'commandes/commande_livraison.html', {'commande': commande})

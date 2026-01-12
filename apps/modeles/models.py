@@ -14,7 +14,7 @@ class Modele(models.Model):
     type_habit = models.ForeignKey(TypeHabit, on_delete=models.CASCADE, related_name='modeles')
     difficulte = models.CharField(max_length=20, choices=DIFFICULTE_CHOICES, default='moyen')
     temps_realisation_heures = models.IntegerField(default=4)
-    prix_main_oeuvre = models.DecimalField(max_digits=10, decimal_places=2)
+    prix_main_oeuvre = models.DecimalField(max_digits=10, decimal_places=0)
     image = models.ImageField(upload_to='modeles/', blank=True, null=True)
     description_technique = models.TextField(blank=True, null=True, help_text="Détails de confection, mesures...")
     actif = models.BooleanField(default=True)

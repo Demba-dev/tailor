@@ -8,9 +8,13 @@ class ClientForm(forms.ModelForm):
             'prenom',
             'nom',
             'genre',
+            'date_naissance',
+            'profession',
             'telephone',
             'email',
             'adresse',
+            'photo',
+            'source',
             'note',
             'is_active',
         ]
@@ -18,4 +22,5 @@ class ClientForm(forms.ModelForm):
         widgets = {
             'adresse': forms.Textarea(attrs={'rows': 2}),
             'note': forms.Textarea(attrs={'rows': 2}),
+            'date_naissance': forms.DateInput(attrs={'type': 'date'}),
         }

@@ -11,7 +11,7 @@ class Setting(TimeStampedModel):
     
     # Paramètres Métier
     devise = models.CharField(max_length=10, default="FCFA")
-    tva = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, help_text="Taux de TVA en %")
+    tva = models.DecimalField(max_digits=5, decimal_places=0, default=0.00, help_text="Taux de TVA en %")
     delai_confection_standard = models.IntegerField(default=7, help_text="Délai standard en jours")
     
     # Notifications

@@ -8,7 +8,6 @@ class Client(models.Model):
         ('F', 'Femme'),
     )
 
-    # Identité
     prenom = models.CharField(max_length=100)
     nom = models.CharField(max_length=100)
     genre = models.CharField(
@@ -18,18 +17,23 @@ class Client(models.Model):
         null=True
     )
 
-    # Contact
     telephone = models.CharField(max_length=20, unique=True)
     email = models.EmailField(blank=True, null=True)
     adresse = models.TextField(blank=True)
 
-    # Infos atelier
     note = models.TextField(
         blank=True,
         help_text="Informations particulières sur le client"
     )
+    profession = models.CharField(max_length=100, blank=True)
+    date_naissance = models.DateField(null=True, blank=True)
+    source = models.CharField(
+        max_length=50,
+        blank=True,
+        help_text="Origine du client (recommandation, Web, publicité, etc.)"
+    )
+    photo = models.ImageField(upload_to='clients/', null=True, blank=True)
 
-    # Suivi
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -44,36 +48,40 @@ class Client(models.Model):
 
     def get_commandes_count(self):
         """Retourne le nombre total de commandes"""
-        return self.commandes.count() # type: ignore
+        return self.commandes.count()
     
     def get_commandes_encours(self):
         """Retourne le nombre de commandes en cours"""
-        return self.commandes.filter(Q(status='en_cours') | Q(status='termine')).count() # type: ignore
+        return self.commandes.filter(Q(statut='encours') | Q(statut='termine')).count()
     
     def get_ca_total(self):
         """Retourne le chiffre d'affaires total (prix_total des commandes)"""
-        total = self.commandes.aggregate( # type: ignore
+        total = self.commandes.aggregate(
             total=Sum('prix_total')
         )['total']
         return total or Decimal('0.00')
     
     def get_derniere_commande(self):
         """Retourne la dernière commande du client"""
-        return self.commandes.order_by('-date_commande').first() # type: ignore
+        return self.commandes.order_by('-date_commande').first()
     
     def get_total_du(self):
         """Retourne le reste à payer (dette du client)"""
-        total_commandes = self.commandes.aggregate(  # type: ignore
+        total_commandes = self.commandes.aggregate(
             total=Sum('prix_total')
         )['total'] or Decimal('0.00')
         
-        total_paye = self.commandes.aggregate(  # type: ignore
+        total_paye = self.commandes.aggregate(
             total=Sum('paiements__montant')
         )['total'] or Decimal('0.00')
         
         return total_commandes - total_paye
 
-
     def get_status_actif(self):
         return "Actif" if self.is_active else "Inactif"
-    
+
+    @property
+    def paiements(self):
+        """Retourne tous les paiements associés aux commandes du client"""
+        from apps.paiements.models import Paiement
+        return Paiement.objects.filter(commande__client=self)

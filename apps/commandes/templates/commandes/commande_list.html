@@ -1,160 +1,1514 @@
 {% extends "base.html" %}
 {% load static %}
+{% load humanize %}
 
-{% block title %}Gestion des Commandes - TAILOR{% endblock %}
+{% block title %}Gestion des Commandes - ATELIER TAILOR{% endblock %}
+
+{% block extra_css %}
+<style>
+    .orders-header {
+        background: linear-gradient(135deg, #805ad5 0%, #6b46c1 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .orders-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 200%;
+        background: rgba(255,255,255,0.1);
+        transform: rotate(30deg);
+        pointer-events: none;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card-order {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border-left: 4px solid;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card-order:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+    }
+    
+    .stat-card-order.all { border-color: #805ad5; }
+    .stat-card-order.pending { border-color: #ed8936; }
+    .stat-card-order.in-progress { border-color: #4299e1; }
+    .stat-card-order.completed { border-color: #48bb78; }
+    .stat-card-order.delivered { border-color: #667eea; }
+    .stat-card-order.cancelled { border-color: #f56565; }
+    
+    .stat-icon-circle {
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 1.5rem;
+        color: white;
+    }
+    
+    .stat-icon-circle.all { background: linear-gradient(135deg, #805ad5 0%, #6b46c1 100%); }
+    .stat-icon-circle.pending { background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); }
+    .stat-icon-circle.in-progress { background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); }
+    .stat-icon-circle.completed { background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); }
+    .stat-icon-circle.delivered { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .stat-icon-circle.cancelled { background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%); }
+    
+    .stat-number {
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: #2d3748;
+        line-height: 1;
+        margin-bottom: 0.25rem;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: #718096;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .filters-section {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .status-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .status-filter {
+        padding: 0.6rem 1.2rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 25px;
+        background: white;
+        color: #718096;
+        font-weight: 500;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .status-filter:hover {
+        border-color: #805ad5;
+        color: #805ad5;
+        background: rgba(128, 90, 213, 0.05);
+    }
+    
+    .status-filter.active {
+        background: linear-gradient(135deg, #805ad5 0%, #6b46c1 100%);
+        color: white;
+        border-color: #805ad5;
+        box-shadow: 0 4px 10px rgba(128, 90, 213, 0.2);
+    }
+    
+    .filter-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+    
+    .orders-table-container {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        margin-bottom: 2rem;
+    }
+    
+    .table-toolbar {
+        padding: 1.5rem;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .search-box {
+        position: relative;
+        width: 300px;
+    }
+    
+    .search-box input {
+        width: 100%;
+        padding: 0.75rem 1rem 0.75rem 2.5rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    .search-box input:focus {
+        outline: none;
+        border-color: #805ad5;
+        box-shadow: 0 0 0 3px rgba(128, 90, 213, 0.1);
+    }
+    
+    .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #a0aec0;
+    }
+    
+    .view-controls {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .view-toggle {
+        display: flex;
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .view-btn {
+        padding: 0.5rem 1rem;
+        background: white;
+        border: none;
+        color: #718096;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .view-btn:hover {
+        background: #f8fafc;
+    }
+    
+    .view-btn.active {
+        background: linear-gradient(135deg, #805ad5 0%, #6b46c1 100%);
+        color: white;
+    }
+    
+    .orders-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    .orders-table thead {
+        background: linear-gradient(135deg, #805ad5 0%, #6b46c1 100%);
+    }
+    
+    .orders-table thead th {
+        color: white;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+        padding: 1.25rem 1.5rem;
+        border: none;
+    }
+    
+    .orders-table tbody tr {
+        transition: all 0.3s ease;
+        border-bottom: 1px solid #f7fafc;
+    }
+    
+    .orders-table tbody tr:hover {
+        background: linear-gradient(135deg, rgba(128, 90, 213, 0.05) 0%, rgba(107, 70, 193, 0.05) 100%);
+        transform: scale(1.002);
+    }
+    
+    .orders-table tbody td {
+        padding: 1.25rem 1.5rem;
+        vertical-align: middle;
+        color: #4a5568;
+    }
+    
+    .client-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .client-avatar {
+        width: 45px;
+        height: 45px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #805ad5 0%, #6b46c1 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+    
+    .client-details {
+        min-width: 0;
+    }
+    
+    .client-name {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .client-contact {
+        font-size: 0.85rem;
+        color: #718096;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .order-type {
+        display: inline-block;
+        padding: 0.4rem 0.8rem;
+        background: rgba(128, 90, 213, 0.1);
+        color: #805ad5;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .order-measures {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #718096;
+        font-size: 0.9rem;
+    }
+    
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.6rem 1rem;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .status-badge-en_attente { background: linear-gradient(135deg, rgba(237, 137, 54, 0.1) 0%, rgba(221, 107, 32, 0.1) 100%); color: #ed8936; }
+    .status-badge-encours { background: linear-gradient(135deg, rgba(66, 153, 225, 0.1) 0%, rgba(49, 130, 206, 0.1) 100%); color: #4299e1; }
+    .status-badge-termine { background: linear-gradient(135deg, rgba(72, 187, 120, 0.1) 0%, rgba(56, 161, 105, 0.1) 100%); color: #48bb78; }
+    .status-badge-livre { background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%); color: #667eea; }
+    .status-badge-annule { background: linear-gradient(135deg, rgba(245, 101, 101, 0.1) 0%, rgba(229, 62, 62, 0.1) 100%); color: #f56565; }
+    
+    .finance-info {
+        text-align: right;
+    }
+    
+    .order-total {
+        font-weight: 700;
+        color: #2d3748;
+        font-size: 1.1rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .payment-status {
+        font-size: 0.85rem;
+    }
+    
+    .payment-paid {
+        color: #48bb78;
+        font-weight: 500;
+    }
+    
+    .payment-pending {
+        color: #f56565;
+        font-weight: 500;
+    }
+    
+    .payment-complete {
+        color: #48bb78;
+        font-weight: 600;
+    }
+    
+    .progress-indicator {
+        margin-top: 0.5rem;
+        height: 6px;
+        background: #e2e8f0;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+    
+    .progress-bar {
+        height: 100%;
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        border-radius: 3px;
+        transition: width 0.3s ease;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+    }
+    
+    .action-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid;
+        background: white;
+        color: #4a5568;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .action-btn.view {
+        border-color: #4299e1;
+        color: #4299e1;
+    }
+    
+    .action-btn.view:hover {
+        background: #4299e1;
+        color: white;
+    }
+    
+    .action-btn.edit {
+        border-color: #ed8936;
+        color: #ed8936;
+    }
+    
+    .action-btn.edit:hover {
+        background: #ed8936;
+        color: white;
+    }
+    
+    .action-btn.payment {
+        border-color: #48bb78;
+        color: #48bb78;
+    }
+    
+    .action-btn.payment:hover {
+        background: #48bb78;
+        color: white;
+    }
+    
+    .action-btn.delivery {
+        border-color: #667eea;
+        color: #667eea;
+    }
+    
+    .action-btn.delivery:hover {
+        background: #667eea;
+        color: white;
+    }
+    
+    .action-btn.delete {
+        border-color: #f56565;
+        color: #f56565;
+    }
+    
+    .action-btn.delete:hover {
+        background: #f56565;
+        color: white;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 15px;
+        margin: 2rem 0;
+    }
+    
+    .empty-state-icon {
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, rgba(128, 90, 213, 0.1) 0%, rgba(107, 70, 193, 0.1) 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        color: #805ad5;
+        font-size: 2.5rem;
+    }
+    
+    .pagination-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem;
+        border-top: 1px solid #e2e8f0;
+        background: white;
+        border-bottom-left-radius: 15px;
+        border-bottom-right-radius: 15px;
+    }
+    
+    .bulk-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .bulk-action-btn {
+        padding: 0.5rem 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        background: white;
+        color: #4a5568;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .bulk-action-btn:hover {
+        border-color: #805ad5;
+        color: #805ad5;
+        background: rgba(128, 90, 213, 0.05);
+    }
+    
+    .order-cards-view {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+        padding: 1.5rem;
+        display: none;
+    }
+    
+    .order-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .order-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+        border-color: #805ad5;
+    }
+    
+    .order-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f7fafc;
+    }
+    
+    .order-number {
+        font-weight: 700;
+        color: #805ad5;
+        font-size: 1.1rem;
+    }
+    
+    .order-date {
+        font-size: 0.85rem;
+        color: #718096;
+    }
+    
+    .order-client {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .order-details {
+        margin-bottom: 1.5rem;
+    }
+    
+    .order-type-badge {
+        display: inline-block;
+        padding: 0.3rem 0.7rem;
+        background: rgba(128, 90, 213, 0.1);
+        color: #805ad5;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+    
+    .order-measures-list {
+        font-size: 0.9rem;
+        color: #4a5568;
+        line-height: 1.5;
+    }
+    
+    .order-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 1rem;
+        border-top: 1px solid #e2e8f0;
+    }
+    
+    .order-total-amount {
+        font-weight: 700;
+        color: #2d3748;
+        font-size: 1.2rem;
+    }
+    
+    .card-action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .table-toolbar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .search-box {
+            width: 100%;
+        }
+        
+        .view-controls {
+            justify-content: space-between;
+        }
+        
+        .orders-table {
+            font-size: 0.9rem;
+        }
+        
+        .orders-table thead th,
+        .orders-table tbody td {
+            padding: 1rem 0.75rem;
+        }
+        
+        .action-buttons {
+            flex-wrap: wrap;
+            justify-content: flex-start;
+        }
+        
+        .order-cards-view {
+            grid-template-columns: 1fr;
+        }
+        
+        .pagination-container {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: stretch;
+        }
+        
+        .bulk-actions {
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item active">Commandes</li>
+    </ol>
+</nav>
+{% endblock %}
 
 {% block page_title %}
-<i class="fas fa-scroll me-2 text-primary opacity-50"></i>Commandes
-{% endblock %}
-
-{% block page_subtitle %}
-Suivez et gérez l'ensemble des confections de votre atelier
-{% endblock %}
-
-{% block page_actions %}
-<a href="{% url 'commandes:commande_create' %}" class="btn btn-primary px-4">
-    <i class="fas fa-plus-circle me-2"></i>Nouvelle Commande
-</a>
+<div class="orders-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h2 mb-2">
+                <i class="fas fa-scroll me-2"></i>Gestion des Commandes
+            </h1>
+            <p class="mb-0 opacity-75">
+                Suivez et gérez l'ensemble des confections de votre atelier
+            </p>
+        </div>
+        <div>
+            <a href="{% url 'commandes:commande_create' %}" class="btn btn-light btn-lg">
+                <i class="fas fa-plus-circle me-2"></i>Nouvelle commande
+            </a>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body p-0">
-                {% if commandes %}
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0" style="border-collapse: separate; border-spacing: 0 10px; background: transparent;">
-                        <thead>
-                            <tr class="xsmall text-muted text-uppercase letter-spacing-1">
-                                <th class="border-0 px-4">Client</th>
-                                <th class="border-0">Détails Habit</th>
-                                <th class="border-0 text-center">Statut</th>
-                                <th class="border-0 text-end">Finances</th>
-                                <th class="border-0 text-end px-4">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody style="background: transparent;">
-                            {% for commande in commandes %}
-                            <tr class="bg-white shadow-sm mb-2" style="border-radius: 12px;">
-                                <!-- Client -->
-                                <td class="px-4" style="border-top-left-radius: 12px; border-bottom-left-radius: 12px;">
-                                    <div class="d-flex align-items-center">
-                                        <div class="avatar-sm me-3">
-                                            <div class="avatar-circle bg-primary bg-opacity-10 text-primary" style="width: 38px; height: 38px; font-size: 14px; border-radius: 10px;">
-                                                {{ commande.client.prenom|first|upper }}{{ commande.client.nom|first|upper }}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <div class="fw-bold small">{{ commande.client.prenom }} {{ commande.client.nom }}</div>
-                                            <div class="xsmall text-muted">{{ commande.client.telephone }}</div>
-                                        </div>
-                                    </div>
-                                </td>
+<!-- Statistiques -->
+<div class="stats-grid">
+    <div class="stat-card-order all">
+        <div class="stat-icon-circle all">
+            <i class="fas fa-scroll"></i>
+        </div>
+        <div class="stat-number">{{ commandes_count|default:0 }}</div>
+        <div class="stat-label">Total commandes</div>
+    </div>
+    
+    <div class="stat-card-order pending">
+        <div class="stat-icon-circle pending">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-number">{{ commandes_en_attente|default:0 }}</div>
+        <div class="stat-label">En attente</div>
+    </div>
+    
+    <div class="stat-card-order in-progress">
+        <div class="stat-icon-circle in-progress">
+            <i class="fas fa-tools"></i>
+        </div>
+        <div class="stat-number">{{ commandes_encours|default:0 }}</div>
+        <div class="stat-label">En cours</div>
+    </div>
+    
+    <div class="stat-card-order completed">
+        <div class="stat-icon-circle completed">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-number">{{ commandes_termine|default:0 }}</div>
+        <div class="stat-label">Terminées</div>
+    </div>
+    
+    <div class="stat-card-order delivered">
+        <div class="stat-icon-circle delivered">
+            <i class="fas fa-truck"></i>
+        </div>
+        <div class="stat-number">{{ commandes_livre|default:0 }}</div>
+        <div class="stat-label">Livrées</div>
+    </div>
+    
+    <div class="stat-card-order cancelled">
+        <div class="stat-icon-circle cancelled">
+            <i class="fas fa-times-circle"></i>
+        </div>
+        <div class="stat-number">{{ commandes_annule|default:0 }}</div>
+        <div class="stat-label">Annulées</div>
+    </div>
+</div>
 
-                                <!-- Habit & Mesure -->
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <span class="badge bg-light text-dark border me-2">{{ commande.type_habit }}</span>
-                                        <div class="xsmall text-muted">
-                                            <i class="fas fa-ruler-combined me-1"></i>{{ commande.mesure|default:"N/A" }}
-                                        </div>
-                                    </div>
-                                </td>
-
-                                <!-- Statut -->
-                                <td class="text-center">
-                                    <span class="badge bg-{{ commande.get_statut_color|default:'secondary' }} status-badge">
-                                        {{ commande.get_statut_display|default:commande.statut }}
-                                    </span>
-                                </td>
-
-                                <!-- Finances -->
-                                <td class="text-end">
-                                    <div class="fw-bold small">{{ commande.prix_total }}CFA</div>
-                                    <div class="xsmall">
-                                        <span class="text-success">Payé: {{ commande.get_montant_paye|floatformat:2 }}CFA</span>
-                                        <span class="mx-1 text-muted">|</span>
-                                        <span class="{% if commande.get_reste_a_payer > 0 %}text-danger fw-bold{% else %}text-success{% endif %}">
-                                            Reste: {{ commande.get_reste_a_payer|floatformat:2 }}CFA
-                                        </span>
-                                    </div>
-                                </td>
-
-
-                                <!-- Actions -->
-                                <td class="text-end px-4" style="border-top-right-radius: 12px; border-bottom-right-radius: 12px;">
-                                    <div class="btn-group btn-group-sm shadow-sm rounded">
-                                        <a href="{% url 'commandes:commande_update' commande.id %}" class="btn btn-white border-end" title="Modifier">
-                                            <i class="fas fa-edit text-primary"></i>
-                                        </a>
-                                        <a href="#" class="btn btn-white" data-bs-toggle="modal" data-bs-target="#deleteModal{{ commande.id }}" title="Supprimer">
-                                            <i class="fas fa-trash text-danger"></i>
-                                        </a>
-                                    </div>
-
-                                    <!-- Modale de suppression spécifique -->
-                                    <div class="modal fade" id="deleteModal{{ commande.id }}" tabindex="-1" aria-hidden="true">
-                                        <div class="modal-dialog modal-dialog-centered modal-sm">
-                                            <div class="modal-content border-0 shadow-lg">
-                                                <div class="modal-body p-4 text-center">
-                                                    <i class="fas fa-exclamation-circle text-danger fa-3x mb-3"></i>
-                                                    <h6 class="fw-bold">Supprimer la commande ?</h6>
-                                                    <p class="xsmall text-muted">Cette action est définitive pour la commande de {{ commande.client }}.</p>
-                                                    <div class="d-flex gap-2 mt-4">
-                                                        <button type="button" class="btn btn-light border w-100 btn-sm" data-bs-dismiss="modal">Non</button>
-                                                        <form action="{% url 'commandes:commande_delete' commande.id %}" method="post" class="w-100">
-                                                            {% csrf_token %}
-                                                            <button type="submit" class="btn btn-danger w-100 btn-sm">Supprimer</button>
-                                                        </form>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% else %}
-                <div class="text-center py-5">
-                    <div class="avatar-lg mx-auto mb-3 opacity-25">
-                        <div class="avatar-circle bg-secondary text-white">
-                            <i class="fas fa-scroll"></i>
-                        </div>
-                    </div>
-                    <h5 class="text-muted">Aucune commande enregistrée</h5>
-                    <p class="text-muted small mb-4">Commencez par créer votre première commande client.</p>
-                    <a href="{% url 'commandes:commande_create' %}" class="btn btn-primary btn-sm">
-                        <i class="fas fa-plus me-2"></i>Nouvelle Commande
-                    </a>
-                </div>
-                {% endif %}
-            </div>
+<!-- Filtres -->
+<div class="filters-section">
+    <div class="status-filters">
+        <span class="status-filter active" data-status="all">
+            <span class="filter-dot" style="background: #805ad5;"></span>
+            Toutes ({{ commandes_count|default:0 }})
+        </span>
+        <span class="status-filter" data-status="en_attente">
+            <span class="filter-dot" style="background: #ed8936;"></span>
+            En attente ({{ commandes_en_attente|default:0 }})
+        </span>
+        <span class="status-filter" data-status="encours">
+            <span class="filter-dot" style="background: #4299e1;"></span>
+            En cours ({{ commandes_encours|default:0 }})
+        </span>
+        <span class="status-filter" data-status="termine">
+            <span class="filter-dot" style="background: #48bb78;"></span>
+            Terminée ({{ commandes_termine|default:0 }})
+        </span>
+        <span class="status-filter" data-status="livre">
+            <span class="filter-dot" style="background: #667eea;"></span>
+            Livrée ({{ commandes_livres|default:0 }})
+        </span>
+        <span class="status-filter" data-status="annule">
+            <span class="filter-dot" style="background: #f56565;"></span>
+            Annulée ({{ commandes_annule|default:0 }})
+        </span>
+    </div>
+    
+    <div class="row g-3">
+        <div class="col-md-3">
+            <label class="form-label small">Tri par</label>
+            <select class="form-select form-select-sm" id="sortSelect">
+                <option value="-date_creation">Plus récentes</option>
+                <option value="date_creation">Plus anciennes</option>
+                <option value="-prix_total">Prix décroissant</option>
+                <option value="prix_total">Prix croissant</option>
+                <option value="client__nom">Nom client (A-Z)</option>
+                <option value="-client__nom">Nom client (Z-A)</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small">Type d'habit</label>
+            <select class="form-select form-select-sm" id="typeFilter">
+                <option value="">Tous les types</option>
+                <option value="chemise">Chemise</option>
+                <option value="pantalon">Pantalon</option>
+                <option value="costume">Costume</option>
+                <option value="robe">Robe</option>
+                <option value="veste">Veste</option>
+                <option value="jupe">Jupe</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small">Date de début</label>
+            <input type="date" class="form-control form-control-sm" id="dateStart">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small">Date de fin</label>
+            <input type="date" class="form-control form-control-sm" id="dateEnd">
         </div>
     </div>
 </div>
 
+<!-- Conteneur des commandes -->
+<div class="orders-table-container">
+    <!-- Barre d'outils -->
+    <div class="table-toolbar">
+        <div class="search-box">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="searchInput" placeholder="Rechercher une commande, un client...">
+        </div>
+        
+        <div class="view-controls">
+            <div class="view-toggle">
+                <button class="view-btn active" data-view="table">
+                    <i class="fas fa-table"></i>
+                </button>
+                <button class="view-btn" data-view="cards">
+                    <i class="fas fa-th-large"></i>
+                </button>
+            </div>
+            
+            <button class="btn btn-sm btn-outline-primary" onclick="exportToExcel()">
+                <i class="fas fa-file-excel me-2"></i>Excel
+            </button>
+            <button class="btn btn-sm btn-outline-primary" onclick="printTable()">
+                <i class="fas fa-print me-2"></i>Imprimer
+            </button>
+        </div>
+    </div>
+    
+    <!-- Vue Tableau -->
+    <div id="tableView">
+        {% if commandes %}
+        <div class="table-responsive">
+            <table class="orders-table">
+                <thead>
+                    <tr>
+                        <th class="text-start ps-4">Client</th>
+                        <th class="text-start">Commande</th>
+                        <th class="text-center">Statut</th>
+                        <th class="text-center">Finances</th>
+                        <th class="text-center pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for commande in commandes %}
+                    <tr class="order-row" data-status="{{ commande.statut }}" data-type="{{ commande.type_habit|lower }}">
+                        <td class="text-start ps-4">
+                            <div class="client-info">
+                                <div class="client-avatar">
+                                    {{ commande.client.prenom|first|upper }}{{ commande.client.nom|first|upper }}
+                                </div>
+                                <div class="client-details">
+                                    <div class="client-name">{{ commande.client.prenom }} {{ commande.client.nom }}</div>
+                                    <div class="client-contact">
+                                        {{ commande.client.telephone }}
+                                        {% if commande.client.email %}
+                                        • {{ commande.client.email|truncatechars:15 }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-start">
+                            <div class="order-number">#CMD-{{ commande.numero|default:commande.id|stringformat:"04d" }}</div>
+                            <div class="order-date">{{ commande.date_creation|date:"d/m/Y" }}</div>
+                            <div class="order-type">{{ commande.type_habit|default:"N/A" }}</div>
+                            <div class="order-measures">
+                                <i class="fas fa-ruler-combined"></i>
+                                {{ commande.mesure|default:"N/A" }}
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <span class="status-badge status-badge-{{ commande.statut }}">
+                                {{ commande.get_statut_display }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <div class="finance-info">
+                                <div class="order-total">{{ commande.prix_total|floatformat:0|intcomma }} CFA</div>
+                                <div class="payment-status">
+                                    <span class="payment-paid">Payé: {{ commande.get_montant_paye|floatformat:0|intcomma }} CFA</span>
+                                    <br>
+                                    <span class="{% if commande.get_reste_a_payer > 0 %}payment-pending{% else %}payment-complete{% endif %}">
+                                        Reste: {{ commande.get_reste_a_payer|floatformat:0|intcomma }} CFA
+                                    </span>
+                                </div>
+                                <div class="progress-indicator">
+                                    {% with total=commande.prix_total paye=commande.get_montant_paye|default:0 %}
+                                    {% if total > 0 %}
+                                    <div class="progress-bar" style="width: {% widthratio paye total 100 %}%"></div>
+                                    {% endif %}
+                                    {% endwith %}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-center pe-4">
+                            <div class="action-buttons">
+                                <a href="{% url 'commandes:commande_detail' commande.id %}" class="action-btn view" title="Voir détails">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'commandes:commande_update' commande.id %}" class="action-btn edit" title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'paiements:paiement_create' %}?commande={{ commande.id }}" class="action-btn payment" title="Ajouter paiement">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </a>
+                                <a href="{% url 'commandes:commande_livraison' commande.id %}" class="action-btn delivery" title="Gérer livraison">
+                                    <i class="fas fa-truck"></i>
+                                </a>
+                                <a href="{% url 'commandes:commande_delete' commande.id %}" class="action-btn delete" title="Supprimer" data-bs-toggle="modal" data-bs-target="#deleteModal{{ commande.id }}">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-scroll"></i>
+            </div>
+            <h4 class="text-muted mb-3">Aucune commande trouvée</h4>
+            <p class="text-muted mb-4">
+                Commencez par créer votre première commande de confection.
+            </p>
+            <a href="{% url 'commandes:commande_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-2"></i>Créer une commande
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Vue Cartes -->
+    <div id="cardsView" class="order-cards-view">
+        {% if commandes %}
+            {% for commande in commandes %}
+            <div class="order-card" data-status="{{ commande.statut }}" data-type="{{ commande.type_habit|lower }}">
+                <div class="order-card-header">
+                    <div>
+                        <div class="order-number">#CMD-{{ commande.numero|default:commande.id|stringformat:"04d" }}</div>
+                        <div class="order-date">{{ commande.date_creation|date:"d/m/Y" }}</div>
+                    </div>
+                    <span class="status-badge status-badge-{{ commande.statut }}">
+                        {{ commande.get_statut_display }}
+                    </span>
+                </div>
+                
+                <div class="order-client">
+                    <div class="client-avatar" style="width: 40px; height: 40px; font-size: 0.9rem;">
+                        {{ commande.client.prenom|first|upper }}{{ commande.client.nom|first|upper }}
+                    </div>
+                    <div>
+                        <div class="client-name">{{ commande.client.prenom }} {{ commande.client.nom }}</div>
+                        <div class="client-contact">{{ commande.client.telephone }}</div>
+                    </div>
+                </div>
+                
+                <div class="order-details">
+                    <div class="order-type-badge">{{ commande.type_habit|default:"N/A" }}</div>
+                    <div class="order-measures-list">
+                        <i class="fas fa-ruler-combined me-1"></i>
+                        {{ commande.mesure|default:"Mesures non spécifiées"|truncatechars:60 }}
+                    </div>
+                </div>
+                
+                <div class="order-footer">
+                    <div>
+                        <div class="order-total-amount">{{ commande.prix_total|floatformat:0|intcomma }} CFA</div>
+                        <div class="small text-muted">
+                            Payé: {{ commande.get_montant_paye|floatformat:0|intcomma }} CFA
+                            • Reste: {{ commande.get_reste_a_payer|floatformat:0|intcomma }} CFA
+                        </div>
+                    </div>
+                    <div class="card-action-buttons">
+                        <a href="{% url 'commandes:commande_detail' commande.id %}" class="action-btn view" title="Voir">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{% url 'commandes:commande_update' commande.id %}" class="action-btn edit" title="Modifier">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if commandes.paginator.num_pages > 1 %}
+    <div class="pagination-container">
+        <div class="bulk-actions">
+            <button class="bulk-action-btn" onclick="exportSelected()">
+                <i class="fas fa-download"></i> Exporter
+            </button>
+            <button class="bulk-action-btn" onclick="markAsCompleted()">
+                <i class="fas fa-check-circle"></i> Marquer terminé
+            </button>
+            <button class="bulk-action-btn" onclick="deleteSelected()">
+                <i class="fas fa-trash"></i> Supprimer
+            </button>
+        </div>
+        
+        <nav aria-label="Navigation des commandes">
+            <ul class="pagination pagination-sm mb-0">
+                {% if commandes.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ commandes.previous_page_number }}">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for num in commandes.paginator.page_range %}
+                    {% if commandes.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > commandes.number|add:'-3' and num < commandes.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if commandes.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ commandes.next_page_number }}">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ commandes.paginator.num_pages }}">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        
+        <div class="text-muted small">
+            Affichage de {{ commandes.start_index }} à {{ commandes.end_index }} sur {{ commandes.paginator.count }} commandes
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Filtres par statut
+    const statusFilters = document.querySelectorAll('.status-filter');
+    statusFilters.forEach(filter => {
+        filter.addEventListener('click', function() {
+            const status = this.getAttribute('data-status');
+            
+            // Mettre à jour les filtres actifs
+            statusFilters.forEach(f => f.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Filtrer les commandes
+            filterOrders(status);
+        });
+    });
+    
+    // Recherche en temps réel
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                searchOrders(this.value);
+            }, 300);
+        });
+    }
+    
+    // Filtres avancés
+    const sortSelect = document.getElementById('sortSelect');
+    const typeFilter = document.getElementById('typeFilter');
+    const dateStart = document.getElementById('dateStart');
+    const dateEnd = document.getElementById('dateEnd');
+    
+    [sortSelect, typeFilter, dateStart, dateEnd].forEach(element => {
+        if (element) {
+            element.addEventListener('change', applyAdvancedFilters);
+        }
+    });
+    
+    // Gestion de la vue (table/cartes)
+    const viewButtons = document.querySelectorAll('.view-btn');
+    const tableView = document.getElementById('tableView');
+    const cardsView = document.getElementById('cardsView');
+    
+    viewButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const view = this.getAttribute('data-view');
+            
+            // Mettre à jour les boutons actifs
+            viewButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Afficher la vue correspondante
+            if (view === 'table') {
+                tableView.style.display = 'block';
+                cardsView.style.display = 'none';
+            } else {
+                tableView.style.display = 'none';
+                cardsView.style.display = 'grid';
+            }
+            
+            // Sauvegarder la préférence
+            localStorage.setItem('ordersViewPreference', view);
+        });
+    });
+    
+    // Restaurer la préférence de vue
+    const savedView = localStorage.getItem('ordersViewPreference') || 'table';
+    const savedButton = document.querySelector(`.view-btn[data-view="${savedView}"]`);
+    if (savedButton) savedButton.click();
+    
+    // Animation des cartes
+    const orderCards = document.querySelectorAll('.order-card');
+    orderCards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+        card.classList.add('animate__animated', 'animate__fadeInUp');
+    });
+});
+
+function filterOrders(status) {
+    const orderRows = document.querySelectorAll('.order-row, .order-card');
+    
+    if (status === 'all') {
+        orderRows.forEach(row => {
+            row.style.display = '';
+        });
+        return;
+    }
+    
+    orderRows.forEach(row => {
+        const rowStatus = row.getAttribute('data-status');
+        if (rowStatus === status) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function searchOrders(query) {
+    const currentView = localStorage.getItem('ordersViewPreference') || 'table';
+    const searchTerm = query.toLowerCase();
+    
+    if (currentView === 'table') {
+        searchTableView(searchTerm);
+    } else {
+        searchCardsView(searchTerm);
+    }
+}
+
+function searchTableView(searchTerm) {
+    const rows = document.querySelectorAll('.order-row');
+    let visibleCount = 0;
+    
+    rows.forEach(row => {
+        const rowText = row.textContent.toLowerCase();
+        if (rowText.includes(searchTerm)) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    
+    updateEmptyState(visibleCount, searchTerm);
+}
+
+function searchCardsView(searchTerm) {
+    const cards = document.querySelectorAll('.order-card');
+    let visibleCount = 0;
+    
+    cards.forEach(card => {
+        const cardText = card.textContent.toLowerCase();
+        if (cardText.includes(searchTerm)) {
+            card.style.display = '';
+            visibleCount++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+    
+    updateEmptyState(visibleCount, searchTerm);
+}
+
+function updateEmptyState(visibleCount, searchTerm) {
+    const emptyState = document.querySelector('.empty-state');
+    if (!emptyState) return;
+    
+    if (visibleCount === 0 && searchTerm) {
+        emptyState.style.display = 'block';
+        emptyState.querySelector('h4').textContent = 'Aucun résultat trouvé';
+        emptyState.querySelector('p').textContent = `Aucune commande ne correspond à "${searchTerm}"`;
+    } else if (visibleCount === 0) {
+        emptyState.style.display = 'block';
+        emptyState.querySelector('h4').textContent = 'Aucune commande trouvée';
+        emptyState.querySelector('p').textContent = 'Commencez par créer votre première commande de confection.';
+    } else {
+        emptyState.style.display = 'none';
+    }
+}
+
+function applyAdvancedFilters() {
+    const status = document.querySelector('.status-filter.active')?.getAttribute('data-status') || 'all';
+    const sort = document.getElementById('sortSelect').value;
+    const type = document.getElementById('typeFilter').value;
+    const dateStart = document.getElementById('dateStart').value;
+    const dateEnd = document.getElementById('dateEnd').value;
+    
+    // Construire l'URL
+    let url = new URL(window.location.href);
+    
+    if (status !== 'all') url.searchParams.set('statut', status);
+    if (sort !== '-date_creation') url.searchParams.set('sort', sort);
+    if (type) url.searchParams.set('type', type);
+    if (dateStart) url.searchParams.set('date_debut', dateStart);
+    if (dateEnd) url.searchParams.set('date_fin', dateEnd);
+    
+    // Rediriger
+    window.location.href = url.toString();
+}
+
+function exportToExcel() {
+    showToast('Préparation de l\'export Excel...', 'info');
+    
+    setTimeout(() => {
+        showToast('Export Excel terminé !', 'success');
+        // Ici, ajouter la logique d'export réelle
+    }, 1500);
+}
+
+function printTable() {
+    const currentView = localStorage.getItem('ordersViewPreference') || 'table';
+    const contentToPrint = document.getElementById(currentView === 'table' ? 'tableView' : 'cardsView');
+    
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Liste des Commandes - ATELIER TAILOR</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; }
+                    h2 { color: #805ad5; border-bottom: 2px solid #805ad5; padding-bottom: 10px; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                    th { background: #805ad5; color: white; padding: 10px; text-align: left; }
+                    td { padding: 8px 10px; border-bottom: 1px solid #ddd; }
+                    .badge { padding: 3px 8px; border-radius: 3px; font-size: 12px; color: white; }
+                    .badge-en_attente { background-color: #ed8936; }
+                    .badge-encours { background-color: #4299e1; }
+                    .badge-termine { background-color: #48bb78; }
+                    .badge-livre { background-color: #667eea; }
+                    .badge-annule { background-color: #f56565; }
+                    @media print {
+                        .no-print { display: none; }
+                        @page { margin: 0.5cm; }
+                    }
+                </style>
+            </head>
+            <body>
+                <h2><i class="fas fa-scroll"></i> Liste des Commandes - ATELIER TAILOR</h2>
+                <p>Imprimé le ${new Date().toLocaleDateString('fr-FR')}</p>
+                <div>
+                    ${contentToPrint.innerHTML}
+                </div>
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => printWindow.print(), 500);
+}
+
+function exportSelected() {
+    const selectedRows = document.querySelectorAll('.order-row input:checked');
+    if (selectedRows.length === 0) {
+        showToast('Sélectionnez des commandes d\'abord', 'warning');
+        return;
+    }
+    
+    const orderIds = Array.from(selectedRows).map(input => input.value);
+    console.log('Export des commandes :', orderIds);
+    showToast(`Export de ${orderIds.length} commande(s) démarré`, 'info');
+}
+
+function markAsCompleted() {
+    const selectedRows = document.querySelectorAll('.order-row input:checked');
+    if (selectedRows.length === 0) {
+        showToast('Sélectionnez des commandes d\'abord', 'warning');
+        return;
+    }
+    
+    if (confirm(`Marquer ${selectedRows.length} commande(s) comme terminée(s) ?`)) {
+        const orderIds = Array.from(selectedRows).map(input => input.value);
+        updateOrdersStatus(orderIds, 'termine');
+    }
+}
+
+function deleteSelected() {
+    const selectedRows = document.querySelectorAll('.order-row input:checked');
+    if (selectedRows.length === 0) {
+        showToast('Sélectionnez des commandes d\'abord', 'warning');
+        return;
+    }
+    
+    if (confirm(`Supprimer ${selectedRows.length} commande(s) ? Cette action est irréversible.`)) {
+        const orderIds = Array.from(selectedRows).map(input => input.value);
+        deleteOrders(orderIds);
+    }
+}
+
+function updateOrdersStatus(orderIds, status) {
+    fetch('/api/commandes/bulk-update/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            order_ids: orderIds,
+            status: status
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(`${orderIds.length} commande(s) mises à jour avec succès`, 'success');
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
+        } else {
+            showToast('Erreur lors de la mise à jour', 'error');
+        }
+    });
+}
+
+function deleteOrders(orderIds) {
+    fetch('/api/commandes/bulk-delete/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            order_ids: orderIds
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(`${orderIds.length} commande(s) supprimée(s) avec succès`, 'success');
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
+        } else {
+            showToast('Erreur lors de la suppression', 'error');
+        }
+    });
+}
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    const bsToast = new bootstrap.Toast(toast, {
+        autohide: true,
+        delay: 3000
+    });
+    bsToast.show();
+    
+    toast.addEventListener('hidden.bs.toast', function () {
+        toast.remove();
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Raccourci clavier pour la recherche
+document.addEventListener('keydown', function(e) {
+    if (e.key === '/' && !e.target.matches('input, textarea, select')) {
+        e.preventDefault();
+        document.getElementById('searchInput')?.focus();
+    }
+});
+</script>
+
+<!-- Animation CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+
+<!-- Styles d'animation supplémentaires -->
 <style>
-    .table thead th {
-        background: transparent;
-        padding-bottom: 15px;
+    .stat-card-order {
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeInUp 0.6s ease forwards;
     }
-    .table tbody tr {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    
+    .stat-card-order:nth-child(1) { animation-delay: 0.1s; }
+    .stat-card-order:nth-child(2) { animation-delay: 0.2s; }
+    .stat-card-order:nth-child(3) { animation-delay: 0.3s; }
+    .stat-card-order:nth-child(4) { animation-delay: 0.4s; }
+    .stat-card-order:nth-child(5) { animation-delay: 0.5s; }
+    .stat-card-order:nth-child(6) { animation-delay: 0.6s; }
+    
+    .order-row {
+        opacity: 0;
+        transform: translateX(-20px);
+        animation: slideInRight 0.4s ease forwards;
     }
-    .table tbody tr:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 15px rgba(0,0,0,0.08) !important;
+    
+    .order-row:nth-child(1) { animation-delay: 0.1s; }
+    .order-row:nth-child(2) { animation-delay: 0.15s; }
+    .order-row:nth-child(3) { animation-delay: 0.2s; }
+    .order-row:nth-child(4) { animation-delay: 0.25s; }
+    .order-row:nth-child(5) { animation-delay: 0.3s; }
+    
+    @keyframes slideInRight {
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
     }
-    .btn-white {
-        background: white;
-        border: none;
+    
+    .progress-bar {
+        position: relative;
+        overflow: hidden;
     }
-    .btn-white:hover {
-        background: #f8fafc;
+    
+    .progress-bar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        background: linear-gradient(90deg, 
+            transparent 0%, 
+            rgba(255, 255, 255, 0.3) 50%, 
+            transparent 100%);
+        animation: shimmer 2s infinite;
+    }
+    
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+    
+    .status-badge {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .status-badge::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .status-badge:hover::before {
+        opacity: 1;
     }
 </style>
 {% endblock %}

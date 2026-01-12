@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
                 ('difficulte', models.CharField(choices=[('facile', 'Facile'), ('moyen', 'Moyen'), ('difficile', 'Difficile')], default='moyen', max_length=20)),
                 ('type_habit', models.CharField(help_text='Ex: Chemise, Pantalon, Robe...', max_length=50)),
                 ('temps_realisation_heures', models.IntegerField(default=4)),
-                ('prix_main_oeuvre', models.DecimalField(decimal_places=2, max_digits=10)),
+                ('prix_main_oeuvre', models.DecimalField(decimal_places=0, max_digits=10)),
                 ('image', models.ImageField(blank=True, null=True, upload_to='modeles/')),
                 ('description_technique', models.TextField(blank=True, help_text='Détails de confection, mesures...', null=True)),
                 ('actif', models.BooleanField(default=True)),

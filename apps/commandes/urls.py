@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import commande_list, commande_create, commande_update, commande_delete, commande_detail, commande_print, commande_duplicate
+from .views import commande_list, commande_create, commande_update, commande_delete, commande_detail, commande_print, commande_duplicate, commande_livraison
 
 app_name = 'commandes'
 
@@ -11,5 +11,5 @@ urlpatterns = [
     path('<int:pk>/imprimer/', commande_print, name='commande_print'),
     path('<int:pk>/dupliquer/', commande_duplicate, name='commande_duplicate'),
     path('<int:pk>/supprimer/', commande_delete, name='commande_delete'),
-   
+    path('<int:pk>/livraison/', commande_livraison, name='commande_livraison'),
 ]

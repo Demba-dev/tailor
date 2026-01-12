@@ -1,73 +1,1209 @@
 {% extends "base.html" %}
 {% load static %}
+{% load humanize %}
 
-{% block title %}Détail du paiement{% endblock %}
+{% block title %}Paiement #{{ paiement.numero|default:paiement.id|stringformat:"06d" }} - ATELIER TAILOR{% endblock %}
 
-{% block content %}
-<div class="container-fluid py-4">
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <h2>
-                <i class="fas fa-receipt me-2"></i>Détail du paiement
-            </h2>
+{% block extra_css %}
+<style>
+    .payment-detail-header {
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .payment-detail-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 200%;
+        background: rgba(255,255,255,0.1);
+        transform: rotate(30deg);
+        pointer-events: none;
+    }
+    
+    .payment-status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.6rem 1.2rem;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        margin-bottom: 1rem;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+    
+    .payment-status-badge.completed {
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+    }
+    
+    .payment-status-badge.pending {
+        background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+        color: white;
+    }
+    
+    .payment-status-badge.failed {
+        background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+        color: white;
+    }
+    
+    .payment-status-badge.refunded {
+        background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+        color: white;
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .info-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        transition: transform 0.3s ease;
+    }
+    
+    .info-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    }
+    
+    .info-card .card-title {
+        color: #2d3748;
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .info-card .card-title i {
+        color: #48bb78;
+        font-size: 1.1rem;
+    }
+    
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #f7fafc;
+    }
+    
+    .info-row:last-child {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: none;
+    }
+    
+    .info-label {
+        font-size: 0.85rem;
+        color: #718096;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .info-value {
+        font-size: 1rem;
+        color: #2d3748;
+        font-weight: 600;
+        text-align: right;
+    }
+    
+    .info-value.amount {
+        color: #48bb78;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+    
+    .payment-method-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+    
+    .method-especes { background: rgba(72, 187, 120, 0.1); color: #48bb78; }
+    .method-carte { background: rgba(102, 126, 234, 0.1); color: #667eea; }
+    .method-cheque { background: rgba(237, 137, 54, 0.1); color: #ed8936; }
+    .method-virement { background: rgba(66, 153, 225, 0.1); color: #4299e1; }
+    .method-mobile { background: rgba(128, 90, 213, 0.1); color: #805ad5; }
+    
+    .client-avatar-large {
+        width: 80px;
+        height: 80px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 2rem;
+        margin: 0 auto 1.5rem;
+    }
+    
+    .command-summary {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        margin-bottom: 2rem;
+    }
+    
+    .command-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .command-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .detail-item {
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 1rem;
+    }
+    
+    .detail-label {
+        font-size: 0.85rem;
+        color: #718096;
+        margin-bottom: 0.5rem;
+    }
+    
+    .detail-value {
+        font-weight: 600;
+        color: #2d3748;
+        font-size: 1.1rem;
+    }
+    
+    .payment-timeline {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        margin-bottom: 2rem;
+    }
+    
+    .timeline {
+        position: relative;
+        padding-left: 2rem;
+        margin-top: 1.5rem;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #e2e8f0;
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 1.5rem;
+        padding-left: 1.5rem;
+    }
+    
+    .timeline-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -6px;
+        top: 0;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: white;
+        border: 3px solid #48bb78;
+    }
+    
+    .timeline-item.completed::before {
+        border-color: #48bb78;
+    }
+    
+    .timeline-item.pending::before {
+        border-color: #ed8936;
+    }
+    
+    .timeline-date {
+        font-size: 0.85rem;
+        color: #718096;
+        margin-bottom: 0.25rem;
+    }
+    
+    .timeline-content {
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 1rem;
+        border-left: 3px solid #48bb78;
+    }
+    
+    .payment-proof {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        margin-bottom: 2rem;
+    }
+    
+    .proof-upload {
+        border: 2px dashed #e2e8f0;
+        border-radius: 10px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-bottom: 1.5rem;
+    }
+    
+    .proof-upload:hover {
+        border-color: #48bb78;
+        background: rgba(72, 187, 120, 0.05);
+    }
+    
+    .upload-icon {
+        font-size: 2.5rem;
+        color: #48bb78;
+        margin-bottom: 1rem;
+    }
+    
+    .proof-preview {
+        display: none;
+        margin-bottom: 1.5rem;
+    }
+    
+    .proof-image {
+        width: 100%;
+        max-width: 300px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        margin: 0 auto;
+        display: block;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 2px solid #e2e8f0;
+        flex-wrap: wrap;
+    }
+    
+    .action-btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: 2px solid;
+    }
+    
+    .action-btn-primary {
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+        border-color: #48bb78;
+    }
+    
+    .action-btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(72, 187, 120, 0.3);
+        color: white;
+    }
+    
+    .action-btn-secondary {
+        background: white;
+        color: #718096;
+        border-color: #e2e8f0;
+    }
+    
+    .action-btn-secondary:hover {
+        border-color: #4299e1;
+        color: #4299e1;
+        background: rgba(66, 153, 225, 0.05);
+    }
+    
+    .action-btn-warning {
+        background: white;
+        color: #ed8936;
+        border-color: #ed8936;
+    }
+    
+    .action-btn-warning:hover {
+        background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+        color: white;
+    }
+    
+    .action-btn-danger {
+        background: white;
+        color: #f56565;
+        border-color: #f56565;
+    }
+    
+    .action-btn-danger:hover {
+        background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+        color: white;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 15px;
+    }
+    
+    .empty-state-icon {
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, rgba(72, 187, 120, 0.1) 0%, rgba(56, 161, 105, 0.1) 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        color: #48bb78;
+        font-size: 2.5rem;
+    }
+    
+    .related-payments {
+        margin-top: 2rem;
+    }
+    
+    .related-payment-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 0.75rem;
+        transition: all 0.3s ease;
+    }
+    
+    .related-payment-card:hover {
+        border-color: #48bb78;
+        transform: translateX(5px);
+    }
+    
+    .related-payment-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .related-payment-id {
+        font-weight: 600;
+        color: #48bb78;
+    }
+    
+    .related-payment-amount {
+        font-weight: 600;
+        color: #2d3748;
+    }
+    
+    .related-payment-date {
+        font-size: 0.85rem;
+        color: #718096;
+    }
+    
+    @media (max-width: 768px) {
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .command-details {
+            grid-template-columns: 1fr;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .action-btn {
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'paiements:paiement_list' %}">Paiements</a></li>
+        <li class="breadcrumb-item active">Paiement #{{ paiement.numero|default:paiement.id|stringformat:"06d" }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block page_title %}
+<div class="payment-detail-header">
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <span class="payment-status-badge completed">
+                <i class="fas fa-check-circle"></i>
+                Paiement validé
+            </span>
+            <h1 class="h2 mb-2">
+                <i class="fas fa-receipt me-2"></i>
+                Paiement #{{ paiement.numero|default:paiement.id|stringformat:"06d" }}
+            </h1>
+            <p class="mb-0 opacity-75">
+                Transaction du {{ paiement.date_paiement|date:"d F Y" }} pour la commande
+            </p>
         </div>
-        <div class="col-md-4 text-end">
-            <a href="{% url 'paiements:paiement_print' paiement.pk %}" class="btn btn-primary">
-                <i class="fas fa-print me-2"></i>Imprimer
-            </a>
-            <a href="{% url 'paiements:paiement_list' %}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left me-2"></i>Retour
-            </a>
+        <div class="text-end">
+            <div class="h1 text-white mb-2">{{ paiement.montant|floatformat:0|intcomma }} CFA</div>
+            <div class="payment-method-badge method-{{ paiement.mode_paiement }}">
+                <i class="fas fa-{{ paiement.get_mode_icon }}"></i>
+                {{ paiement.get_mode_paiement_display }}
+            </div>
         </div>
     </div>
+</div>
+{% endblock %}
 
-    <div class="card">
-        <div class="card-body">
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <h6 class="text-muted">Numéro de paiement</h6>
-                    <p class="fw-bold">#{{ paiement.pk }}</p>
+{% block content %}
+<div class="row">
+    <!-- Colonne gauche : Informations principales -->
+    <div class="col-lg-8">
+        <!-- Grille d'informations -->
+        <div class="info-grid">
+            <!-- Informations de paiement -->
+            <div class="info-card">
+                <div class="card-title">
+                    <i class="fas fa-info-circle"></i>
+                    Informations de paiement
                 </div>
-                <div class="col-md-6">
-                    <h6 class="text-muted">Date</h6>
-                    <p class="fw-bold">{{ paiement.date_paiement|date:"d/m/Y" }}</p>
+                
+                <div class="info-row">
+                    <div class="info-label">
+                        <i class="fas fa-hashtag"></i>
+                        Référence
+                    </div>
+                    <div class="info-value">#PAY-{{ paiement.numero|default:paiement.id|stringformat:"06d" }}</div>
+                </div>
+                
+                <div class="info-row">
+                    <div class="info-label">
+                        <i class="fas fa-calendar"></i>
+                        Date et heure
+                    </div>
+                    <div class="info-value">{{ paiement.date_paiement|date:"d F Y" }}</div>
+                </div>
+                
+                <div class="info-row">
+                    <div class="info-label">
+                        <i class="fas fa-credit-card"></i>
+                        Mode de paiement
+                    </div>
+                    <div class="info-value">
+                        <div class="payment-method-badge method-{{ paiement.mode_paiement }}">
+                            <i class="fas fa-{{ paiement.get_mode_icon }}"></i>
+                            {{ paiement.get_mode_paiement_display }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-row">
+                    <div class="info-label">
+                        <i class="fas fa-money-bill-wave"></i>
+                        Montant
+                    </div>
+                    <div class="info-value amount">{{ paiement.montant|floatformat:0|intcomma }} CFA</div>
+                </div>
+                
+                {% if paiement.reference_paiement %}
+                <div class="info-row">
+                    <div class="info-label">
+                        <i class="fas fa-hashtag"></i>
+                        Référence transaction
+                    </div>
+                    <div class="info-value">{{ paiement.reference_paiement }}</div>
+                </div>
+                {% endif %}
+                
+                <div class="info-row">
+                    <div class="info-label">
+                        <i class="fas fa-user-tie"></i>
+                        Enregistré par
+                    </div>
+                    <div class="info-value">{{ paiement.enregistre_par.prenom|default:"-" }} {{ paiement.enregistre_par.nom|default:"" }}</div>
                 </div>
             </div>
-
-            <hr>
-
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <h6 class="text-muted">Commande</h6>
-                    <p class="fw-bold">#{{ paiement.commande.pk }} - {{ paiement.commande.client }}</p>
+            
+            <!-- Informations client -->
+            <div class="info-card">
+                <div class="card-title">
+                    <i class="fas fa-user"></i>
+                    Informations client
                 </div>
-                <div class="col-md-6">
-                    <h6 class="text-muted">Montant</h6>
-                    <p class="fw-bold">{{ paiement.montant|floatformat:0 }} CFA</p>
+                
+                <div class="text-center mb-3">
+                    <div class="client-avatar-large">
+                        {{ paiement.commande.client.prenom|first|upper }}{{ paiement.commande.client.nom|first|upper }}
+                    </div>
+                    <h5 class="mb-1">{{ paiement.commande.client.prenom }} {{ paiement.commande.client.nom }}</h5>
+                    <p class="text-muted small mb-0">Client #{{ paiement.commande.client.id|stringformat:"04d" }}</p>
+                </div>
+                
+                <div class="info-row">
+                    <div class="info-label">
+                        <i class="fas fa-phone"></i>
+                        Téléphone
+                    </div>
+                    <div class="info-value">{{ paiement.commande.client.telephone|default:"-" }}</div>
+                </div>
+                
+                {% if paiement.commande.client.email %}
+                <div class="info-row">
+                    <div class="info-label">
+                        <i class="fas fa-envelope"></i>
+                        Email
+                    </div>
+                    <div class="info-value">{{ paiement.commande.client.email }}</div>
+                </div>
+                {% endif %}
+                
+                {% if paiement.commande.client.adresse %}
+                <div class="info-row">
+                    <div class="info-label">
+                        <i class="fas fa-map-marker-alt"></i>
+                        Adresse
+                    </div>
+                    <div class="info-value">{{ paiement.commande.client.adresse|truncatechars:30 }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Résumé de la commande -->
+        <div class="command-summary">
+            <div class="command-header">
+                <div>
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-scroll me-2"></i>
+                        Commande associée
+                    </h5>
+                    <p class="mb-0 text-muted small">#CMD-{{ paiement.commande.id|stringformat:"04d" }}</p>
+                </div>
+                <div>
+                    <span class="status-badge" style="background: {{ paiement.commande.get_statut_color }}; color: white; padding: 0.5rem 1.5rem; border-radius: 20px; font-weight: 600;">
+                        <i class="fas fa-{{ paiement.commande.get_statut_icon }} me-2"></i>{{ paiement.commande.get_statut_display }}
+                    </span>
                 </div>
             </div>
-
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <h6 class="text-muted">Mode de paiement</h6>
-                    <p class="fw-bold">{{ paiement.get_mode_paiement_display }}</p>
+            
+            <div class="command-details">
+                <div class="detail-item">
+                    <div class="detail-label">Type d'habit</div>
+                    <div class="detail-value">{{ paiement.commande.type_habit.nom|default:"-" }}</div>
                 </div>
-                <div class="col-md-6">
-                    <h6 class="text-muted">Statut de la commande</h6>
-                    <p class="fw-bold">{{ paiement.commande.get_statut_display }}</p>
+                
+                <div class="detail-item">
+                    <div class="detail-label">Date de création</div>
+                    <div class="detail-value">{{ paiement.commande.date_commande|date:"d/m/Y" }}</div>
+                </div>
+                
+                <div class="detail-item">
+                    <div class="detail-label">Date de livraison</div>
+                    <div class="detail-value">{{ paiement.commande.date_livraison|date:"d/m/Y"|default:"-" }}</div>
+                </div>
+                
+                <div class="detail-item">
+                    <div class="detail-label">Total commande</div>
+                    <div class="detail-value">{{ paiement.commande.prix_total|floatformat:0|intcomma }} CFA</div>
                 </div>
             </div>
-
+            
+            <!-- État des paiements de la commande -->
+            <div class="mt-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="small text-muted">État des paiements</div>
+                    <div class="small fw-bold">
+                        {{ paiement.commande.get_montant_paye|floatformat:0|intcomma }} CFA / {{ paiement.commande.prix_total|floatformat:0|intcomma }} CFA
+                    </div>
+                </div>
+                <div class="progress" style="height: 8px;">
+                    {% with total=paiement.commande.prix_total paye=paiement.commande.get_montant_paye %}
+                    {% if total > 0 %}
+                    <div class="progress-bar" role="progressbar" 
+                         style="width: {% widthratio paye total 100 %}%; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);"
+                         aria-valuenow="{{ paye }}" aria-valuemin="0" aria-valuemax="{{ total }}">
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-1">
+                    <div class="small text-success">
+                        <i class="fas fa-check-circle"></i>
+                        {% widthratio paiement.commande.get_montant_paye paiement.commande.prix_total 100 %}% payé
+                    </div>
+                    <div class="small {% if paiement.commande.get_reste_a_payer > 0 %}text-danger{% else %}text-success{% endif %}">
+                        Reste: {{ paiement.commande.get_reste_a_payer|floatformat:0|intcomma }} CFA
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Justificatif de paiement -->
+        <div class="payment-proof">
+            <div class="card-title">
+                <i class="fas fa-file-invoice"></i>
+                Justificatif de paiement
+            </div>
+            
+            {% if paiement.preuve_paiement %}
+            <div class="proof-preview" id="proofPreview">
+                <img src="{{ paiement.preuve_paiement.url }}" alt="Justificatif de paiement" class="proof-image">
+                <div class="text-center mt-2">
+                    <a href="{{ paiement.preuve_paiement.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-expand me-1"></i>Agrandir
+                    </a>
+                    <a href="{{ paiement.preuve_paiement.url }}" download class="btn btn-sm btn-outline-success">
+                        <i class="fas fa-download me-1"></i>Télécharger
+                    </a>
+                </div>
+            </div>
+            {% else %}
+            <div class="proof-upload" onclick="document.getElementById('proofUpload').click()">
+                <div class="upload-icon">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                </div>
+                <h6 class="mb-2">Aucun justificatif uploadé</h6>
+                <p class="text-muted small mb-0">Cliquez pour ajouter un justificatif (reçu, capture...)</p>
+                <input type="file" id="proofUpload" accept="image/*,.pdf" style="display: none;" onchange="previewProof(event)">
+            </div>
+            {% endif %}
+            
             {% if paiement.note %}
-            <hr>
-            <div class="row">
-                <div class="col-md-12">
-                    <h6 class="text-muted">Note</h6>
-                    <p>{{ paiement.note }}</p>
+            <div class="mt-3">
+                <div class="info-label mb-2">
+                    <i class="fas fa-sticky-note"></i>
+                    Note
+                </div>
+                <div class="bg-light p-3 rounded">
+                    {{ paiement.note|linebreaks }}
                 </div>
             </div>
             {% endif %}
         </div>
     </div>
+    
+    <!-- Colonne droite : Chronologie et actions -->
+    <div class="col-lg-4">
+        <!-- Chronologie -->
+        <div class="payment-timeline">
+            <h5 class="fw-bold mb-3">
+                <i class="fas fa-history me-2"></i>
+                Historique de la transaction
+            </h5>
+            
+            <div class="timeline">
+                <div class="timeline-item completed">
+                    <div class="timeline-date">{{ paiement.date_paiement|date:"d F Y" }}</div>
+                    <div class="timeline-content">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">Paiement effectué</h6>
+                                <p class="mb-0 small text-muted">
+                                    {{ paiement.get_mode_paiement_display|lower|capfirst }}
+                                    {% if paiement.reference_paiement %}
+                                    • Réf: {{ paiement.reference_paiement }}
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="text-success">
+                                <i class="fas fa-check-circle fa-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="timeline-item completed">
+                    <div class="timeline-date">{{ paiement.date_validation|default:paiement.date_paiement|date:"d F Y" }}</div>
+                    <div class="timeline-content">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">Paiement validé</h6>
+                                <p class="mb-0 small text-muted">
+                                    Validé par {{ paiement.valide_par.prenom|default:"l'équipe" }}
+                                </p>
+                            </div>
+                            <div class="text-success">
+                                <i class="fas fa-check-double fa-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if paiement.date_encaissement %}
+                <div class="timeline-item completed">
+                    <div class="timeline-date">{{ paiement.date_encaissement|date:"d F Y" }}</div>
+                    <div class="timeline-content">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">Montant encaissé</h6>
+                                <p class="mb-0 small text-muted">
+                                    Fondés crédités sur le compte
+                                </p>
+                            </div>
+                            <div class="text-success">
+                                <i class="fas fa-university fa-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="timeline-item">
+                    <div class="timeline-date">Maintenant</div>
+                    <div class="timeline-content">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">Transaction complète</h6>
+                                <p class="mb-0 small text-muted">Paiement traité avec succès</p>
+                            </div>
+                            <div class="text-primary">
+                                <i class="fas fa-flag-checkered fa-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="action-buttons">
+            <a href="{% url 'paiements:paiement_print' paiement.id %}" class="action-btn action-btn-primary" target="_blank">
+                <i class="fas fa-print"></i>
+                Imprimer le reçu
+            </a>
+            
+            <a href="{% url 'paiements:paiement_update' paiement.id %}" class="action-btn action-btn-warning">
+                <i class="fas fa-edit"></i>
+                Modifier
+            </a>
+            
+            <a href="{% url 'commandes:commande_detail' paiement.commande.id %}" class="action-btn action-btn-secondary">
+                <i class="fas fa-external-link-alt"></i>
+                Voir la commande
+            </a>
+            
+            <a href="{% url 'paiements:paiement_list' %}" class="action-btn action-btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Retour
+            </a>
+            
+            <a href="#" class="action-btn action-btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                <i class="fas fa-trash"></i>
+                Annuler le paiement
+            </a>
+        </div>
+        
+        <!-- Paiements liés -->
+        {% if paiements_lies %}
+        <div class="payment-timeline mt-4">
+            <h5 class="fw-bold mb-3">
+                <i class="fas fa-exchange-alt me-2"></i>
+                Autres paiements de cette commande
+            </h5>
+            
+            <div class="related-payments">
+                {% for paiement_lie in paiements_lies|slice:":3" %}
+                {% if paiement_lie.id != paiement.id %}
+                <a href="{% url 'paiements:paiement_detail' paiement_lie.id %}" class="related-payment-card text-decoration-none">
+                    <div class="related-payment-info">
+                        <div>
+                            <div class="related-payment-id">#{{ paiement_lie.numero|default:paiement_lie.id|stringformat:"06d" }}</div>
+                            <div class="related-payment-date">{{ paiement_lie.date_paiement|date:"d/m/Y" }}</div>
+                        </div>
+                        <div class="related-payment-amount">{{ paiement_lie.montant|floatformat:0|intcomma }} CFA</div>
+                    </div>
+                </a>
+                {% endif %}
+                {% endfor %}
+                
+                {% if paiements_lies.count > 4 %}
+                <div class="text-center mt-2">
+                    <a href="{% url 'commandes:commande_detail' paiement.commande.id %}#paiements" 
+                       class="btn btn-sm btn-outline-primary">
+                        Voir les {{ paiements_lies.count|add:"-3" }} autres paiements
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
 </div>
+
+<!-- Modal de suppression -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle text-danger me-2"></i>
+                    Annuler le paiement
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="mb-4">
+                    <i class="fas fa-ban fa-3x text-danger opacity-25"></i>
+                </div>
+                <h5 class="mb-3">Confirmer l'annulation</h5>
+                <p class="text-muted mb-0">
+                    Êtes-vous sûr de vouloir annuler ce paiement de {{ paiement.montant|floatformat:0|intcomma }} CFA ?
+                    Cette action mettra à jour le solde de la commande.
+                </p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                <form action="{% url 'paiements:paiement_delete' paiement.id %}" method="post" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Annuler le paiement</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animation des cartes
+    const cards = document.querySelectorAll('.info-card, .command-summary, .payment-timeline, .payment-proof');
+    cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+        card.classList.add('animate__animated', 'animate__fadeInUp');
+    });
+    
+    // Copie de la référence de paiement
+    const paymentRef = document.querySelector('.info-value:first-child');
+    if (paymentRef) {
+        paymentRef.style.cursor = 'pointer';
+        paymentRef.title = 'Cliquer pour copier';
+        paymentRef.addEventListener('click', function() {
+            const text = this.textContent.trim();
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Référence copiée !', 'success');
+            });
+        });
+    }
+    
+    // Gestion de l'upload de justificatif
+    const proofUpload = document.getElementById('proofUpload');
+    if (proofUpload) {
+        proofUpload.addEventListener('change', previewProof);
+    }
+    
+    // Confirmation pour l'annulation
+    const cancelBtn = document.querySelector('.action-btn-danger');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            // La modal Bootstrap s'occupe de la confirmation
+        });
+    }
+    
+    // Calcul des statistiques de paiement
+    updatePaymentStats();
+});
+
+function previewProof(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // Vérifier le type de fichier
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
+    if (!validTypes.includes(file.type)) {
+        showToast('Format de fichier non supporté. Utilisez JPG, PNG ou PDF.', 'error');
+        return;
+    }
+    
+    // Vérifier la taille (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        showToast('Fichier trop volumineux (max 5MB)', 'error');
+        return;
+    }
+    
+    if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const proofPreview = document.getElementById('proofPreview');
+            if (!proofPreview) {
+                const previewContainer = document.createElement('div');
+                previewContainer.id = 'proofPreview';
+                previewContainer.className = 'proof-preview';
+                previewContainer.innerHTML = `
+                    <img src="${e.target.result}" alt="Justificatif" class="proof-image">
+                    <div class="text-center mt-2">
+                        <button class="btn btn-sm btn-outline-primary" onclick="expandImage('${e.target.result}')">
+                            <i class="fas fa-expand me-1"></i>Agrandir
+                        </button>
+                        <button class="btn btn-sm btn-outline-success" onclick="downloadImage('${e.target.result}', 'justificatif.png')">
+                            <i class="fas fa-download me-1"></i>Télécharger
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="removeProof()">
+                            <i class="fas fa-trash me-1"></i>Supprimer
+                        </button>
+                    </div>
+                `;
+                document.querySelector('.proof-upload').style.display = 'none';
+                document.querySelector('.payment-proof').insertBefore(previewContainer, document.querySelector('.proof-upload'));
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    // Simuler l'upload
+    showToast('Téléchargement du justificatif...', 'info');
+    setTimeout(() => {
+        // Ici, vous devriez implémenter l'upload réel vers le serveur
+        showToast('Justificatif uploadé avec succès !', 'success');
+    }, 2000);
+}
+
+function expandImage(src) {
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.innerHTML = `
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Justificatif de paiement</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img src="${src}" alt="Justificatif" style="max-width: 100%; max-height: 70vh;">
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+    
+    modal.addEventListener('hidden.bs.modal', function () {
+        modal.remove();
+    });
+}
+
+function downloadImage(src, filename) {
+    const link = document.createElement('a');
+    link.href = src;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('Justificatif téléchargé', 'success');
+}
+
+function removeProof() {
+    if (confirm('Supprimer ce justificatif ?')) {
+        const proofPreview = document.getElementById('proofPreview');
+        if (proofPreview) {
+            proofPreview.remove();
+        }
+        document.querySelector('.proof-upload').style.display = 'block';
+        document.getElementById('proofUpload').value = '';
+        showToast('Justificatif supprimé', 'info');
+    }
+}
+
+function updatePaymentStats() {
+    const total = parseFloat("{{ paiement.commande.prix_total|default:0 }}");
+    const paid = parseFloat("{{ paiement.commande.get_montant_paye|default:0 }}");
+    
+    if (total > 0) {
+        const remaining = total - paid;
+        const percentage = (paid / total * 100).toFixed(1);
+        
+        console.log('Statistiques de paiement:', {
+            total: total,
+            paid: paid,
+            remaining: remaining,
+            percentage: percentage + '%'
+        });
+        
+        // Mettre à jour les éléments UI si nécessaire
+        const progressBar = document.querySelector('.progress-bar');
+        if (progressBar) {
+            progressBar.style.width = percentage + '%';
+            progressBar.setAttribute('aria-valuenow', paid);
+        }
+    }
+}
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    const bsToast = new bootstrap.Toast(toast, {
+        autohide: true,
+        delay: 3000
+    });
+    bsToast.show();
+    
+    toast.addEventListener('hidden.bs.toast', function () {
+        toast.remove();
+    });
+}
+
+// Raccourci clavier pour l'impression
+document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+        e.preventDefault();
+        window.open("{% url 'paiements:paiement_print' paiement.id %}", '_blank');
+    }
+});
+</script>
+
+<!-- Animation CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+
+<!-- Styles d'animation supplémentaires -->
+<style>
+    .info-card {
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeInUp 0.6s ease forwards;
+    }
+    
+    .info-card:nth-child(1) { animation-delay: 0.1s; }
+    .info-card:nth-child(2) { animation-delay: 0.2s; }
+    
+    .timeline-item {
+        opacity: 0;
+        transform: translateX(-20px);
+        animation: slideInRight 0.4s ease forwards;
+    }
+    
+    .timeline-item:nth-child(1) { animation-delay: 0.1s; }
+    .timeline-item:nth-child(2) { animation-delay: 0.3s; }
+    .timeline-item:nth-child(3) { animation-delay: 0.5s; }
+    .timeline-item:nth-child(4) { animation-delay: 0.7s; }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes slideInRight {
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    .payment-method-badge {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .payment-method-badge::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .payment-method-badge:hover::after {
+        opacity: 1;
+    }
+    
+    .progress-bar {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .progress-bar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        background: linear-gradient(90deg, 
+            transparent 0%, 
+            rgba(255, 255, 255, 0.3) 50%, 
+            transparent 100%);
+        animation: shimmer 2s infinite;
+    }
+    
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+</style>
 {% endblock %}

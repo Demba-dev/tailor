@@ -67,15 +67,17 @@
         <div class="card mb-4 border-0 shadow-sm overflow-hidden">
             <div class="card-body p-0">
                 <div class="text-center p-4 bg-light bg-opacity-50">
+                    {% if client.photo %}
+                    <div class="profile-photo-wrapper">
+                        <img src="{{ client.photo.url }}" alt="Photo de {{ client.prenom }} {{ client.nom }}" class="profile-photo">
+                    </div>
+                    {% else %}
                     <div class="avatar-lg mx-auto mb-3">
-                        {% if client.photo %}
-                        <img src="{{ client.photo.url }}" class="avatar-circle" style="border: 4px solid white; object-fit: cover;">
-                        {% else %}
                         <div class="avatar-circle">
                             {{ client.prenom|first|upper }}{{ client.nom|first|upper }}
                         </div>
-                        {% endif %}
                     </div>
+                    {% endif %}
                     <h4 class="fw-bold mb-1" style="font-family: var(--font-heading);">{{ client.prenom }} {{ client.nom }}</h4>
                     <div class="d-flex justify-content-center gap-2 mb-2">
                         <span class="badge bg-{{ client.get_fidelite_color|default:'info' }} status-badge">
@@ -312,7 +314,7 @@
                                     {% for paiement in client.paiements.all|dictsortreversed:"date_paiement" %}
                                     <tr>
                                         <td class="small">{{ paiement.date_paiement|date:"d/m/Y" }}</td>
-                                        <td class="small text-primary fw-bold">{{ paiement.commande.numero }}</td>
+                                        <td class="small text-primary fw-bold">#CMD-{{ paiement.commande.id|stringformat:"04d" }}</td>
                                         <td class="fw-bold">{{ paiement.montant|floatformat:2 }}CFA</td>
                                         <td><span class="badge bg-light text-dark border">{{ paiement.get_mode_display }}</span></td>
                                         <td class="text-end">

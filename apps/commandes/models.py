@@ -6,9 +6,11 @@ from apps.catalogue.models import TypeHabit
 from apps.modeles.models import Modele
 from apps.tissus.models import Tissu
 from decimal import Decimal
+from datetime import date
 
 class Commande(models.Model):
     STATUT_CHOICES = (
+        ('en_attente', 'En attente'),
         ('encours', 'En cours'),
         ('termine', 'Terminé'),
         ('livre', 'Livré'),
@@ -34,15 +36,6 @@ class Commande(models.Model):
     class Meta:
         ordering = ['-date_commande']
 
-    def get_status_color(self):
-        colors = {
-            'encours': '#3b82f6',  # bleu
-            'termine': '#10b981',  # vert
-            'livre': '#6366f1',    # indigo
-            'annule': '#ef4444',   # rouge
-        }
-        return colors.get(self.statut, '#64748b')
-
     def __str__(self):
         return f"Commande #{self.id} - {self.client}"
 
@@ -67,4 +60,56 @@ class Commande(models.Model):
         montant_paye = self.get_montant_paye()
         return self.prix_total - montant_paye
     
+    def get_progression(self):
+        """Calcule le pourcentage de progression (0-100)"""
+        statuts_progression = {
+            'en_attente': 0,
+            'encours': 50,
+            'termine': 85,
+            'livre': 100,
+            'annule': 0,
+        }
+        return statuts_progression.get(self.statut, 0)
+    
+    def get_statut_color(self):
+        """Retourne la couleur CSS associée au statut"""
+        colors = {
+            'en_attente': '#ed8936',
+            'encours': '#4299e1',
+            'termine': '#48bb78',
+            'livre': '#667eea',
+            'annule': '#f56565',
+        }
+        return colors.get(self.statut, '#64748b')
+    
+    def get_statut_icon(self):
+        """Retourne l'icône Font Awesome associée au statut"""
+        icons = {
+            'en_attente': 'clock',
+            'encours': 'hourglass-start',
+            'termine': 'check-circle',
+            'livre': 'truck',
+            'annule': 'times-circle',
+        }
+        return icons.get(self.statut, 'question-circle')
+    
+    def is_late(self):
+        """Vérifie si la commande est en retard"""
+        if self.statut == 'livre' or self.statut == 'annule':
+            return False
+        if self.date_livraison and date.today() > self.date_livraison:
+            return True
+        return False
+    
+    def days_late(self):
+        """Retourne le nombre de jours de retard"""
+        if not self.is_late():
+            return 0
+        if self.date_livraison:
+            return (date.today() - self.date_livraison).days
+        return 0
+    
+    def is_paid(self):
+        """Vérifie si la commande est entièrement payée"""
+        return self.get_reste_a_payer() <= 0
 

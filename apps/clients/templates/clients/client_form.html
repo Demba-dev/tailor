@@ -314,8 +314,7 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Prévisualisation de la photo
-    const photoInput = document.getElementById('{{ form.photo.id_for_label }}');
+    const photoInput = document.getElementById('id_photo');
     const avatarPreview = document.getElementById('avatarPreview');
     
     if (photoInput && avatarPreview) {
@@ -330,7 +329,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Validation du formulaire
     const form = document.querySelector('.needs-validation');
     form.addEventListener('submit', function(event) {
         if (!form.checkValidity()) {
@@ -340,8 +338,7 @@ document.addEventListener('DOMContentLoaded', function() {
         form.classList.add('was-validated');
     });
     
-    // Formatage automatique du téléphone
-    const telephoneField = document.getElementById('{{ form.telephone.id_for_label }}');
+    const telephoneField = document.getElementById('id_telephone');
     if (telephoneField) {
         telephoneField.addEventListener('input', function() {
             let value = this.value.replace(/\D/g, '');

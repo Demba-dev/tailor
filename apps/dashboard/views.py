@@ -6,17 +6,17 @@ from apps.clients.models import Client
 from apps.personnel.models import Personnel
 from apps.formations.models import Formation
 from django.db.models import Sum
-from datetime import date
+from datetime import date, timedelta
 
 from django.urls import reverse
 from apps.ventes.models import Vente
 
 @login_required
 def index(request):
-    commandes_encours = Commande.objects.filter(statut='encours').count()
+    commandes_encours = Commande.objects.filter(statut__in=['encours', 'en_attente']).count()
     commandes_terminees = Commande.objects.filter(statut='termine').count()
     commandes_annulees = Commande.objects.filter(statut='annule').count()
-    commandes_total = commandes_encours + commandes_terminees + commandes_annulees
+    commandes_total = Commande.objects.exclude(statut='annule').count()
 
     total_paiements = sum(p.montant for p in Paiement.objects.all())
     reste_total = sum(c.reste_a_payer for c in Commande.objects.all())
@@ -33,7 +33,7 @@ def index(request):
     
     
     # 5 Dernières ventes
-    for v in Vente.objects.order_by('-date_vente')[:5]:
+    for v in Vente.objects.order_by('-date_vente')[:4]:
         recent_activities.append({
             'title': f"Vente #{v.pk}",
             'time': v.date_vente,
@@ -86,14 +86,58 @@ def index(request):
     else:
         satisfaction_rate = 100
 
-    # Commandes en retard (En cours et date livraison dépassée)
-    commandes_retard = Commande.objects.filter(
-        statut='encours', 
+    # Commandes en retard (Pas livrées et date livraison dépassée)
+    commandes_retard = Commande.objects.exclude(
+        statut='livre'
+    ).exclude(
+        statut='annule'
+    ).filter(
         date_livraison__lt=date.today()
     ).count()
 
     # 5 Dernières commandes pour le tableau
     recent_orders = Commande.objects.order_by('-date_commande')[:5]
+
+    # ca mensuelles
+    today = date.today()
+    ca_mensuel = Commande.objects.filter(
+        date_commande__year=today.year,
+        date_commande__month=today.month
+    ).aggregate(Sum('prix_total'))['prix_total__sum'] or 0
+
+    # Commandes ce mois vs mois dernier
+    first_day_this_month = today.replace(day=1)
+    first_day_last_month = (first_day_this_month - timedelta(days=1)).replace(day=1)
+    last_day_last_month = first_day_this_month - timedelta(days=1)
+    
+    commandes_this_month = Commande.objects.filter(
+        date_commande__gte=first_day_this_month,
+        date_commande__lte=today
+    ).count()
+    
+    commandes_last_month = Commande.objects.filter(
+        date_commande__gte=first_day_last_month,
+        date_commande__lte=last_day_last_month
+    ).count()
+    
+    commandes_evolution = round(
+        ((commandes_this_month - commandes_last_month) / commandes_last_month * 100)
+        if commandes_last_month > 0 else 0
+    )
+    
+    # Nouveaux clients les 30 derniers jours
+    thirty_days_ago = today - timedelta(days=30)
+    nouveaux_clients_30j = Client.objects.filter(
+        created_at__gte=thirty_days_ago
+    ).count()
+    
+    # Objectif CA (peut être basé sur la moyenne des 3 derniers mois)
+    three_months_ago = today - timedelta(days=90)
+    ca_3_months = Commande.objects.filter(
+        date_commande__gte=three_months_ago
+    ).aggregate(Sum('prix_total'))['prix_total__sum'] or 0
+    ca_moyenne = ca_3_months / 3 if ca_3_months > 0 else 1
+    objectif_ca = round((ca_mensuel / ca_moyenne * 100)) if ca_moyenne > 0 else 0
 
     context = {
         'commandes_encours': commandes_encours,
@@ -113,6 +157,10 @@ def index(request):
         'delai_moyen': delai_moyen,
         'satisfaction_rate': satisfaction_rate,
         'recent_activities': recent_activities,
+        'ca_mensuel': ca_mensuel,
+        'commandes_evolution': commandes_evolution,
+        'objectif_ca': objectif_ca,
+        'nouveaux_clients_30j': nouveaux_clients_30j,
     }
     return render(request, 'dashboard/index.html', context)
     

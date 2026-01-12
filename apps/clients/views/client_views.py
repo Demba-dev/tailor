@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from datetime import date
 from apps.clients.models import Client
 from apps.clients.forms import ClientForm
@@ -14,16 +15,13 @@ def client_list(request):
     clients = Client.objects.filter(is_active=True)
     today = date.today()
     
-    # Clients ayant commandé ce mois-ci
     clients_actifs_mois = clients.filter(
         commandes__date_commande__month=today.month,
         commandes__date_commande__year=today.year
     ).distinct()
 
-    # Statistiques globales pour les cartes
     total_commandes_encours = Commande.objects.filter(statut='encours').count()
     
-    # Calcul du CA moyen (somme des prix_total / nombre de clients)
     total_ca = Commande.objects.aggregate(total=Sum('prix_total'))['total'] or 0
     ca_moyen = total_ca / clients.count() if clients.exists() else 0
 
@@ -41,13 +39,13 @@ def client_detail(request, pk):
     return render(request, 'clients/client_detail.html', {'client': client})
 
 
-
-
+@login_required
 def client_create(request):
     if request.method == 'POST':
-        form = ClientForm(request.POST)
+        form = ClientForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
+            messages.success(request, "Client créé avec succès.")
             return redirect('clients:client_list')
     else:
         form = ClientForm()
@@ -58,13 +56,15 @@ def client_create(request):
     })
 
 
+@login_required
 def client_update(request, pk):
     client = get_object_or_404(Client, pk=pk)
 
     if request.method == 'POST':
-        form = ClientForm(request.POST, instance=client)
+        form = ClientForm(request.POST, request.FILES, instance=client)
         if form.is_valid():
             form.save()
+            messages.success(request, "Client modifié avec succès.")
             return redirect('clients:client_detail', pk=client.pk)
     else:
         form = ClientForm(instance=client)
@@ -74,6 +74,7 @@ def client_update(request, pk):
         'title': 'Modifier le client'
     })
 
+@login_required
 def send_message(request, pk):
     client = get_object_or_404(Client, pk=pk)
     
@@ -81,17 +82,15 @@ def send_message(request, pk):
         subject = request.POST.get('subject')
         message = request.POST.get('message')
         
-        # --- Logique d'envoi ici ---
-        # Exemple : send_mail(subject, message, 'from@tailor.com', [client.email])
-        # Pour l'instant, on affiche juste un message de succès
-        
         messages.success(request, f"Message envoyé avec succès à {client.prenom} {client.nom}.")
         
     return redirect('clients:client_detail', pk=pk)
 
 
+@login_required
 def client_delete(request, pk):
     client = get_object_or_404(Client, pk=pk)
     client.is_active = False
     client.save()
+    messages.success(request, f"Client {client.prenom} {client.nom} désactivé.")
     return redirect('clients:client_list')

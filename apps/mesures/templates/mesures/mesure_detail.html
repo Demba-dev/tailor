@@ -1,17 +1,1316 @@
 {% extends "base.html" %}
+{% load static %}
+{% load humanize %}
 
-{% block title %}Mesure de {{ mesure.client.prenom }} - TAILOR{% endblock %}
+{% block title %}Mesures de {{ mesure.client.prenom }} {{ mesure.client.nom }} - ATELIER TAILOR{% endblock %}
 
-{% block content %}
-<div class="container mt-4">
-    <h2>Mesures de {{ mesure.client.prenom }} {{ mesure.client.nom }}</h2>
-    <div class="card">
-        <div class="card-body">
-            <p><strong>Client :</strong> {{ mesure.client.prenom }} {{ mesure.client.nom }}</p>
-            <!-- Ajouter d'autres champs de mesure selon votre modèle -->
-            <a href="{% url 'mesures:mesure_update' mesure.pk %}" class="btn btn-primary">Modifier</a>
-            <a href="{% url 'mesures:mesure_list' %}" class="btn btn-secondary">Retour</a>
+{% block extra_css %}
+<style>
+    .measurement-header {
+        background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .measurement-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 200%;
+        background: rgba(255,255,255,0.1);
+        transform: rotate(30deg);
+        pointer-events: none;
+    }
+    
+    .client-info-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        margin-bottom: 2rem;
+    }
+    
+    .client-avatar-large {
+        width: 100px;
+        height: 100px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 2.5rem;
+        margin: 0 auto 1.5rem;
+    }
+    
+    .client-details-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #e2e8f0;
+    }
+    
+    .detail-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        background: #f8fafc;
+        border-radius: 10px;
+    }
+    
+    .detail-item i {
+        color: #ed8936;
+        width: 20px;
+    }
+    
+    .measurement-sections {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .measurement-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        height: 100%;
+        transition: transform 0.3s ease;
+    }
+    
+    .measurement-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    }
+    
+    .section-title {
+        color: #2d3748;
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .section-title i {
+        color: #ed8936;
+        font-size: 1.2rem;
+    }
+    
+    .measurement-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+    }
+    
+    .measurement-item {
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 1rem;
+        text-align: center;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+    
+    .measurement-item:hover {
+        background: rgba(237, 137, 54, 0.1);
+        transform: scale(1.02);
+    }
+    
+    .measurement-label {
+        font-size: 0.85rem;
+        color: #718096;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .measurement-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #2d3748;
+        line-height: 1;
+    }
+    
+    .measurement-unit {
+        font-size: 0.75rem;
+        color: #a0aec0;
+        margin-left: 2px;
+    }
+    
+    .measurement-status {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+    
+    .status-normal { background: #48bb78; }
+    .status-warning { background: #ed8936; }
+    .status-critical { background: #f56565; }
+    
+    .body-diagram {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .body-diagram-title {
+        color: #2d3748;
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+    }
+    
+    .diagram-container {
+        max-width: 400px;
+        margin: 0 auto;
+        position: relative;
+    }
+    
+    .body-svg {
+        width: 100%;
+        height: auto;
+        filter: drop-shadow(0 4px 12px rgba(0,0,0,0.1));
+    }
+    
+    .measurement-point {
+        position: absolute;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: rgba(237, 137, 54, 0.9);
+        border: 2px solid white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 0.7rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 10;
+    }
+    
+    .measurement-point:hover {
+        transform: scale(1.2);
+        box-shadow: 0 4px 16px rgba(237, 137, 54, 0.4);
+    }
+    
+    .measurement-tooltip {
+        position: absolute;
+        background: white;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        border: 1px solid #e2e8f0;
+        font-size: 0.85rem;
+        color: #2d3748;
+        font-weight: 500;
+        z-index: 20;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        white-space: nowrap;
+    }
+    
+    .notes-section {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        margin-bottom: 2rem;
+    }
+    
+    .notes-content {
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 1.5rem;
+        min-height: 100px;
+        color: #4a5568;
+        line-height: 1.6;
+    }
+    
+    .history-section {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        margin-bottom: 2rem;
+    }
+    
+    .history-timeline {
+        position: relative;
+        padding-left: 2rem;
+        margin-top: 1.5rem;
+    }
+    
+    .history-timeline::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #e2e8f0;
+    }
+    
+    .history-item {
+        position: relative;
+        margin-bottom: 1.5rem;
+        padding-left: 1.5rem;
+    }
+    
+    .history-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .history-item::before {
+        content: '';
+        position: absolute;
+        left: -6px;
+        top: 0;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: white;
+        border: 3px solid #ed8936;
+    }
+    
+    .history-date {
+        font-size: 0.85rem;
+        color: #718096;
+        margin-bottom: 0.25rem;
+    }
+    
+    .history-content {
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 1rem;
+        border-left: 3px solid #ed8936;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 2px solid #e2e8f0;
+    }
+    
+    .action-btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: 2px solid;
+    }
+    
+    .action-btn-primary {
+        background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+        color: white;
+        border-color: #ed8936;
+    }
+    
+    .action-btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(237, 137, 54, 0.3);
+        color: white;
+    }
+    
+    .action-btn-secondary {
+        background: white;
+        color: #718096;
+        border-color: #e2e8f0;
+    }
+    
+    .action-btn-secondary:hover {
+        border-color: #4299e1;
+        color: #4299e1;
+        background: rgba(66, 153, 225, 0.05);
+    }
+    
+    .action-btn-danger {
+        background: white;
+        color: #f56565;
+        border-color: #f56565;
+    }
+    
+    .action-btn-danger:hover {
+        background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+        color: white;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 15px;
+    }
+    
+    .empty-state-icon {
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, rgba(237, 137, 54, 0.1) 0%, rgba(221, 107, 32, 0.1) 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        color: #ed8936;
+        font-size: 2.5rem;
+    }
+    
+    .sizing-chart {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+    
+    .size-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem;
+        border: 2px solid #e2e8f0;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .size-card:hover {
+        border-color: #ed8936;
+        transform: translateY(-2px);
+    }
+    
+    .size-card.active {
+        border-color: #ed8936;
+        background: rgba(237, 137, 54, 0.1);
+        box-shadow: 0 4px 12px rgba(237, 137, 54, 0.1);
+    }
+    
+    .size-label {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+    }
+    
+    .size-range {
+        font-size: 0.85rem;
+        color: #718096;
+    }
+    
+    @media (max-width: 768px) {
+        .measurement-sections {
+            grid-template-columns: 1fr;
+        }
+        
+        .measurement-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .client-details-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .sizing-chart {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'clients:client_list' %}">Clients</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'clients:client_detail' mesure.client.id %}">{{ mesure.client.prenom }} {{ mesure.client.nom }}</a></li>
+        <li class="breadcrumb-item active">Mesures</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block page_title %}
+<div class="measurement-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h2 mb-2">
+                <i class="fas fa-ruler-combined me-2"></i>Fiche de mesures
+            </h1>
+            <p class="mb-0 opacity-75">
+                Détails des mesures de {{ mesure.client.prenom }} {{ mesure.client.nom }}
+            </p>
+        </div>
+        <div class="text-end">
+            <div class="h4 text-white mb-1">{{ mesure.date_prise|date:"d F Y" }}</div>
+            <div class="small opacity-75">Dernière mise à jour</div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Informations client -->
+    <div class="col-lg-4">
+        <div class="client-info-card">
+            <div class="text-center">
+                <div class="client-avatar-large">
+                    {{ mesure.client.prenom|first|upper }}{{ mesure.client.nom|first|upper }}
+                </div>
+                <h3 class="mb-2">{{ mesure.client.prenom }} {{ mesure.client.nom }}</h3>
+                <p class="text-muted mb-3">Réf: #{{ mesure.client.id|stringformat:"04d" }}</p>
+                
+                <div class="d-flex justify-content-center gap-2 mb-3">
+                    <span class="badge bg-primary">
+                        <i class="fas fa-venus-mars me-1"></i>
+                        {{ mesure.get_sexe_display|default:"Non spécifié" }}
+                    </span>
+                    <span class="badge bg-info">
+                        <i class="fas fa-tshirt me-1"></i>
+                        Taille: {{ mesure.tour_taille|default:"-" }}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="client-details-grid">
+                {% if mesure.client.telephone %}
+                <div class="detail-item">
+                    <i class="fas fa-phone"></i>
+                    <span>{{ mesure.client.telephone }}</span>
+                </div>
+                {% endif %}
+                
+                {% if mesure.client.email %}
+                <div class="detail-item">
+                    <i class="fas fa-envelope"></i>
+                    <span>{{ mesure.client.email }}</span>
+                </div>
+                {% endif %}
+                
+                {% if mesure.client.adresse %}
+                <div class="detail-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>{{ mesure.client.adresse|truncatechars:40 }}</span>
+                </div>
+                {% endif %}
+                
+                <div class="detail-item">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>{{ mesure.client.created_at|date:"d/m/Y"|default:"-" }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Guide des tailles -->
+        <div class="measurement-card">
+            <div class="section-title">
+                <i class="fas fa-chart-bar"></i>
+                Guide des tailles
+            </div>
+            
+            <div class="sizing-chart">
+                <div class="size-card {% if mesure.taille_standard == 'XS' %}active{% endif %}">
+                    <div class="size-label">XS</div>
+                    <div class="size-range">Extra Small</div>
+                </div>
+                <div class="size-card {% if mesure.taille_standard == 'S' %}active{% endif %}">
+                    <div class="size-label">S</div>
+                    <div class="size-range">Small</div>
+                </div>
+                <div class="size-card {% if mesure.taille_standard == 'M' %}active{% endif %}">
+                    <div class="size-label">M</div>
+                    <div class="size-range">Medium</div>
+                </div>
+                <div class="size-card {% if mesure.taille_standard == 'L' %}active{% endif %}">
+                    <div class="size-label">L</div>
+                    <div class="size-range">Large</div>
+                </div>
+                <div class="size-card {% if mesure.taille_standard == 'XL' %}active{% endif %}">
+                    <div class="size-label">XL</div>
+                    <div class="size-range">Extra Large</div>
+                </div>
+                <div class="size-card {% if mesure.taille_standard == 'XXL' %}active{% endif %}">
+                    <div class="size-label">XXL</div>
+                    <div class="size-range">2X Large</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Notes particulières -->
+        <div class="notes-section">
+            <div class="section-title">
+                <i class="fas fa-sticky-note"></i>
+                Notes particulières
+            </div>
+            
+            <div class="notes-content">
+                {% if mesure.notes %}
+                    {{ mesure.notes|linebreaks }}
+                {% else %}
+                    <p class="text-muted text-center py-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Aucune note particulière
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Mesures détaillées -->
+    <div class="col-lg-8">
+        <!-- Diagramme corporel -->
+        <div class="body-diagram">
+            <h3 class="body-diagram-title">
+                <i class="fas fa-user"></i>
+                Schéma corporel
+            </h3>
+            
+            <div class="diagram-container">
+                <svg class="body-svg" viewBox="0 0 400 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Tête -->
+                    <ellipse cx="200" cy="80" rx="35" ry="45" fill="#f7fafc" stroke="#e2e8f0" stroke-width="2"/>
+                    
+                    <!-- Tronc -->
+                    <path d="M150 125 L150 300 C150 320 180 340 200 340 C220 340 250 320 250 300 L250 125" 
+                          fill="#f7fafc" stroke="#e2e8f0" stroke-width="2"/>
+                    
+                    <!-- Bras -->
+                    <path d="M150 150 L80 200 L80 250 L150 200" fill="#f7fafc" stroke="#e2e8f0" stroke-width="2"/>
+                    <path d="M250 150 L320 200 L320 250 L250 200" fill="#f7fafc" stroke="#e2e8f0" stroke-width="2"/>
+                    
+                    <!-- Jambes -->
+                    <path d="M170 300 L170 480 L150 500 L150 550" fill="#f7fafc" stroke="#e2e8f0" stroke-width="2"/>
+                    <path d="M230 300 L230 480 L250 500 L250 550" fill="#f7fafc" stroke="#e2e8f0" stroke-width="2"/>
+                </svg>
+                
+                <!-- Points de mesure -->
+                {% if mesure.tour_poitrine %}
+                <div class="measurement-point" style="top: 150px; left: 200px;" data-measurement="tour_poitrine" data-value="{{ mesure.tour_poitrine }}">
+                    P
+                </div>
+                {% endif %}
+                
+                {% if mesure.tour_taille %}
+                <div class="measurement-point" style="top: 220px; left: 200px;" data-measurement="tour_taille" data-value="{{ mesure.tour_taille }}">
+                    T
+                </div>
+                {% endif %}
+                
+                {% if mesure.tour_hanche %}
+                <div class="measurement-point" style="top: 280px; left: 200px;" data-measurement="tour_hanche" data-value="{{ mesure.tour_hanche }}">
+                    H
+                </div>
+                {% endif %}
+                
+                {% if mesure.longueur_bras %}
+                <div class="measurement-point" style="top: 200px; left: 80px;" data-measurement="longueur_bras" data-value="{{ mesure.longueur_bras }}">
+                    B
+                </div>
+                {% endif %}
+                
+                {% if mesure.longueur_jambe %}
+                <div class="measurement-point" style="top: 480px; left: 150px;" data-measurement="longueur_jambe" data-value="{{ mesure.longueur_jambe }}">
+                    J
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Sections de mesures -->
+        <div class="measurement-sections">
+            <!-- Mesures du haut -->
+            <div class="measurement-card">
+                <div class="section-title">
+                    <i class="fas fa-tshirt"></i>
+                    Haut du corps
+                </div>
+                
+                <div class="measurement-grid">
+                    {% if mesure.tour_poitrine %}
+                    <div class="measurement-item">
+                        <div class="measurement-label">Poitrine</div>
+                        <div class="measurement-value">
+                            {{ mesure.tour_poitrine }}
+                            <span class="measurement-unit">cm</span>
+                        </div>
+                        <div class="measurement-status status-normal"></div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if mesure.tour_taille %}
+                    <div class="measurement-item">
+                        <div class="measurement-label">Taille</div>
+                        <div class="measurement-value">
+                            {{ mesure.tour_taille }}
+                            <span class="measurement-unit">cm</span>
+                        </div>
+                        <div class="measurement-status status-normal"></div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if mesure.tour_hanche %}
+                    <div class="measurement-item">
+                        <div class="measurement-label">Hanches</div>
+                        <div class="measurement-value">
+                            {{ mesure.tour_hanche }}
+                            <span class="measurement-unit">cm</span>
+                        </div>
+                        <div class="measurement-status status-normal"></div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if mesure.epaule %}
+                    <div class="measurement-item">
+                        <div class="measurement-label">Épaule</div>
+                        <div class="measurement-value">
+                            {{ mesure.epaule }}
+                            <span class="measurement-unit">cm</span>
+                        </div>
+                        <div class="measurement-status status-normal"></div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if mesure.longueur_dos %}
+                    <div class="measurement-item">
+                        <div class="measurement-label">Dos</div>
+                        <div class="measurement-value">
+                            {{ mesure.longueur_dos }}
+                            <span class="measurement-unit">cm</span>
+                        </div>
+                        <div class="measurement-status status-normal"></div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if mesure.manche_longue %}
+                    <div class="measurement-item">
+                        <div class="measurement-label">Manche longue</div>
+                        <div class="measurement-value">
+                            {{ mesure.manche_longue }}
+                            <span class="measurement-unit">cm</span>
+                        </div>
+                        <div class="measurement-status status-normal"></div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if mesure.manche_courte %}
+                    <div class="measurement-item">
+                        <div class="measurement-label">Manche courte</div>
+                        <div class="measurement-value">
+                            {{ mesure.manche_courte }}
+                            <span class="measurement-unit">cm</span>
+                        </div>
+                        <div class="measurement-status status-normal"></div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if mesure.tour_bras %}
+                    <div class="measurement-item">
+                        <div class="measurement-label">Bras</div>
+                        <div class="measurement-value">
+                            {{ mesure.tour_bras }}
+                            <span class="measurement-unit">cm</span>
+                        </div>
+                        <div class="measurement-status status-normal"></div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Mesures du bas -->
+            <div class="measurement-card">
+                <div class="section-title">
+                    <i class="fas fa-vest"></i>
+                    Bas du corps
+                </div>
+                
+                <div class="measurement-grid">
+                    {% if mesure.longueur_jambe %}
+                    <div class="measurement-item">
+                        <div class="measurement-label">Jambe</div>
+                        <div class="measurement-value">
+                            {{ mesure.longueur_jambe }}
+                            <span class="measurement-unit">cm</span>
+                        </div>
+                        <div class="measurement-status status-normal"></div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if mesure.tour_cuisse %}
+                    <div class="measurement-item">
+                        <div class="measurement-label">Cuisse</div>
+                        <div class="measurement-value">
+                            {{ mesure.tour_cuisse }}
+                            <span class="measurement-unit">cm</span>
+                        </div>
+                        <div class="measurement-status status-normal"></div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if mesure.tour_mollet %}
+                    <div class="measurement-item">
+                        <div class="measurement-label">Mollet</div>
+                        <div class="measurement-value">
+                            {{ mesure.tour_mollet }}
+                            <span class="measurement-unit">cm</span>
+                        </div>
+                        <div class="measurement-status status-normal"></div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if mesure.longueur_pantalon %}
+                    <div class="measurement-item">
+                        <div class="measurement-label">Pantalon</div>
+                        <div class="measurement-value">
+                            {{ mesure.longueur_pantalon }}
+                            <span class="measurement-unit">cm</span>
+                        </div>
+                        <div class="measurement-status status-normal"></div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if mesure.hauteur_montant %}
+                    <div class="measurement-item">
+                        <div class="measurement-label">Montant</div>
+                        <div class="measurement-value">
+                            {{ mesure.hauteur_montant }}
+                            <span class="measurement-unit">cm</span>
+                        </div>
+                        <div class="measurement-status status-normal"></div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if mesure.tour_cheville %}
+                    <div class="measurement-item">
+                        <div class="measurement-label">Cheville</div>
+                        <div class="measurement-value">
+                            {{ mesure.tour_cheville }}
+                            <span class="measurement-unit">cm</span>
+                        </div>
+                        <div class="measurement-status status-normal"></div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if mesure.longueur_entrejambe %}
+                    <div class="measurement-item">
+                        <div class="measurement-label">Entrejambe</div>
+                        <div class="measurement-value">
+                            {{ mesure.longueur_entrejambe }}
+                            <span class="measurement-unit">cm</span>
+                        </div>
+                        <div class="measurement-status status-normal"></div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Mesures supplémentaires -->
+            <div class="measurement-card">
+                <div class="section-title">
+                    <i class="fas fa-plus-circle"></i>
+                    Mesures supplémentaires
+                </div>
+                
+                <div class="measurement-grid">
+                    {% if mesure.encolure %}
+                    <div class="measurement-item">
+                        <div class="measurement-label">Encolure</div>
+                        <div class="measurement-value">
+                            {{ mesure.encolure }}
+                            <span class="measurement-unit">cm</span>
+                        </div>
+                        <div class="measurement-status status-normal"></div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if mesure.hauteur_poitrine %}
+                    <div class="measurement-item">
+                        <div class="measurement-label">Hauteur poitrine</div>
+                        <div class="measurement-value">
+                            {{ mesure.hauteur_poitrine }}
+                            <span class="measurement-unit">cm</span>
+                        </div>
+                        <div class="measurement-status status-normal"></div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if mesure.largeur_dos %}
+                    <div class="measurement-item">
+                        <div class="measurement-label">Largeur dos</div>
+                        <div class="measurement-value">
+                            {{ mesure.largeur_dos }}
+                            <span class="measurement-unit">cm</span>
+                        </div>
+                        <div class="measurement-status status-normal"></div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if mesure.tour_poignet %}
+                    <div class="measurement-item">
+                        <div class="measurement-label">Poignet</div>
+                        <div class="measurement-value">
+                            {{ mesure.tour_poignet }}
+                            <span class="measurement-unit">cm</span>
+                        </div>
+                        <div class="measurement-status status-normal"></div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if mesure.hauteur_genou %}
+                    <div class="measurement-item">
+                        <div class="measurement-label">Hauteur genou</div>
+                        <div class="measurement-value">
+                            {{ mesure.hauteur_genou }}
+                            <span class="measurement-unit">cm</span>
+                        </div>
+                        <div class="measurement-status status-normal"></div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Historique des modifications -->
+        <div class="history-section">
+            <div class="section-title">
+                <i class="fas fa-history"></i>
+                Historique des mesures
+            </div>
+            
+            <div class="history-timeline">
+                <div class="history-item">
+                    <div class="history-date">{{ mesure.date_prise|date:"d F Y à H:i" }}</div>
+                    <div class="history-content">
+                        <strong>Mesures initiales</strong>
+                        <p class="mb-0 small">Fiche de mesures créée par {{ mesure.pris_par.prenom|default:"l'équipe" }}</p>
+                    </div>
+                </div>
+                
+                {% if mesure.date_modification and mesure.date_modification != mesure.date_prise %}
+                <div class="history-item">
+                    <div class="history-date">{{ mesure.updated_at|date:"d F Y à H:i" }}</div>
+                    <div class="history-content">
+                        <strong>Dernière mise à jour</strong>
+                        <p class="mb-0 small">Mesures mises à jour par {{ mesure.modifie_par.prenom|default:"l'équipe" }}</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="action-buttons">
+            <a href="{% url 'mesures:mesure_update' mesure.id %}" class="action-btn action-btn-primary">
+                <i class="fas fa-edit"></i>
+                Modifier les mesures
+            </a>
+            <a href="{% url 'mesures:mesure_duplicate' mesure.id %}" class="action-btn action-btn-secondary">
+                <i class="fas fa-copy"></i>
+                Dupliquer
+            </a>
+            <a href="{% url 'mesures:mesure_print' mesure.id %}" class="action-btn action-btn-secondary" target="_blank">
+                <i class="fas fa-print"></i>
+                Imprimer
+            </a>
+            <a href="{% url 'mesures:mesure_list' %}" class="action-btn action-btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Retour à la liste
+            </a>
+            <a href="#" class="action-btn action-btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                <i class="fas fa-trash"></i>
+                Supprimer
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de suppression -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle text-danger me-2"></i>
+                    Supprimer les mesures
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="mb-4">
+                    <i class="fas fa-trash-alt fa-3x text-danger opacity-25"></i>
+                </div>
+                <h5 class="mb-3">Confirmer la suppression</h5>
+                <p class="text-muted mb-0">
+                    Êtes-vous sûr de vouloir supprimer les mesures de {{ mesure.client.prenom }} {{ mesure.client.nom }} ?
+                    Cette action est irréversible.
+                </p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                <form action="{% url 'mesures:mesure_delete' mesure.id %}" method="post" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Supprimer définitivement</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animation des cartes de mesure
+    const measurementCards = document.querySelectorAll('.measurement-card');
+    measurementCards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+        card.classList.add('animate__animated', 'animate__fadeInUp');
+    });
+    
+    // Gestion des points de mesure sur le diagramme
+    const measurementPoints = document.querySelectorAll('.measurement-point');
+    const tooltip = document.createElement('div');
+    tooltip.className = 'measurement-tooltip';
+    document.querySelector('.diagram-container').appendChild(tooltip);
+    
+    measurementPoints.forEach(point => {
+        point.addEventListener('mouseenter', function(e) {
+            const measurement = this.getAttribute('data-measurement');
+            const value = this.getAttribute('data-value');
+            const label = getMeasurementLabel(measurement);
+            
+            tooltip.innerHTML = `
+                <div class="fw-bold">${label}</div>
+                <div>${value} cm</div>
+            `;
+            
+            const rect = this.getBoundingClientRect();
+            const containerRect = document.querySelector('.diagram-container').getBoundingClientRect();
+            
+            tooltip.style.left = `${rect.left - containerRect.left + rect.width/2}px`;
+            tooltip.style.top = `${rect.top - containerRect.top - tooltip.offsetHeight - 10}px`;
+            tooltip.style.opacity = '1';
+        });
+        
+        point.addEventListener('mouseleave', function() {
+            tooltip.style.opacity = '0';
+        });
+        
+        point.addEventListener('click', function() {
+            const measurement = this.getAttribute('data-measurement');
+            const value = this.getAttribute('data-value');
+            const label = getMeasurementLabel(measurement);
+            
+            showToast(`${label}: ${value} cm`, 'info');
+        });
+    });
+    
+    // Gestion des cartes de taille
+    const sizeCards = document.querySelectorAll('.size-card');
+    sizeCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const size = this.querySelector('.size-label').textContent;
+            showToast(`Taille sélectionnée: ${size}`, 'info');
+            
+            sizeCards.forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+    
+    // Calcul automatique des ratios
+    calculateBodyRatios();
+    
+    // Impression optimisée
+    const printBtn = document.querySelector('a[href*="print"]');
+    if (printBtn) {
+        printBtn.addEventListener('click', function(e) {
+            if (e.ctrlKey) return; // Laisser Ctrl+clic ouvrir dans un nouvel onglet
+            
+            e.preventDefault();
+            printMeasurementSheet();
+        });
+    }
+    
+    // Raccourci clavier pour l'impression
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+            e.preventDefault();
+            printMeasurementSheet();
+        }
+    });
+});
+
+function getMeasurementLabel(measurement) {
+    const labels = {
+        'tour_poitrine': 'Tour de poitrine',
+        'tour_taille': 'Tour de taille',
+        'tour_hanche': 'Tour de hanches',
+        'longueur_bras': 'Longueur de bras',
+        'longueur_jambe': 'Longueur de jambe',
+        'epaule': 'Largeur d\'épaule',
+        'longueur_dos': 'Longueur du dos',
+        'manche_longue': 'Manche longue',
+        'manche_courte': 'Manche courte',
+        'tour_bras': 'Tour de bras',
+        'tour_cuisse': 'Tour de cuisse',
+        'tour_mollet': 'Tour de mollet',
+        'longueur_pantalon': 'Longueur de pantalon',
+        'hauteur_montant': 'Hauteur de montant',
+        'tour_cheville': 'Tour de cheville',
+        'longueur_entrejambe': 'Longueur d\'entrejambe',
+        'encolure': 'Tour d\'encolure',
+        'hauteur_poitrine': 'Hauteur de poitrine',
+        'largeur_dos': 'Largeur du dos',
+        'tour_poignet': 'Tour de poignet',
+        'hauteur_genou': 'Hauteur de genou'
+    };
+    
+    return labels[measurement] || measurement.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
+function calculateBodyRatios() {
+    // Calcule les ratios corporels (ex: taille/poitrine, etc.)
+    const poitrine = parseFloat("{{ mesure.tour_poitrine|default:0 }}");
+    const taille = parseFloat("{{ mesure.tour_taille|default:0 }}");
+    const hanches = parseFloat("{{ mesure.tour_hanche|default:0 }}");
+    
+    if (poitrine > 0 && taille > 0 && hanches > 0) {
+        // Calcul des ratios standards
+        const ratio_taille_poitrine = (taille / poitrine * 100).toFixed(1);
+        const ratio_taille_hanches = (taille / hanches * 100).toFixed(1);
+        
+        // Afficher les ratios si pertinent
+        if (ratio_taille_poitrine < 90 || ratio_taille_hanches < 90) {
+            console.log('Ratios corporels:', {
+                taille_poitrine: ratio_taille_poitrine + '%',
+                taille_hanches: ratio_taille_hanches + '%'
+            });
+        }
+    }
+}
+
+function printMeasurementSheet() {
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Fiche de mesures - {{ mesure.client.prenom }} {{ mesure.client.nom }} - ATELIER TAILOR</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; }
+                    .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #ed8936; padding-bottom: 20px; }
+                    .client-info { background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 30px; }
+                    .measurements-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+                    .measurement-item { border: 1px solid #ddd; padding: 10px; border-radius: 5px; text-align: center; }
+                    .measurement-label { font-size: 12px; color: #666; text-transform: uppercase; }
+                    .measurement-value { font-size: 18px; font-weight: bold; color: #333; }
+                    .section-title { background: #ed8936; color: white; padding: 10px; border-radius: 5px; margin: 20px 0 10px 0; }
+                    @media print {
+                        @page { margin: 0.5cm; }
+                        body { margin: 0; }
+                        .no-print { display: none; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1><i class="fas fa-ruler-combined"></i> Fiche de mesures - ATELIER TAILOR</h1>
+                    <p>Client: {{ mesure.client.prenom }} {{ mesure.client.nom }} | Date: {{ mesure.date_prise|date:"d/m/Y" }}</p>
+                </div>
+                
+                <div class="client-info">
+                    <h3>Informations client</h3>
+                    <p><strong>Téléphone:</strong> {{ mesure.client.telephone|default:"-" }}</p>
+                    <p><strong>Sexe:</strong> {{ mesure.get_sexe_display|default:"Non spécifié" }}</p>
+                    <p><strong>Taille standard:</strong> {{ mesure.taille_standard|default:"-" }}</p>
+                </div>
+                
+                <div class="section-title">Mesures du haut</div>
+                <div class="measurements-grid">
+                    {% if mesure.tour_poitrine %}
+                    <div class="measurement-item">
+                        <div class="measurement-label">Poitrine</div>
+                        <div class="measurement-value">{{ mesure.tour_poitrine }} cm</div>
+                    </div>
+                    {% endif %}
+                    {% if mesure.tour_taille %}
+                    <div class="measurement-item">
+                        <div class="measurement-label">Taille</div>
+                        <div class="measurement-value">{{ mesure.tour_taille }} cm</div>
+                    </div>
+                    {% endif %}
+                    {% if mesure.tour_hanche %}
+                    <div class="measurement-item">
+                        <div class="measurement-label">Hanches</div>
+                        <div class="measurement-value">{{ mesure.tour_hanche }} cm</div>
+                    </div>
+                    {% endif %}
+                    {% if mesure.epaule %}
+                    <div class="measurement-item">
+                        <div class="measurement-label">Épaule</div>
+                        <div class="measurement-value">{{ mesure.epaule }} cm</div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="section-title">Mesures du bas</div>
+                <div class="measurements-grid">
+                    {% if mesure.longueur_jambe %}
+                    <div class="measurement-item">
+                        <div class="measurement-label">Jambe</div>
+                        <div class="measurement-value">{{ mesure.longueur_jambe }} cm</div>
+                    </div>
+                    {% endif %}
+                    {% if mesure.tour_cuisse %}
+                    <div class="measurement-item">
+                        <div class="measurement-label">Cuisse</div>
+                        <div class="measurement-value">{{ mesure.tour_cuisse }} cm</div>
+                    </div>
+                    {% endif %}
+                    {% if mesure.tour_mollet %}
+                    <div class="measurement-item">
+                        <div class="measurement-label">Mollet</div>
+                        <div class="measurement-value">{{ mesure.tour_mollet }} cm</div>
+                    </div>
+                    {% endif %}
+                    {% if mesure.longueur_pantalon %}
+                    <div class="measurement-item">
+                        <div class="measurement-label">Pantalon</div>
+                        <div class="measurement-value">{{ mesure.longueur_pantalon }} cm</div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div style="margin-top: 40px; text-align: center; color: #666; font-size: 12px;">
+                    <p>Document généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}</p>
+                    <p>ATELIER TAILOR - Mesures confidentielles</p>
+                </div>
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => printWindow.print(), 500);
+}
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    const bsToast = new bootstrap.Toast(toast, {
+        autohide: true,
+        delay: 3000
+    });
+    bsToast.show();
+    
+    toast.addEventListener('hidden.bs.toast', function () {
+        toast.remove();
+    });
+}
+</script>
+
+<!-- Animation CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+
+<!-- Styles d'animation supplémentaires -->
+<style>
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    
+    .measurement-point {
+        animation: pulse 2s infinite;
+    }
+    
+    .measurement-item {
+        animation: fadeIn 0.3s ease;
+        animation-fill-mode: both;
+    }
+    
+    .measurement-item:nth-child(1) { animation-delay: 0.1s; }
+    .measurement-item:nth-child(2) { animation-delay: 0.2s; }
+    .measurement-item:nth-child(3) { animation-delay: 0.3s; }
+    .measurement-item:nth-child(4) { animation-delay: 0.4s; }
+    .measurement-item:nth-child(5) { animation-delay: 0.5s; }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .history-item {
+        opacity: 0;
+        transform: translateX(-20px);
+        animation: slideInRight 0.4s ease forwards;
+    }
+    
+    .history-item:nth-child(1) { animation-delay: 0.1s; }
+    .history-item:nth-child(2) { animation-delay: 0.3s; }
+    
+    @keyframes slideInRight {
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+</style>
 {% endblock %}
