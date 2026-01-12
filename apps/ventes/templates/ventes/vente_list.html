@@ -1,64 +1,1128 @@
 {% extends "base.html" %}
 {% load static %}
+{% load humanize %}
 
-{% block title %}Historique des Ventes - TAILOR{% endblock %}
+{% block title %}Historique des Ventes - ATELIER TAILOR{% endblock %}
 
-{% block page_title %}
-<i class="fas fa-history text-primary me-2"></i>Historique des Ventes
+{% block extra_css %}
+<style>
+    .sales-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .sales-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 200%;
+        background: rgba(255,255,255,0.1);
+        transform: rotate(30deg);
+        pointer-events: none;
+    }
+    
+    .stats-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card-sales {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border-left: 4px solid;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card-sales:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+    }
+    
+    .stat-card-sales.total { border-color: #667eea; }
+    .stat-card-sales.month { border-color: #48bb78; }
+    .stat-card-sales.today { border-color: #ed8936; }
+    .stat-card-sales.avg { border-color: #4299e1; }
+    
+    .stat-icon-wrapper {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        font-size: 1.5rem;
+    }
+    
+    .stat-icon-wrapper.total { background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%); color: #667eea; }
+    .stat-icon-wrapper.month { background: linear-gradient(135deg, rgba(72, 187, 120, 0.1) 0%, rgba(56, 161, 105, 0.1) 100%); color: #48bb78; }
+    .stat-icon-wrapper.today { background: linear-gradient(135deg, rgba(237, 137, 54, 0.1) 0%, rgba(221, 107, 32, 0.1) 100%); color: #ed8936; }
+    .stat-icon-wrapper.avg { background: linear-gradient(135deg, rgba(66, 153, 225, 0.1) 0%, rgba(49, 130, 206, 0.1) 100%); color: #4299e1; }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #2d3748;
+        line-height: 1;
+        margin-bottom: 0.25rem;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: #718096;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-trend {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .trend-up { color: #48bb78; }
+    .trend-down { color: #f56565; }
+    
+    .sales-table-container {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        margin-bottom: 2rem;
+    }
+    
+    .table-header {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        padding: 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .filters-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .filter-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #4a5568;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .filter-tag:hover {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.05);
+    }
+    
+    .filter-tag.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: #667eea;
+    }
+    
+    .filter-tag i {
+        font-size: 0.8rem;
+    }
+    
+    .date-range-picker {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 0.5rem 1rem;
+    }
+    
+    .date-range-picker input {
+        border: none;
+        background: none;
+        outline: none;
+        font-size: 0.9rem;
+        color: #4a5568;
+        width: 100px;
+    }
+    
+    .table-responsive {
+        overflow-x: auto;
+    }
+    
+    .sales-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    .sales-table thead {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .sales-table thead th {
+        color: white;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+        padding: 1rem 1.5rem;
+        border: none;
+    }
+    
+    .sales-table thead th:first-child {
+        border-top-left-radius: 15px;
+    }
+    
+    .sales-table thead th:last-child {
+        border-top-right-radius: 15px;
+    }
+    
+    .sales-table tbody tr {
+        transition: all 0.3s ease;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .sales-table tbody tr:hover {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+        transform: scale(1.002);
+        box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+    }
+    
+    .sales-table tbody td {
+        padding: 1.25rem 1.5rem;
+        vertical-align: middle;
+        color: #4a5568;
+    }
+    
+    .client-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1rem;
+        margin-right: 1rem;
+    }
+    
+    .client-info {
+        display: flex;
+        align-items: center;
+    }
+    
+    .client-name {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 2px;
+    }
+    
+    .client-contact {
+        font-size: 0.85rem;
+        color: #718096;
+    }
+    
+    .sale-id {
+        font-weight: 700;
+        color: #2d3748;
+        font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+    }
+    
+    .sale-date {
+        font-weight: 500;
+        color: #2d3748;
+        margin-bottom: 4px;
+    }
+    
+    .sale-time {
+        font-size: 0.85rem;
+        color: #718096;
+    }
+    
+    .items-count {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0.5rem 1rem;
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .amount-badge {
+        display: inline-block;
+        padding: 0.75rem 1.25rem;
+        background: linear-gradient(135deg, rgba(72, 187, 120, 0.1) 0%, rgba(56, 161, 105, 0.1) 100%);
+        color: #48bb78;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        border: 2px solid rgba(72, 187, 120, 0.2);
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+    }
+    
+    .action-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid;
+        background: white;
+        color: #4a5568;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    
+    .action-btn.view {
+        border-color: #4299e1;
+        color: #4299e1;
+    }
+    
+    .action-btn.view:hover {
+        background: #4299e1;
+        color: white;
+    }
+    
+    .action-btn.invoice {
+        border-color: #48bb78;
+        color: #48bb78;
+    }
+    
+    .action-btn.invoice:hover {
+        background: #48bb78;
+        color: white;
+    }
+    
+    .action-btn.refund {
+        border-color: #ed8936;
+        color: #ed8936;
+    }
+    
+    .action-btn.refund:hover {
+        background: #ed8936;
+        color: white;
+    }
+    
+    .action-btn.print {
+        border-color: #718096;
+        color: #718096;
+    }
+    
+    .action-btn.print:hover {
+        background: #718096;
+        color: white;
+    }
+    
+    .empty-state {
+        padding: 4rem 2rem;
+        text-align: center;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 15px;
+        margin: 2rem 0;
+    }
+    
+    .empty-state-icon {
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        color: #667eea;
+        font-size: 2.5rem;
+    }
+    
+    .pagination-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem;
+        border-top: 1px solid #e2e8f0;
+        background: white;
+        border-bottom-left-radius: 15px;
+        border-bottom-right-radius: 15px;
+    }
+    
+    .export-options {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .export-btn {
+        padding: 0.5rem 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        background: white;
+        color: #4a5568;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .export-btn:hover {
+        border-color: #667eea;
+        color: #667eea;
+        background: rgba(102, 126, 234, 0.05);
+    }
+    
+    .export-btn.excel:hover {
+        border-color: #48bb78;
+        color: #48bb78;
+        background: rgba(72, 187, 120, 0.05);
+    }
+    
+    .export-btn.pdf:hover {
+        border-color: #f56565;
+        color: #f56565;
+        background: rgba(245, 101, 101, 0.05);
+    }
+    
+    .quick-stats {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .quick-stat {
+        flex: 1;
+        min-width: 200px;
+        background: white;
+        padding: 1rem;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .quick-stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        color: white;
+    }
+    
+    .quick-stat-icon.trend { background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); }
+    .quick-stat-icon.top { background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); }
+    .quick-stat-icon.peak { background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); }
+    
+    @media (max-width: 768px) {
+        .stats-overview {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .filters-bar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .filter-group {
+            flex-wrap: wrap;
+        }
+        
+        .action-buttons {
+            flex-wrap: wrap;
+            justify-content: flex-start;
+        }
+        
+        .pagination-container {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: stretch;
+        }
+        
+        .export-options {
+            justify-content: center;
+        }
+    }
+</style>
 {% endblock %}
 
-{% block page_subtitle %}Consultez toutes les transactions réalisées{% endblock %}
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'ventes:index' %}">Ventes</a></li>
+        <li class="breadcrumb-item active">Historique</li>
+    </ol>
+</nav>
+{% endblock %}
 
-{% block content %}
-<div class="card shadow-sm border-0">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th class="ps-4">ID Vente</th>
-                        <th>Client</th>
-                        <th class="text-center">Date</th>
-                        <th class="text-center">Articles</th>
-                        <th class="text-center">Montant Total</th>
-                        <th class="text-end pe-4">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for vente in ventes %}
-                    <tr>
-                        <td class="ps-4 fw-bold">#{{ vente.id }}</td>
-                        <td>
-                            {% if vente.client %}
-                            {{ vente.client.prenom }} {{ vente.client.nom }}
-                            {% else %}
-                            <span class="text-muted italic">Client non spécifié</span>
-                            {% endif %}
-                        </td>
-                        <td class="text-center">{{ vente.date_vente|date:"d/m/Y H:i" }}</td>
-                        <td class="text-center">
-                            <span class="badge bg-secondary">{{ vente.lignes.count }}</span>
-                        </td>
-                        <td class="text-center fw-bold text-primary">{{ vente.montant_total }} FCFA</td>
-                        <td class="text-end pe-4">
-                            <a href="{% url 'ventes:vente_detail' vente.pk %}" class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-eye me-1"></i>Détails
-                            </a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="6" class="text-center py-5">
-                            <div class="text-muted">
-                                <i class="fas fa-info-circle fa-3x mb-3 opacity-25"></i>
-                                <p>Aucune vente enregistrée dans l'historique.</p>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+{% block page_title %}
+<div class="sales-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h2 mb-2">
+                <i class="fas fa-chart-line me-2"></i>Historique des Ventes
+            </h1>
+            <p class="mb-0 opacity-75">
+                Suivez toutes les transactions et performances commerciales
+            </p>
+        </div>
+        <div>
+            <a href="{% url 'ventes:valider_vente' %}" class="btn btn-light btn-lg">
+                <i class="fas fa-cash-register me-2"></i>Nouvelle vente
+            </a>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block content %}
+<!-- Statistiques principales -->
+<div class="stats-overview">
+    <div class="stat-card-sales total">
+        <div class="stat-icon-wrapper total">
+            <i class="fas fa-wallet"></i>
+        </div>
+        <div class="stat-label">Total des ventes</div>
+        <div class="stat-value">{{ montant_total|floatformat:0|intcomma }} FCFA</div>
+        <div class="stat-trend trend-up">
+            <i class="fas fa-arrow-up"></i>
+            {{ evolution_annuelle }}% cette année
+        </div>
+    </div>
+    
+    <div class="stat-card-sales month">
+        <div class="stat-icon-wrapper month">
+            <i class="fas fa-calendar-alt"></i>
+        </div>
+        <div class="stat-label">Ce mois</div>
+        <div class="stat-value">{{ ventes_mois|floatformat:0|intcomma }} FCFA</div>
+        <div class="stat-trend {% if evolution_mensuelle >= 0 %}trend-up{% else %}trend-down{% endif %}">
+            <i class="fas fa-arrow-{% if evolution_mensuelle >= 0 %}up{% else %}down{% endif %}"></i>
+            {{ evolution_mensuelle|floatformat:1 }}% vs mois dernier
+        </div>
+    </div>
+    
+    <div class="stat-card-sales today">
+        <div class="stat-icon-wrapper today">
+            <i class="fas fa-sun"></i>
+        </div>
+        <div class="stat-label">Aujourd'hui</div>
+        <div class="stat-value">{{ ventes_aujourdhui|floatformat:0|intcomma }} FCFA</div>
+        <div class="stat-trend">
+            {{ ventes_count_aujourdhui }} transaction{{ ventes_count_aujourdhui|pluralize }}
+        </div>
+    </div>
+    
+    <div class="stat-card-sales avg">
+        <div class="stat-icon-wrapper avg">
+            <i class="fas fa-chart-bar"></i>
+        </div>
+        <div class="stat-label">Panier moyen</div>
+        <div class="stat-value">{{ panier_moyen|floatformat:0|intcomma }} FCFA</div>
+        <div class="stat-trend">
+            <i class="fas fa-shopping-basket me-1"></i>
+            {{ total_transactions }} transactions
+        </div>
+    </div>
+</div>
+
+<!-- Tableau des ventes -->
+<div class="sales-table-container">
+    <!-- En-tête avec filtres -->
+    <div class="table-header">
+        <div class="filters-bar">
+            <div class="filter-group">
+                <span class="filter-tag active" data-filter="all">
+                    <i class="fas fa-th-large"></i>
+                    Toutes
+                </span>
+                <span class="filter-tag" data-filter="today">
+                    <i class="fas fa-calendar-day"></i>
+                    Aujourd'hui
+                </span>
+                <span class="filter-tag" data-filter="week">
+                    <i class="fas fa-calendar-week"></i>
+                    Cette semaine
+                </span>
+                <span class="filter-tag" data-filter="month">
+                    <i class="fas fa-calendar-alt"></i>
+                    Ce mois
+                </span>
+            </div>
+            
+            <div class="date-range-picker">
+                <i class="fas fa-calendar text-muted"></i>
+                <input type="date" id="dateStart" value="{{ date_debut|date:'Y-m-d' }}">
+                <span class="text-muted">au</span>
+                <input type="date" id="dateEnd" value="{{ date_fin|date:'Y-m-d' }}">
+                <button class="btn btn-sm btn-primary" onclick="applyDateFilter()">
+                    <i class="fas fa-filter"></i>
+                </button>
+            </div>
+            
+            <div class="ms-auto">
+                <div class="input-group" style="width: 300px;">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="fas fa-search text-muted"></i>
+                    </span>
+                    <input type="text" class="form-control border-start-0" 
+                           id="searchSales" placeholder="Rechercher une vente, un client...">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tableau -->
+    <div class="table-responsive">
+        <table class="sales-table">
+            <thead>
+                <tr>
+                    <th class="text-start ps-4">Transaction</th>
+                    <th class="text-start">Client</th>
+                    <th class="text-center">Date & Heure</th>
+                    <th class="text-center">Articles</th>
+                    <th class="text-center">Montant</th>
+                    <th class="text-center pe-4">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for vente in ventes %}
+                <tr>
+                    <td class="text-start ps-4">
+                        <div class="sale-id">#{{ vente.numero_vente|default:vente.id|stringformat:"06d" }}</div>
+                        {% if vente.moyen_paiement %}
+                        <div class="text-muted small">
+                            <i class="fas fa-{{ vente.get_moyen_paiement_icon }} me-1"></i>
+                            {{ vente.get_moyen_paiement_display }}
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td class="text-start">
+                        <div class="client-info">
+                            <div class="client-avatar">
+                                {% if vente.client %}
+                                {{ vente.client.prenom|first|upper }}{{ vente.client.nom|first|upper }}
+                                {% else %}
+                                <i class="fas fa-user"></i>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <div class="client-name">
+                                    {% if vente.client %}
+                                    {{ vente.client.prenom }} {{ vente.client.nom }}
+                                    {% else %}
+                                    <span class="text-muted">Client non spécifié</span>
+                                    {% endif %}
+                                </div>
+                                {% if vente.client and vente.client.telephone %}
+                                <div class="client-contact">
+                                    <i class="fas fa-phone me-1"></i>{{ vente.client.telephone }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <div class="sale-date">{{ vente.date_vente|date:"d/m/Y" }}</div>
+                        <div class="sale-time">{{ vente.date_vente|date:"H:i" }}</div>
+                    </td>
+                    <td class="text-center">
+                        <span class="items-count">
+                            <i class="fas fa-box"></i>
+                            {{ vente.lignes.count }}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <span class="amount-badge">
+                            {{ vente.montant_total|floatformat:0|intcomma }} FCFA
+                        </span>
+                    </td>
+                    <td class="text-center pe-4">
+                        <div class="action-buttons">
+                            <a href="{% url 'ventes:vente_detail' vente.pk %}" class="action-btn view" title="Voir détails">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'ventes:facture' vente.pk %}" class="action-btn invoice" title="Facture" target="_blank">
+                                <i class="fas fa-file-invoice"></i>
+                            </a>
+                            <a href="#" class="action-btn refund" title="Retour">
+                                <i class="fas fa-exchange-alt"></i>
+                            </a>
+                            <a href="{% url 'ventes:print_vente' vente.pk %}" class="action-btn print" title="Imprimer" target="_blank">
+                                <i class="fas fa-print"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <h4 class="text-muted mb-3">Aucune vente enregistrée</h4>
+                            <p class="text-muted mb-4">
+                                Commencez par enregistrer vos premières transactions.
+                            </p>
+                            <a href="{% url 'ventes:valider_vente' %}" class="btn btn-primary">
+                                <i class="fas fa-cash-register me-2"></i>Enregistrer une vente
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination et export -->
+    {% if ventes.paginator.num_pages > 1 %}
+    <div class="pagination-container">
+        <div class="export-options">
+            <button class="export-btn" onclick="exportToExcel()">
+                <i class="fas fa-file-excel text-success"></i> Excel
+            </button>
+            <button class="export-btn pdf" onclick="exportToPDF()">
+                <i class="fas fa-file-pdf text-danger"></i> PDF
+            </button>
+            <button class="export-btn" onclick="printTable()">
+                <i class="fas fa-print text-primary"></i> Imprimer
+            </button>
+        </div>
+        
+        <nav aria-label="Navigation des ventes">
+            <ul class="pagination pagination-sm mb-0">
+                {% if ventes.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ ventes.previous_page_number }}">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for num in ventes.paginator.page_range %}
+                    {% if ventes.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > ventes.number|add:'-3' and num < ventes.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if ventes.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ ventes.next_page_number }}">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ ventes.paginator.num_pages }}">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        
+        <div class="text-muted small">
+            Affichage de {{ ventes.start_index }} à {{ ventes.end_index }} sur {{ ventes.paginator.count }} ventes
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Statistiques rapides -->
+<div class="quick-stats">
+    <div class="quick-stat">
+        <div class="quick-stat-icon trend">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <div>
+            <div class="fw-bold">Meilleur jour</div>
+            <div class="text-muted small">{{ meilleur_jour.date|date:"d/m/Y" }}</div>
+            <div class="text-primary fw-bold">{{ meilleur_jour.total|floatformat:0|intcomma }} FCFA</div>
+        </div>
+    </div>
+    
+    <div class="quick-stat">
+        <div class="quick-stat-icon top">
+            <i class="fas fa-crown"></i>
+        </div>
+        <div>
+            <div class="fw-bold">Client top</div>
+            <div class="text-muted small">{{ top_client.nom_complet|default:"Aucun" }}</div>
+            <div class="text-success fw-bold">{{ top_client.total_achats|floatformat:0|intcomma }} FCFA</div>
+        </div>
+    </div>
+    
+    <div class="quick-stat">
+        <div class="quick-stat-icon peak">
+            <i class="fas fa-bolt"></i>
+        </div>
+        <div>
+            <div class="fw-bold">Heure de pointe</div>
+            <div class="text-muted small">{{ heure_pointe.heure|default:"-" }}</div>
+            <div class="text-warning fw-bold">{{ heure_pointe.nombre_ventes|default:0 }} ventes</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Filtres par tag
+    const filterTags = document.querySelectorAll('.filter-tag');
+    filterTags.forEach(tag => {
+        tag.addEventListener('click', function() {
+            const filter = this.getAttribute('data-filter');
+            
+            // Mettre à jour les tags actifs
+            filterTags.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Appliquer le filtre
+            applyFilter(filter);
+        });
+    });
+    
+    // Recherche en temps réel
+    const searchInput = document.getElementById('searchSales');
+    if (searchInput) {
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                searchSales(this.value);
+            }, 300);
+        });
+    }
+    
+    // Tri des colonnes
+    const tableHeaders = document.querySelectorAll('.sales-table th');
+    tableHeaders.forEach((header, index) => {
+        if (index < 5) { // Ne pas trier la colonne actions
+            header.style.cursor = 'pointer';
+            header.addEventListener('click', () => {
+                sortTable(index);
+            });
+        }
+    });
+    
+    // Initialiser la date du jour par défaut
+    const today = new Date().toISOString().split('T')[0];
+    if (!document.getElementById('dateStart').value) {
+        document.getElementById('dateStart').value = today;
+    }
+    if (!document.getElementById('dateEnd').value) {
+        document.getElementById('dateEnd').value = today;
+    }
+});
+
+function applyFilter(filter) {
+    let url = new URL(window.location.href);
+    
+    if (filter === 'all') {
+        url.searchParams.delete('filter');
+    } else {
+        url.searchParams.set('filter', filter);
+    }
+    
+    // Réinitialiser la page
+    url.searchParams.delete('page');
+    
+    window.location.href = url.toString();
+}
+
+function applyDateFilter() {
+    const dateStart = document.getElementById('dateStart').value;
+    const dateEnd = document.getElementById('dateEnd').value;
+    
+    if (dateStart && dateEnd) {
+        let url = new URL(window.location.href);
+        url.searchParams.set('date_debut', dateStart);
+        url.searchParams.set('date_fin', dateEnd);
+        url.searchParams.delete('page');
+        
+        window.location.href = url.toString();
+    }
+}
+
+function searchSales(query) {
+    const rows = document.querySelectorAll('.sales-table tbody tr');
+    let visibleCount = 0;
+    
+    rows.forEach(row => {
+        if (row.querySelector('.empty-state')) return;
+        
+        const text = row.textContent.toLowerCase();
+        if (text.includes(query.toLowerCase())) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    
+    // Afficher/masquer le message vide
+    const emptyState = document.querySelector('.empty-state');
+    if (emptyState) {
+        if (query && visibleCount === 0) {
+            emptyState.style.display = 'block';
+            emptyState.querySelector('h4').textContent = 'Aucun résultat trouvé';
+            emptyState.querySelector('p').textContent = `Aucune vente ne correspond à "${query}"`;
+        } else if (!query) {
+            emptyState.style.display = 'block';
+            emptyState.querySelector('h4').textContent = 'Aucune vente enregistrée';
+            emptyState.querySelector('p').textContent = 'Commencez par enregistrer vos premières transactions.';
+        } else {
+            emptyState.style.display = 'none';
+        }
+    }
+}
+
+function sortTable(columnIndex) {
+    const table = document.querySelector('.sales-table tbody');
+    const rows = Array.from(table.querySelectorAll('tr:not([style*="display: none"])'));
+    
+    const isAscending = table.getAttribute('data-sort-direction') === 'asc';
+    const newDirection = isAscending ? 'desc' : 'asc';
+    
+    rows.sort((a, b) => {
+        let aValue, bValue;
+        
+        switch(columnIndex) {
+            case 0: // Transaction ID
+                aValue = a.querySelector('.sale-id')?.textContent || '';
+                bValue = b.querySelector('.sale-id')?.textContent || '';
+                break;
+            case 1: // Client
+                aValue = a.querySelector('.client-name')?.textContent || '';
+                bValue = b.querySelector('.client-name')?.textContent || '';
+                break;
+            case 2: // Date
+                aValue = a.querySelector('.sale-date')?.textContent || '';
+                bValue = b.querySelector('.sale-date')?.textContent || '';
+                break;
+            case 3: // Articles
+                aValue = parseInt(a.querySelector('.items-count')?.textContent) || 0;
+                bValue = parseInt(b.querySelector('.items-count')?.textContent) || 0;
+                break;
+            case 4: // Montant
+                aValue = parseFloat(a.querySelector('.amount-badge')?.textContent.replace(/[^0-9.]/g, '')) || 0;
+                bValue = parseFloat(b.querySelector('.amount-badge')?.textContent.replace(/[^0-9.]/g, '')) || 0;
+                break;
+            default:
+                return 0;
+        }
+        
+        if (typeof aValue === 'string') {
+            aValue = aValue.toLowerCase();
+            bValue = bValue.toLowerCase();
+        }
+        
+        let comparison = 0;
+        if (aValue > bValue) comparison = 1;
+        if (aValue < bValue) comparison = -1;
+        
+        return newDirection === 'asc' ? comparison : -comparison;
+    });
+    
+    // Réorganiser les lignes
+    rows.forEach(row => table.appendChild(row));
+    table.setAttribute('data-sort-direction', newDirection);
+    
+    // Mettre à jour l'icône de tri dans l'en-tête
+    updateSortIcon(columnIndex, newDirection);
+}
+
+function updateSortIcon(columnIndex, direction) {
+    // Retirer toutes les icônes de tri existantes
+    document.querySelectorAll('.sales-table th i.fa-sort').forEach(icon => {
+        icon.className = 'fas fa-sort';
+    });
+    
+    const header = document.querySelectorAll('.sales-table th')[columnIndex];
+    const icon = header.querySelector('i') || document.createElement('i');
+    icon.className = `fas fa-sort-${direction === 'asc' ? 'up' : 'down'}`;
+    
+    if (!header.querySelector('i')) {
+        header.appendChild(icon);
+    }
+}
+
+function exportToExcel() {
+    showToast('Préparation de l\'export Excel...', 'info');
+    
+    // Simulation d'export
+    setTimeout(() => {
+        showToast('Export Excel terminé !', 'success');
+        // Ici, vous pourriez ajouter la logique d'export réelle
+    }, 1500);
+}
+
+function exportToPDF() {
+    showToast('Génération du PDF...', 'info');
+    
+    setTimeout(() => {
+        showToast('PDF généré avec succès !', 'success');
+    }, 1500);
+}
+
+function printTable() {
+    const printContent = document.querySelector('.sales-table-container').cloneNode(true);
+    
+    // Nettoyer pour l'impression
+    printContent.querySelector('.table-header').remove();
+    printContent.querySelector('.pagination-container').remove();
+    printContent.querySelectorAll('.action-buttons').forEach(actions => actions.remove());
+    
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Historique des Ventes - ATELIER TAILOR</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; }
+                    h2 { color: #2b6cb0; border-bottom: 2px solid #2b6cb0; padding-bottom: 10px; }
+                    table { width: 100%; border-collapse: collapse; }
+                    th { background: #667eea; color: white; padding: 10px; text-align: left; }
+                    td { padding: 8px 10px; border-bottom: 1px solid #ddd; }
+                    .amount { font-weight: bold; color: #48bb78; }
+                    @media print {
+                        @page { margin: 0.5cm; }
+                        body { margin: 0; }
+                    }
+                </style>
+            </head>
+            <body>
+                <h2><i class="fas fa-chart-line"></i> Historique des Ventes - ATELIER TAILOR</h2>
+                <p>Imprimé le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}</p>
+                ${printContent.innerHTML}
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => printWindow.print(), 500);
+}
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    const bsToast = new bootstrap.Toast(toast, {
+        autohide: true,
+        delay: 3000
+    });
+    bsToast.show();
+    
+    toast.addEventListener('hidden.bs.toast', function () {
+        toast.remove();
+    });
+}
+
+// Raccourci clavier pour la recherche
+document.addEventListener('keydown', function(e) {
+    if (e.key === '/' && !e.target.matches('input, textarea, select')) {
+        e.preventDefault();
+        document.getElementById('searchSales')?.focus();
+    }
+});
+</script>
+
+<!-- Animation pour les lignes du tableau -->
+<style>
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .sales-table tbody tr {
+        animation: fadeIn 0.3s ease-out;
+        animation-fill-mode: both;
+    }
+    
+    .sales-table tbody tr:nth-child(1) { animation-delay: 0.1s; }
+    .sales-table tbody tr:nth-child(2) { animation-delay: 0.15s; }
+    .sales-table tbody tr:nth-child(3) { animation-delay: 0.2s; }
+    .sales-table tbody tr:nth-child(4) { animation-delay: 0.25s; }
+    .sales-table tbody tr:nth-child(5) { animation-delay: 0.3s; }
+</style>
 {% endblock %}

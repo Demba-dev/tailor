@@ -1,8 +1,10 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Tissu
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 
 
+@login_required
 def tissu_list(request):
     tissus = Tissu.objects.filter(actif=True)
     matiere_filter = request.GET.get('matiere')
@@ -24,12 +26,14 @@ def tissu_list(request):
     return render(request, 'tissus/tissu_list.html', context)
 
 
+@login_required
 def tissu_detail(request, pk):
     tissu = get_object_or_404(Tissu, pk=pk)
     context = {'tissu': tissu}
     return render(request, 'tissus/tissu_detail.html', context)
 
 
+@login_required
 def tissu_create(request):
     if request.method == 'POST':
         nom = request.POST.get('nom')
@@ -62,6 +66,7 @@ def tissu_create(request):
     return render(request, 'tissus/tissu_form.html', context)
 
 
+@login_required
 def tissu_update(request, pk):
     tissu = get_object_or_404(Tissu, pk=pk)
     
@@ -89,6 +94,7 @@ def tissu_update(request, pk):
     return render(request, 'tissus/tissu_form.html', context)
 
 
+@login_required
 def tissu_delete(request, pk):
     tissu = get_object_or_404(Tissu, pk=pk)
     tissu.delete()

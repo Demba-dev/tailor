@@ -25,6 +25,7 @@ from apps.commandes.views import get_commande_details
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/commandes/<int:pk>/details/', get_commande_details, name='api_commande_details'),
+    path('core/', include('apps.core.urls')),
     path('clients/', include('apps.clients.urls')),
     path('mesures/', include('apps.mesures.urls')),
     path('commandes/', include('apps.commandes.urls')),
@@ -38,6 +39,7 @@ urlpatterns = [
     path('panier/', include('apps.panier.urls')),
     path('ventes/', include('apps.ventes.urls')),
     path('users/', include('apps.users.urls')),
+    path('messages/', include('apps.messagerie.urls')),
     path('settings/', include('apps.settings.urls')),
 ]
 if settings.DEBUG:

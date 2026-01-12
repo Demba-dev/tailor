@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',  # <- bien ajouter ici
     'widget_tweaks',  # <- bien ajouter ici
     # Local apps
     'apps.core',
@@ -57,6 +58,7 @@ INSTALLED_APPS = [
     'apps.ventes',
     'apps.users',
     'apps.settings',
+    'apps.messagerie',
 ]
 
 MIDDLEWARE = [
@@ -85,6 +87,8 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'apps.panier.context_processors.cart',
                 'apps.settings.context_processors.site_settings',
+                'apps.core.context_processors.notifications_processor',
+                'apps.messagerie.context_processors.unread_messages_count',
             ],
         },
     },
@@ -126,9 +130,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'fr-fr'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Paris'
 
 USE_I18N = True
 
@@ -140,3 +144,8 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Auth Settings
+LOGIN_REDIRECT_URL = 'dashboard:index'
+LOGOUT_REDIRECT_URL = 'users:login'
+LOGIN_URL = 'users:login'

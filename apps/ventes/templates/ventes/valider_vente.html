@@ -1,77 +1,385 @@
 {% extends "base.html" %}
 {% load static %}
 {% load widget_tweaks %}
+{% load humanize %}
 
-{% block title %}Finaliser la Vente - TAILOR{% endblock %}
+{% block title %}Finaliser la Vente - ATELIER TAILOR{% endblock %}
 
-{% block page_title %}
-<i class="fas fa-check-double text-success me-2"></i>Finaliser la Vente
+{% block extra_css %}
+<style>
+    .checkout-header {
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .checkout-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 200%;
+        background: rgba(255,255,255,0.1);
+        transform: rotate(30deg);
+        pointer-events: none;
+    }
+    
+    .checkout-container {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 2rem;
+    }
+    
+    @media (max-width: 992px) {
+        .checkout-container {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .checkout-form {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+    }
+    
+    .checkout-summary {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        position: sticky;
+        top: 2rem;
+        height: fit-content;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .form-control, select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, select:focus {
+        outline: none;
+        border-color: #48bb78;
+        box-shadow: 0 0 0 3px rgba(72, 187, 120, 0.1);
+    }
+    
+    .form-text {
+        font-size: 0.85rem;
+        color: #718096;
+        margin-top: 0.5rem;
+    }
+    
+    .summary-header {
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 15px 15px 0 0;
+        text-align: center;
+    }
+    
+    .summary-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    .summary-items {
+        padding: 1.5rem;
+        max-height: 300px;
+        overflow-y: auto;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 1rem 0;
+        border-bottom: 1px solid #f7fafc;
+    }
+    
+    .summary-item:last-child {
+        border-bottom: none;
+    }
+    
+    .item-name {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 0.25rem;
+    }
+    
+    .item-details {
+        font-size: 0.85rem;
+        color: #718096;
+    }
+    
+    .item-price {
+        font-weight: 600;
+        color: #2d3748;
+        white-space: nowrap;
+        margin-left: 1rem;
+    }
+    
+    .summary-totals {
+        padding: 1.5rem;
+        background: #f8fafc;
+    }
+    
+    .total-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+    
+    .total-label {
+        color: #718096;
+        font-weight: 500;
+    }
+    
+    .total-value {
+        color: #2d3748;
+        font-weight: 600;
+    }
+    
+    .grand-total {
+        border-top: 2px solid #e2e8f0;
+        padding-top: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .grand-total .total-label {
+        color: #2d3748;
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+    
+    .grand-total .total-value {
+        color: #48bb78;
+        font-weight: 800;
+        font-size: 1.5rem;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+    
+    .confirm-btn {
+        flex: 1;
+        padding: 1.25rem;
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .confirm-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(72, 187, 120, 0.3);
+    }
+    
+    .confirm-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .cancel-btn {
+        padding: 1.25rem 2rem;
+        background: white;
+        color: #718096;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+    
+    .cancel-btn:hover {
+        border-color: #f56565;
+        color: #f56565;
+        background: rgba(245, 101, 101, 0.05);
+    }
+    
+    .empty-cart {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+    
+    .empty-cart-icon {
+        font-size: 3rem;
+        color: #cbd5e0;
+        margin-bottom: 1rem;
+    }
+</style>
 {% endblock %}
 
-{% block page_subtitle %}Sélectionnez le client et confirmez la transaction{% endblock %}
-
-{% block content %}
-<div class="row">
-    <div class="col-lg-7">
-        <form method="post">
-            {% csrf_token %}
-            <div class="card shadow-sm border-0 mb-4">
-                <div class="card-header bg-white py-3">
-                    <h5 class="mb-0 fw-bold">Informations Transaction</h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">Client</label>
-                        <select name="client" class="form-select form-select-lg">
-                            <option value="">Client de passage (Anonyme)</option>
-                            {% for client in clients %}
-                            <option value="{{ client.id }}">{{ client.prenom }} {{ client.nom }} ({{ client.telephone }})</option>
-                            {% endfor %}
-                        </select>
-                        <div class="form-text">Laissez vide si le client ne souhaite pas être enregistré.</div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Note / Commentaire</label>
-                        <textarea name="note" class="form-control" rows="3" placeholder="Informations complémentaires sur la vente..."></textarea>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-success btn-lg">
-                    <i class="fas fa-cash-register me-2"></i>Confirmer l'encaissement et enregistrer
-                </button>
-                <a href="{% url 'panier:cart_detail' %}" class="btn btn-outline-secondary">
-                    Retour au panier
-                </a>
-            </div>
-        </form>
-    </div>
-    
-    <div class="col-lg-5">
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-white py-3">
-                <h5 class="mb-0 fw-bold">Articles concernés</h5>
-            </div>
-            <div class="card-body p-0">
-                <ul class="list-group list-group-flush">
-                    {% for item in cart %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center py-3">
-                        <div>
-                            <div class="fw-bold">{{ item.obj.nom }}</div>
-                            <small class="text-muted">{{ item.type|capfirst }} x {{ item.quantity }}</small>
-                        </div>
-                        <span class="fw-bold">{{ item.total_price }} FCFA</span>
-                    </li>
-                    {% endfor %}
-                    <li class="list-group-item bg-light py-3 d-flex justify-content-between align-items-center">
-                        <span class="h5 mb-0 fw-bold">TOTAL À PAYER</span>
-                        <span class="h5 mb-0 fw-bold text-primary">{{ cart.get_total_price }} FCFA</span>
-                    </li>
-                </ul>
-            </div>
+{% block page_title %}
+<div class="checkout-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h2 mb-2">
+                <i class="fas fa-cash-register me-2"></i>Finaliser la Vente
+            </h1>
+            <p class="mb-0 opacity-75">
+                Sélectionnez le client et confirmez la transaction
+            </p>
+        </div>
+        <div class="text-end">
+            {% if cart %}
+            <div class="h3 text-white mb-1">{{ cart.get_total_price|floatformat:0|intcomma }} FCFA</div>
+            <div class="small opacity-75">{{ cart|length }} article{{ cart|length|pluralize:"s" }}</div>
+            {% endif %}
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block content %}
+{% if cart %}
+<form method="post" id="checkoutForm" class="checkout-container">
+    {% csrf_token %}
+    
+    <!-- Formulaire -->
+    <div class="checkout-form">
+        <h3 class="mb-4">
+            <i class="fas fa-user me-2 text-success"></i>Informations de la Vente
+        </h3>
+        
+        <div class="form-group">
+            <label class="form-label">
+                <i class="fas fa-user-tie me-2"></i>Client
+            </label>
+            <select name="client" class="form-control" id="clientSelect">
+                <option value="">👤 Client de passage (Anonyme)</option>
+                {% for client in clients %}
+                <option value="{{ client.id }}">{{ client.prenom }} {{ client.nom }} ({{ client.telephone }})</option>
+                {% endfor %}
+            </select>
+            <div class="form-text">Laissez vide si le client ne souhaite pas être enregistré.</div>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">
+                <i class="fas fa-sticky-note me-2"></i>Note / Commentaire
+            </label>
+            <textarea name="note" class="form-control" rows="3" placeholder="Informations complémentaires..."></textarea>
+        </div>
+        
+        <!-- Boutons -->
+        <div class="action-buttons">
+            <button type="submit" class="confirm-btn" id="submitBtn">
+                <i class="fas fa-check-circle"></i>
+                Confirmer et enregistrer
+            </button>
+            <a href="{% url 'panier:cart_detail' %}" class="cancel-btn">
+                <i class="fas fa-arrow-left"></i>
+                Retour
+            </a>
+        </div>
+    </div>
+    
+    <!-- Récapitulatif -->
+    <div class="checkout-summary">
+        <div class="summary-header">
+            <h3 class="summary-title">
+                <i class="fas fa-receipt me-2"></i>Récapitulatif
+            </h3>
+        </div>
+        
+        <div class="summary-items">
+            {% for item in cart %}
+            <div class="summary-item">
+                <div>
+                    <div class="item-name">{{ item.obj.nom }}</div>
+                    <div class="item-details">
+                        {{ item.type|capfirst }} • {{ item.quantity }} unité{{ item.quantity|pluralize:"s" }}
+                        {% if item.taille %}• Taille: {{ item.taille }}{% endif %}
+                    </div>
+                </div>
+                <div class="item-price">{{ item.total_price|floatformat:0|intcomma }} FCFA</div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="summary-totals">
+            <div class="total-row">
+                <span class="total-label">Sous-total</span>
+                <span class="total-value">{{ cart.get_total_price|floatformat:0|intcomma }} FCFA</span>
+            </div>
+            
+            <div class="total-row grand-total">
+                <span class="total-label">Total à payer</span>
+                <span class="total-value">{{ cart.get_total_price|floatformat:0|intcomma }} FCFA</span>
+            </div>
+        </div>
+    </div>
+</form>
+
+{% else %}
+<div class="checkout-form">
+    <div class="empty-cart">
+        <div class="empty-cart-icon">
+            <i class="fas fa-shopping-cart"></i>
+        </div>
+        <p class="text-muted">Votre panier est vide</p>
+        <a href="{% url 'stock:index' %}" class="btn btn-primary">
+            <i class="fas fa-store me-2"></i>Ajouter des articles
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('checkoutForm');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Traitement en cours...';
+        });
+    }
+});
+</script>
 {% endblock %}

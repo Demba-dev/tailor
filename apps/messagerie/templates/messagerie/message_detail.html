@@ -1,0 +1,1126 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load messagerie_filters %}
+
+{% block title %}
+    {% if is_sender %}
+        Message pour {{ message.recipient.nom }}
+    {% else %}
+        Message de {{ message.sender.username }}
+    {% endif %} 
+    | {{ site_settings.nom_atelier }}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .message-detail-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    /* Header élégant */
+    .message-header {
+        background: linear-gradient(135deg, 
+            {% if is_sender %}#10b981{% else %}#667eea{% endif %} 0%, 
+            {% if is_sender %}#059669{% else %}#764ba2{% endif %} 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .message-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.15) 0%, transparent 50%);
+    }
+    
+    .header-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .message-meta {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .message-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    .message-badge i {
+        font-size: 0.85rem;
+    }
+    
+    .header-title {
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        line-height: 1.2;
+        word-wrap: break-word;
+    }
+    
+    .header-subtitle {
+        font-size: 1rem;
+        opacity: 0.9;
+        margin-bottom: 1.5rem;
+        line-height: 1.5;
+    }
+    
+    .participants-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+    
+    .participant-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 16px;
+        padding: 1.25rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .participant-card:hover {
+        background: rgba(255, 255, 255, 0.15);
+        transform: translateY(-3px);
+    }
+    
+    .participant-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .participant-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        background: white;
+        color: {% if is_sender %}#10b981{% else %}#667eea{% endif %};
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+    
+    .participant-info h5 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+    
+    .participant-info p {
+        margin: 0.25rem 0 0 0;
+        font-size: 0.85rem;
+        opacity: 0.8;
+    }
+    
+    /* Contenu du message */
+    .message-card {
+        background: white;
+        border-radius: 20px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+    
+    .message-toolbar {
+        padding: 1rem 1.5rem;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .toolbar-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .toolbar-btn {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+        color: #475569;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+    
+    .toolbar-btn:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+        color: #1e293b;
+        text-decoration: none;
+    }
+    
+    .message-body {
+        padding: 2.5rem;
+        min-height: 300px;
+    }
+    
+    .message-content {
+        font-size: 1.05rem;
+        line-height: 1.7;
+        color: #334155;
+        white-space: pre-line;
+        word-wrap: break-word;
+    }
+    
+    .message-content p {
+        margin-bottom: 1.5rem;
+    }
+    
+    .message-content p:last-child {
+        margin-bottom: 0;
+    }
+    
+    .message-content h1, .message-content h2, .message-content h3 {
+        color: #1e293b;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+    }
+    
+    .message-content ul, .message-content ol {
+        padding-left: 2rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .message-content li {
+        margin-bottom: 0.5rem;
+    }
+    
+    .message-content blockquote {
+        border-left: 4px solid {% if is_sender %}#10b981{% else %}#667eea{% endif %};
+        padding-left: 1.5rem;
+        margin: 2rem 0;
+        font-style: italic;
+        color: #475569;
+        background: #f8fafc;
+        padding: 1.5rem;
+        border-radius: 0 12px 12px 0;
+    }
+    
+    .message-content code {
+        background: #f1f5f9;
+        padding: 0.2rem 0.5rem;
+        border-radius: 6px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+        color: #dc2626;
+    }
+    
+    .message-content pre {
+        background: #1e293b;
+        color: #e2e8f0;
+        padding: 1.5rem;
+        border-radius: 12px;
+        overflow-x: auto;
+        margin: 2rem 0;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+    }
+    
+    /* Pièces jointes */
+    .attachments-section {
+        padding: 1.5rem 2.5rem;
+        border-top: 1px solid #e2e8f0;
+        background: #f8fafc;
+    }
+    
+    .attachments-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #475569;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .attachments-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    .attachment-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+    }
+    
+    .attachment-card:hover {
+        border-color: {% if is_sender %}#10b981{% else %}#667eea{% endif %};
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        text-decoration: none;
+    }
+    
+    .attachment-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, 
+            {% if is_sender %}#d1fae5{% else %}#e0e7ff{% endif %} 0%, 
+            {% if is_sender %}#a7f3d0{% else %}#c7d2fe{% endif %} 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 0.75rem;
+        color: {% if is_sender %}#059669{% else %}#4f46e5{% endif %};
+        font-size: 1.25rem;
+    }
+    
+    .attachment-info h6 {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        color: #1e293b;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .attachment-info p {
+        font-size: 0.8rem;
+        color: #64748b;
+        margin: 0;
+    }
+    
+    /* Section de réponse */
+    .reply-section {
+        background: white;
+        border-radius: 20px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+        padding: 2rem;
+        margin-top: 2rem;
+    }
+    
+    .reply-header {
+        margin-bottom: 2rem;
+    }
+    
+    .reply-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+    }
+    
+    .reply-subtitle {
+        color: #64748b;
+        font-size: 0.95rem;
+    }
+    
+    .reply-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid #e2e8f0;
+    }
+    
+    .btn-reply {
+        background: linear-gradient(135deg, 
+            {% if is_sender %}#10b981{% else %}#667eea{% endif %} 0%, 
+            {% if is_sender %}#059669{% else %}#764ba2{% endif %} 100%);
+        color: white;
+        border: none;
+        padding: 0.875rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+    
+    .btn-reply:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(
+            {% if is_sender %}16, 185, 129{% else %}102, 126, 234{% endif %}, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-forward {
+        background: white;
+        color: #64748b;
+        border: 2px solid #e2e8f0;
+        padding: 0.875rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+    
+    .btn-forward:hover {
+        background: #f8fafc;
+        color: #475569;
+        border-color: #cbd5e1;
+        text-decoration: none;
+    }
+    
+    /* Historique des réponses */
+    .thread-section {
+        margin-top: 2rem;
+    }
+    
+    .thread-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .thread-item {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .thread-item:hover {
+        border-color: #cbd5e1;
+        transform: translateX(4px);
+    }
+    
+    .thread-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .thread-sender {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .thread-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        color: #0369a1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+    
+    .thread-info h6 {
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #1e293b;
+    }
+    
+    .thread-info p {
+        margin: 0.25rem 0 0 0;
+        font-size: 0.8rem;
+        color: #64748b;
+    }
+    
+    .thread-time {
+        font-size: 0.8rem;
+        color: #94a3b8;
+    }
+    
+    .thread-preview {
+        font-size: 0.95rem;
+        color: #475569;
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    /* Animation */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .message-card, .reply-section, .thread-item {
+        animation: fadeIn 0.5s ease forwards;
+        opacity: 0;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .message-header {
+            padding: 1.5rem;
+        }
+        
+        .header-title {
+            font-size: 1.5rem;
+        }
+        
+        .message-body {
+            padding: 1.5rem;
+        }
+        
+        .participants-section {
+            grid-template-columns: 1fr;
+        }
+        
+        .attachments-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .reply-actions {
+            flex-direction: column;
+        }
+        
+        .btn-reply, .btn-forward {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .toolbar-actions {
+            flex-wrap: wrap;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="message-detail-container">
+    <!-- En-tête du message -->
+    <div class="message-header animate__animated animate__fadeIn">
+        <div class="header-content">
+            <div class="message-meta">
+                <span class="message-badge">
+                    <i class="fas fa-envelope"></i>
+                    {% if is_sender %}Message envoyé{% else %}Message reçu{% endif %}
+                </span>
+                <span class="message-badge">
+                    <i class="fas fa-calendar-alt"></i>
+                    {{ message.created_at|date:"d M Y" }}
+                </span>
+                <span class="message-badge">
+                    <i class="fas fa-clock"></i>
+                    {{ message.created_at|date:"H:i" }}
+                </span>
+            </div>
+            
+            <h1 class="header-title">{{ message.subject|default:"(Sans objet)" }}</h1>
+            
+            <p class="header-subtitle">
+                {% if is_sender %}
+                    Message envoyé à votre destinataire
+                {% else %}
+                    Message reçu dans votre boîte de réception
+                {% endif %}
+            </p>
+            
+            <div class="participants-section">
+                <div class="participant-card">
+                    <div class="participant-header">
+                        <div class="participant-avatar">
+                            {% if is_sender %}
+                                {{ user.username|first|upper }}
+                            {% else %}
+                                {{ message.sender.username|first|upper }}
+                            {% endif %}
+                        </div>
+                        <div class="participant-info">
+                            <h5>
+                                {% if is_sender %}
+                                    Vous
+                                {% else %}
+                                    {{ message.sender.get_full_name|default:message.sender.username }}
+                                {% endif %}
+                            </h5>
+                            <p>
+                                {% if is_sender %}
+                                    Expéditeur
+                                {% else %}
+                                    De
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="participant-card">
+                    <div class="participant-header">
+                        <div class="participant-avatar">
+                            {% if is_sender %}
+                                {{ message.recipient.nom|first|upper }}
+                            {% else %}
+                                {{ user.username|first|upper }}
+                            {% endif %}
+                        </div>
+                        <div class="participant-info">
+                            <h5>
+                                {% if is_sender %}
+                                    {{ message.recipient.prenom }} {{ message.recipient.nom }}
+                                {% else %}
+                                    Vous
+                                {% endif %}
+                            </h5>
+                            <p>
+                                {% if is_sender %}
+                                    Destinataire
+                                {% else %}
+                                    À
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenu du message -->
+    <div class="message-card animate__animated animate__fadeInUp">
+        <div class="message-toolbar">
+            <div>
+                <a href="{% if is_sender %}{% url 'messagerie:sent_messages' %}{% else %}{% url 'messagerie:inbox' %}{% endif %}" 
+                   class="toolbar-btn">
+                    <i class="fas fa-arrow-left"></i>
+                    Retour aux messages
+                </a>
+            </div>
+            
+            <div class="toolbar-actions">
+                <button class="toolbar-btn" onclick="printMessage()" title="Imprimer">
+                    <i class="fas fa-print"></i>
+                    Imprimer
+                </button>
+                <button class="toolbar-btn" onclick="downloadMessage()" title="Télécharger">
+                    <i class="fas fa-download"></i>
+                    Télécharger
+                </button>
+                <button class="toolbar-btn" onclick="copyMessageLink()" title="Copier le lien">
+                    <i class="fas fa-link"></i>
+                    Copier le lien
+                </button>
+            </div>
+        </div>
+        
+        <div class="message-body">
+            <div class="message-content" id="messageContent">
+                {{ message.body|linebreaks }}
+            </div>
+        </div>
+        
+        {% if message.attachments.exists %}
+        <div class="attachments-section">
+            <h4 class="attachments-title">
+                <i class="fas fa-paperclip"></i>
+                Pièces jointes ({{ message.attachments.count }})
+            </h4>
+            
+            <div class="attachments-grid">
+                {% for attachment in message.attachments.all %}
+                <a href="{{ attachment.file.url }}" class="attachment-card" target="_blank">
+                    <div class="attachment-icon">
+                        <i class="fas fa-file-{% if attachment.file.name|lower|slice:'-4:' == '.pdf' %}pdf{% elif attachment.file.name|lower|slice:'-4:' == '.doc' or attachment.file.name|lower|slice:'-5:' == '.docx' %}word{% elif attachment.file.name|lower|slice:'-4:' == '.xls' or attachment.file.name|lower|slice:'-5:' == '.xlsx' %}excel{% elif attachment.file.name|lower|slice:'-4:' == '.jpg' or attachment.file.name|lower|slice:'-5:' == '.jpeg' or attachment.file.name|lower|slice:'-4:' == '.png' %}image{% else %}archive{% endif %}"></i>
+                    </div>
+                    <div class="attachment-info">
+                        <h6>{{ attachment.file.name|split:"/"|last }}</h6>
+                        <p>{{ attachment.file.size|filesizeformat }}</p>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Section de réponse -->
+    <div class="reply-section animate__animated animate__fadeInUp">
+        <div class="reply-header">
+            <h3 class="reply-title">Répondre au message</h3>
+            <p class="reply-subtitle">
+                {% if is_sender %}
+                    Vous pouvez répondre à {{ message.recipient.prenom }} {{ message.recipient.nom }}
+                {% else %}
+                    Vous pouvez répondre à {{ message.sender.get_full_name|default:message.sender.username }}
+                {% endif %}
+            </p>
+        </div>
+        
+        <div class="reply-actions">
+            <a href="{% url 'messagerie:compose' %}?reply_to={{ message.sender.id }}&subject=Re: {{ message.subject }}" 
+               class="btn-reply">
+                <i class="fas fa-reply"></i>
+                Répondre
+            </a>
+            
+            <a href="{% url 'messagerie:compose' %}?forward={{ message.id }}" 
+               class="btn-forward">
+                <i class="fas fa-share"></i>
+                Transférer
+            </a>
+            
+            {% if is_sender %}
+            <a href="{% url 'messagerie:compose' %}?resend={{ message.id }}" 
+               class="btn-forward">
+                <i class="fas fa-redo"></i>
+                Renvoyer
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Historique des réponses (si existant) -->
+    {% if thread_messages %}
+    <div class="thread-section">
+        <h4 class="thread-title">
+            <i class="fas fa-comments"></i>
+            Historique des réponses
+        </h4>
+        
+        {% for thread_msg in thread_messages %}
+        {% if thread_msg.id != message.id %}
+        <div class="thread-item animate__animated animate__fadeInUp" 
+             style="animation-delay: {{ forloop.counter|add:"-1"|multiply:0.1 }}s">
+            <div class="thread-header">
+                <div class="thread-sender">
+                    <div class="thread-avatar">
+                        {{ thread_msg.sender.username|first|upper }}
+                    </div>
+                    <div class="thread-info">
+                        <h6>{{ thread_msg.sender.get_full_name|default:thread_msg.sender.username }}</h6>
+                        <p>
+                            {% if thread_msg.sender == user %}
+                                Vous avez répondu
+                            {% else %}
+                                A répondu
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                <div class="thread-time">
+                    {{ thread_msg.created_at|date:"d M Y, H:i" }}
+                </div>
+            </div>
+            <div class="thread-preview">
+                {{ thread_msg.body|truncatechars:200 }}
+            </div>
+            <div class="mt-2">
+                <a href="{% url 'messagerie:message_detail' thread_msg.pk %}" 
+                   class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-eye me-1"></i>Voir le message
+                </a>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Métadonnées avancées -->
+    <div class="message-card mt-4">
+        <div class="message-toolbar">
+            <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informations techniques</h5>
+        </div>
+        <div class="message-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <h6 class="text-muted small mb-2">ID du message</h6>
+                        <p class="fw-semibold">{{ message.id }}</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-muted small mb-2">Date d'envoi</h6>
+                        <p class="fw-semibold">{{ message.created_at|date:"d F Y à H:i:s" }}</p>
+                    </div>
+                    
+                    {% if message.modified_at %}
+                    <div class="mb-3">
+                        <h6 class="text-muted small mb-2">Dernière modification</h6>
+                        <p class="fw-semibold">{{ message.modified_at|date:"d F Y à H:i:s" }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <h6 class="text-muted small mb-2">Statut</h6>
+                        <p class="fw-semibold">
+                            {% if is_sender %}
+                                {% if message.is_read %}
+                                    <span class="badge bg-success">Lu par le destinataire</span>
+                                {% else %}
+                                    <span class="badge bg-warning">En attente de lecture</span>
+                                {% endif %}
+                            {% else %}
+                                {% if message.is_read %}
+                                    <span class="badge bg-success">Lu</span>
+                                {% else %}
+                                    <span class="badge bg-primary">Nouveau</span>
+                                {% endif %}
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-muted small mb-2">Importance</h6>
+                        <p class="fw-semibold">
+                            {% if message.is_important %}
+                                <span class="badge bg-danger">Important</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Normal</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    {% if is_sender %}
+                    <div class="mb-3">
+                        <h6 class="text-muted small mb-2">Dernier accès</h6>
+                        <p class="fw-semibold">
+                            {% if message.last_read_at %}
+                                {{ message.last_read_at|date:"d F Y à H:i:s" }}
+                            {% else %}
+                                <span class="text-muted">Jamais consulté</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de prévisualisation d'image -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Prévisualisation de l'image</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" alt="" class="img-fluid rounded">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                <a href="#" id="downloadImageBtn" class="btn btn-primary" download>
+                    <i class="fas fa-download me-2"></i>Télécharger
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Améliorer le rendu du contenu du message
+    enhanceMessageContent();
+    
+    // Gérer les pièces jointes
+    setupAttachments();
+    
+    // Initialiser les fonctionnalités
+    initializeMessageFeatures();
+    
+    // Marquer comme lu si c'est un message reçu
+    {% if not is_sender %}
+    markAsRead();
+    {% endif %}
+});
+
+function enhanceMessageContent() {
+    const content = document.getElementById('messageContent');
+    if (!content) return;
+    
+    // Améliorer les liens
+    const links = content.querySelectorAll('a');
+    links.forEach(link => {
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.classList.add('text-primary', 'text-decoration-none');
+    });
+    
+    // Améliorer les images
+    const images = content.querySelectorAll('img');
+    images.forEach(img => {
+        img.classList.add('img-fluid', 'rounded', 'my-3', 'shadow-sm');
+        img.style.maxHeight = '400px';
+        img.style.cursor = 'zoom-in';
+        img.addEventListener('click', () => previewImage(img.src, img.alt));
+    });
+    
+    // Ajouter des classes aux tableaux
+    const tables = content.querySelectorAll('table');
+    tables.forEach(table => {
+        table.classList.add('table', 'table-bordered', 'table-striped');
+    });
+}
+
+function setupAttachments() {
+    // Prévisualisation des images jointes
+    const imageAttachments = document.querySelectorAll('.attachment-card[href*=".jpg"], .attachment-card[href*=".jpeg"], .attachment-card[href*=".png"], .attachment-card[href*=".gif"]');
+    
+    imageAttachments.forEach(card => {
+        card.addEventListener('click', function(e) {
+            const url = this.getAttribute('href');
+            const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
+            
+            if (isImage) {
+                e.preventDefault();
+                previewImage(url, this.querySelector('h6').textContent);
+            }
+        });
+    });
+}
+
+function previewImage(src, alt) {
+    document.getElementById('modalImage').src = src;
+    document.getElementById('modalImage').alt = alt;
+    document.getElementById('downloadImageBtn').href = src;
+    document.getElementById('downloadImageBtn').download = alt;
+    
+    const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+    modal.show();
+}
+
+function markAsRead() {
+    // Envoyer une requête AJAX pour marquer le message comme lu
+    fetch(`/messagerie/message/{{ message.pk }}/mark-read/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCSRFToken(),
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Mettre à jour l'interface si nécessaire
+            console.log('Message marqué comme lu');
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function printMessage() {
+    // Créer une fenêtre d'impression stylisée
+    const printContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Message - {{ message.subject|escapejs }}</title>
+            <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; padding: 20px; }
+                .header { border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+                .header h1 { margin: 0 0 10px 0; }
+                .meta { color: #666; font-size: 14px; }
+                .meta div { margin-bottom: 5px; }
+                .content { margin-top: 30px; white-space: pre-line; }
+                .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ccc; 
+                         font-size: 12px; color: #888; }
+                @media print {
+                    .no-print { display: none; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>{{ message.subject|escapejs }}</h1>
+                <div class="meta">
+                    <div><strong>De:</strong> {{ message.sender.get_full_name|default:message.sender.username|escapejs }}</div>
+                    <div><strong>À:</strong> {{ message.recipient.prenom|escapejs }} {{ message.recipient.nom|escapejs }}</div>
+                    <div><strong>Date:</strong> {{ message.created_at|date:"d F Y à H:i"|escapejs }}</div>
+                </div>
+            </div>
+            <div class="content">
+                {{ message.body|escapejs }}
+            </div>
+            <div class="footer">
+                <p>Imprimé depuis {{ site_settings.nom_atelier|escapejs }} le ${new Date().toLocaleDateString('fr-FR')}</p>
+            </div>
+        </body>
+        </html>
+    `;
+    
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.focus();
+    
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 500);
+}
+
+function downloadMessage() {
+    // Créer un contenu téléchargeable
+    const content = `
+    Message ID: {{ message.id }}
+    Sujet: {{ message.subject }}
+    De: {{ message.sender.get_full_name|default:message.sender.username }}
+    À: {{ message.recipient.prenom }} {{ message.recipient.nom }}
+    Date: {{ message.created_at|date:"d F Y à H:i:s" }}
+    Statut: {% if is_sender %}Envoyé{% else %}Reçu{% endif %}
+
+    ----------------------------------------
+
+    {{ message.body }}
+
+    ----------------------------------------
+
+    Pièces jointes: {% if message.attachments.exists %}{% for attachment in message.attachments.all %}
+    - {{ attachment.file.name|split:"/"|last }} ({{ attachment.file.size|filesizeformat }}){% endfor %}{% else %}Aucune{% endif %}
+
+    ----------------------------------------
+
+    Téléchargé depuis {{ site_settings.nom_atelier }} le ${new Date().toLocaleDateString('fr-FR')}
+        `;
+        
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `message-{{ message.id }}-{{ message.subject|slugify }}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+}
+
+function copyMessageLink() {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url)
+        .then(() => {
+            showNotification('Lien copié dans le presse-papier', 'success');
+        })
+        .catch(err => {
+            console.error('Erreur lors de la copie:', err);
+            showNotification('Erreur lors de la copie du lien', 'error');
+        });
+}
+
+function showNotification(message, type = 'info') {
+    // Créer une notification
+    const notification = document.createElement('div');
+    notification.className = `position-fixed top-0 end-0 m-3 p-3 rounded shadow-lg animate__animated animate__fadeInRight`;
+    notification.style.cssText = `
+        background: ${type === 'error' ? '#fef2f2' : type === 'success' ? '#f0f9ff' : '#fffbeb'};
+        border: 1px solid ${type === 'error' ? '#fecaca' : type === 'success' ? '#bae6fd' : '#fde68a'};
+        color: ${type === 'error' ? '#dc2626' : type === 'success' ? '#0369a1' : '#d97706'};
+        z-index: 9999;
+    `;
+    
+    notification.innerHTML = `
+        <div class="d-flex align-items-center gap-2">
+            <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Supprimer après 3 secondes
+    setTimeout(() => {
+        notification.classList.add('animate__fadeOutRight');
+        setTimeout(() => notification.remove(), 500);
+    }, 3000);
+}
+
+function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+
+function initializeMessageFeatures() {
+    // Raccourci clavier pour l'impression (Ctrl+P)
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+            e.preventDefault();
+            printMessage();
+        }
+    });
+    
+    // Zoom sur les images avec la molette
+    const messageContent = document.getElementById('messageContent');
+    if (messageContent) {
+        messageContent.addEventListener('wheel', function(e) {
+            if (e.ctrlKey) {
+                e.preventDefault();
+                const img = e.target.closest('img');
+                if (img) {
+                    const scale = e.deltaY > 0 ? 0.9 : 1.1;
+                    const currentScale = parseFloat(img.style.transform.match(/scale\(([^)]+)\)/)?.[1]) || 1;
+                    const newScale = Math.max(0.5, Math.min(3, currentScale * scale));
+                    img.style.transform = `scale(${newScale})`;
+                    img.style.transformOrigin = 'center center';
+                }
+            }
+        }, { passive: false });
+    }
+}
+
+// Inclure animate.css
+const animateCSS = document.createElement('link');
+animateCSS.rel = 'stylesheet';
+animateCSS.href = 'https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css';
+document.head.appendChild(animateCSS);
+</script>
+{% endblock %}

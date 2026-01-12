@@ -3,7 +3,9 @@ from .models import Mesure
 from .forms import MesureForm
 from django.contrib import messages
 from django.utils import timezone
+from django.contrib.auth.decorators import login_required
 
+@login_required
 def mesure_list(request, client_id=None):
     unique_clients = 0
     last_measure_date = 0
@@ -28,6 +30,7 @@ def mesure_list(request, client_id=None):
         'avg_per_month': avg_per_month
         })
 
+@login_required
 def mesure_create(request, client_id=None):
     if request.method == 'POST':
         form = MesureForm(request.POST)
@@ -41,10 +44,12 @@ def mesure_create(request, client_id=None):
         form = MesureForm(initial=initial)
     return render(request, 'mesures/mesure_form.html', {'form': form, 'title': 'Ajouter mesure'})
 
+@login_required
 def mesure_detail(request, pk):
     mesure = get_object_or_404(Mesure, pk=pk)
     return render(request, 'mesures/mesure_detail.html', {'mesure': mesure})
 
+@login_required
 def mesure_duplicate(request, pk):
     mesure = get_object_or_404(Mesure, pk=pk)
     mesure.pk = None
@@ -52,6 +57,7 @@ def mesure_duplicate(request, pk):
     messages.success(request, 'Mesure dupliquée avec succès')
     return redirect('mesures:mesure_list_client', client_id=mesure.client.pk)
 
+@login_required
 def mesure_update(request, pk):
     mesure = get_object_or_404(Mesure, pk=pk)
     if request.method == 'POST':
@@ -63,10 +69,12 @@ def mesure_update(request, pk):
         form = MesureForm(instance=mesure)
     return render(request, 'mesures/mesure_form.html', {'form': form, 'title': 'Modifier mesure'})
 
+@login_required
 def mesure_print(request, pk):
     mesure = get_object_or_404(Mesure, pk=pk)
     return render(request, 'mesures/mesure_print.html', {'mesure': mesure})
 
+@login_required
 def mesure_import(request):
     if request.method == 'POST' and request.FILES.get('file'):
         csv_file = request.FILES['file']
@@ -86,6 +94,7 @@ def mesure_import(request):
     
     return render(request, 'mesures/mesure_import.html')
 
+@login_required
 def mesure_bulk_delete(request):
     if request.method == 'POST':
         ids = request.POST.getlist('mesure_ids')
@@ -94,6 +103,7 @@ def mesure_bulk_delete(request):
             messages.success(request, f'{len(ids)} mesure(s) supprimée(s)')
         return redirect('mesures:mesure_list')
     return redirect('mesures:mesure_list')
+@login_required
 def mesure_delete(request, pk):
     mesure = get_object_or_404(Mesure, pk=pk)
     mesure.delete()

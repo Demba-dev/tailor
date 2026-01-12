@@ -13,7 +13,7 @@ class Vente(models.Model):
         verbose_name_plural = "Ventes"
 
     def __str__(self):
-        return f"Vente #{self.id} - {self.date_vente.strftime('%d/%m/%Y')}"
+        return f"Vente #{self.pk} - {self.date_vente.strftime('%d/%m/%Y')}"
 
 class LigneVente(models.Model):
     vente = models.ForeignKey(Vente, on_delete=models.CASCADE, related_name='lignes')

@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
 from apps.commandes.models import Commande
 from apps.paiements.models import Paiement
 from apps.clients.models import Client
@@ -10,6 +11,7 @@ from datetime import date
 from django.urls import reverse
 from apps.ventes.models import Vente
 
+@login_required
 def index(request):
     commandes_encours = Commande.objects.filter(statut='encours').count()
     commandes_terminees = Commande.objects.filter(statut='termine').count()
@@ -115,6 +117,7 @@ def index(request):
     return render(request, 'dashboard/index.html', context)
     
 
+@login_required
 def ventes_mensuelles(request):
     today = date.today()
     commandes = Commande.objects.filter(date_commande__year=today.year, date_commande__month=today.month)

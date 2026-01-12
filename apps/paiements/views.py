@@ -4,11 +4,13 @@ from .forms import PaiementForm
 from apps.commandes.models import Commande
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
+from django.contrib.auth.decorators import login_required
 
 from django.db.models import Sum, Avg
 from django.utils import timezone
 from datetime import timedelta
 
+@login_required
 def paiement_list(request):
     paiements = Paiement.objects.all()
     today = timezone.now()
@@ -61,6 +63,7 @@ def paiement_list(request):
 
 
 
+@login_required
 def paiement_create(request):
     if request.method == 'POST':
         form = PaiementForm(request.POST)
@@ -76,6 +79,7 @@ def paiement_create(request):
         form = PaiementForm()
     return render(request, 'paiements/paiement_form.html', {'form': form, 'title': 'Nouveau paiement'})
 
+@login_required
 def paiement_update(request, pk):
     paiement = get_object_or_404(Paiement, pk=pk)
     if request.method == 'POST':
@@ -88,6 +92,7 @@ def paiement_update(request, pk):
     return render(request, 'paiements/paiement_form.html', {'form': form, 'title': 'Modifier paiement'})
 
 
+@login_required
 def paiement_stats(request):
     from django.db.models import Sum
     from apps.commandes.models import Commande
@@ -107,6 +112,7 @@ def paiement_stats(request):
 
 
 
+@login_required
 def paiement_delete(request, pk):
     paiement = get_object_or_404(Paiement, pk=pk)
     commande = paiement.commande
@@ -117,6 +123,7 @@ def paiement_delete(request, pk):
     commande.save()
     return redirect('paiements:paiement_list')
 
+@login_required
 @require_GET
 def get_commande_details(request, pk):
     try:
@@ -135,11 +142,13 @@ def get_commande_details(request, pk):
         return JsonResponse({'success': False, 'error': 'Commande non trouvée'})
 
 
+@login_required
 def paiement_detail(request, pk):
     paiement = get_object_or_404(Paiement, pk=pk)
     return render(request, 'paiements/paiement_detail.html', {'paiement': paiement})
 
 
+@login_required
 def paiement_print(request, pk):
     paiement = get_object_or_404(Paiement, pk=pk)
     return render(request, 'paiements/paiement_print.html', {'paiement': paiement})

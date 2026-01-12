@@ -57,10 +57,10 @@
 
             <!-- Notifications -->
             <div class="nav-item dropdown me-3">
-                <a class="nav-icon-link position-relative" href="#" role="button" 
+                <a class="nav-icon-link position-relative" href="{% url 'core:notification_list' %}" role="button" 
                    data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="fas fa-bell"></i>
-                    {% if notifications_count %}
+                    {% if notifications_count > 0 %}
                     <span class="nav-indicator bg-danger">{{ notifications_count }}</span>
                     {% endif %}
                 </a>
@@ -68,54 +68,79 @@
                      style="width: 350px; border-radius: 12px; overflow: hidden;">
                     <div class="dropdown-header-custom">
                         <h6 class="mb-0"><i class="fas fa-bell me-2"></i>Notifications</h6>
-                        <a href="#" class="text-white small text-decoration-none opacity-75 hover-opacity-100">Tout marquer comme lu</a>
+                        {% if notifications_count > 0 %}
+                        <a href="{% url 'core:mark_all_as_read' %}" class="text-white small text-decoration-none opacity-75 hover-opacity-100">Tout marquer comme lu</a>
+                        {% endif %}
                     </div>
                     <div class="notification-list" style="max-height: 400px; overflow-y: auto;">
-                        <a href="#" class="dropdown-item py-3">
+                        {% for notif in recent_notifications %}
+                        <a href="{% url 'core:mark_as_read' notif.pk %}" class="dropdown-item py-3">
                             <div class="d-flex align-items-center">
-                                <div class="avatar-sm-circle bg-success">
-                                    <i class="fas fa-euro-sign"></i>
+                                <div class="avatar-sm-circle bg-{{ notif.type }}">
+                                    {% if notif.type == 'success' %}
+                                        <i class="fas fa-check"></i>
+                                    {% elif notif.type == 'danger' %}
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    {% else %}
+                                        <i class="fas fa-info"></i>
+                                    {% endif %}
                                 </div>
                                 <div class="ms-3">
-                                    <div class="fw-bold small">Paiement reçu</div>
-                                    <div class="xsmall text-muted">M. Dupont a payé 120CFA</div>
-                                    <div class="xsmall text-muted mt-1">Il y a 5 min</div>
+                                    <div class="fw-bold small">{{ notif.title }}</div>
+                                    <div class="xsmall text-muted">{{ notif.message }}</div>
+                                    <div class="xsmall text-muted mt-1">{{ notif.created_at|timesince }}</div>
                                 </div>
                             </div>
                         </a>
-                        <!-- ... autres notifications ... -->
+                        {% empty %}
+                        <div class="p-4 text-center text-muted">
+                            <i class="fas fa-bell-slash d-block mb-2 opacity-25" style="font-size: 2rem;"></i>
+                            <span class="small">Aucune nouvelle notification</span>
+                        </div>
+                        {% endfor %}
                     </div>
                     <div class="dropdown-footer-custom">
-                        <a href="#" class="btn-view-all">Voir toutes les notifications</a>
+                        <a href="{% url 'core:notification_list' %}" class="btn-view-all">Voir toutes les notifications</a>
                     </div>
                 </div>
             </div>
 
             <!-- Messages -->
             <div class="nav-item dropdown me-3">
-                <a class="nav-icon-link position-relative" href="#" role="button" 
+                <a class="nav-icon-link position-relative" href="{% url 'messagerie:inbox' %}" role="button" 
                    data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="fas fa-envelope"></i>
-                    <span class="nav-indicator bg-primary">3</span>
+                    {% if unread_messages_count > 0 %}
+                    <span class="nav-indicator bg-primary">{{ unread_messages_count }}</span>
+                    {% endif %}
                 </a>
                 <div class="dropdown-menu dropdown-menu-end p-0 shadow-lg border-0" style="min-width: 300px; border-radius: 12px; overflow: hidden;">
                     <div class="dropdown-header-custom header-info">
                         <h6 class="mb-0"><i class="fas fa-envelope me-2"></i>Messages</h6>
                     </div>
                     <div class="message-list" style="max-height: 300px; overflow-y: auto;">
-                        <a href="#" class="dropdown-item py-2">
+                        {% for msg in recent_user_messages %}
+                        <a href="{% url 'messagerie:message_detail' msg.pk %}" class="dropdown-item py-2 {% if not msg.is_read %}bg-light{% endif %}">
                             <div class="d-flex align-items-center">
-                                <div class="avatar-sm-circle bg-primary">JD</div>
-                                <div class="ms-2 flex-grow-1 overflow-hidden">
-                                    <div class="fw-bold small">Jean Dupont</div>
-                                    <div class="xsmall text-muted text-truncate">Bonjour, où en est ma commande ?</div>
+                                <div class="avatar-sm-circle bg-primary-subtle text-primary">
+                                    {{ msg.sender.username|first|upper }}
                                 </div>
-                                <div class="xsmall text-muted">10:30</div>
+                                <div class="ms-2 flex-grow-1 overflow-hidden">
+                                    <div class="fw-bold small">{{ msg.sender.username }}</div>
+                                    <div class="xsmall text-muted text-truncate">{{ msg.subject }}</div>
+                                </div>
+                                <div class="xsmall text-muted">{{ msg.created_at|date:"H:i" }}</div>
                             </div>
                         </a>
+                        {% empty %}
+                        <div class="p-4 text-center text-muted">
+                            <i class="fas fa-comment-slash d-block mb-2 opacity-25" style="font-size: 2rem;"></i>
+                            <span class="small">Aucun message</span>
+                        </div>
+                        {% endfor %}
                     </div>
                     <div class="dropdown-footer-custom">
-                        <a href="#" class="btn-view-all">Voir tous les messages</a>
+                        <a href="{% url 'messagerie:inbox' %}" class="btn-view-all">Voir tous les messages</a>
                     </div>
                 </div>
             </div>
@@ -159,7 +184,7 @@
                     <li><a class="dropdown-item" href="{% url 'settings:settings_detail' %}"><i class="fas fa-cog me-2 text-secondary"></i>Paramètres</a></li>
                     <li><a class="dropdown-item" href="{% url 'admin:index' %}"><i class="fas fa-shield-alt me-2 text-warning"></i>Admin</a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item text-danger" href="{% url 'admin:logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Déconnexion</a></li>
+                    <li><a class="dropdown-item text-danger" href="{% url 'users:logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Déconnexion</a></li>
                 </ul>
             </div>
 

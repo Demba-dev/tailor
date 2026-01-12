@@ -1,96 +1,1090 @@
 {% extends "base.html" %}
 {% load static %}
+{% load humanize %}
 
-{% block title %}Détails de la Vente #{{ vente.id }} - TAILOR{% endblock %}
+{% block title %}Vente #{{ vente.numero_vente|default:vente.id|stringformat:"06d" }} - ATELIER TAILOR{% endblock %}
 
-{% block page_title %}
-<i class="fas fa-file-invoice-dollar text-primary me-2"></i>Vente #{{ vente.id }}
+{% block extra_css %}
+<style>
+    .sale-detail-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .sale-detail-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 200%;
+        background: rgba(255,255,255,0.1);
+        transform: rotate(30deg);
+        pointer-events: none;
+    }
+    
+    .sale-status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.6rem 1.2rem;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        margin-bottom: 1rem;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+    
+    .sale-status-badge.completed {
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+    }
+    
+    .sale-status-badge.pending {
+        background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+        color: white;
+    }
+    
+    .sale-status-badge.cancelled {
+        background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+        color: white;
+    }
+    
+    .info-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        height: 100%;
+        transition: transform 0.3s ease;
+    }
+    
+    .info-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    }
+    
+    .info-card .card-title {
+        color: #2d3748;
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .info-card .card-title i {
+        color: #667eea;
+        font-size: 1.1rem;
+    }
+    
+    .info-item {
+        margin-bottom: 1.25rem;
+        padding-bottom: 1.25rem;
+        border-bottom: 1px solid #f7fafc;
+    }
+    
+    .info-item:last-child {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: none;
+    }
+    
+    .info-label {
+        font-size: 0.85rem;
+        color: #718096;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .info-value {
+        font-size: 1.1rem;
+        color: #2d3748;
+        font-weight: 600;
+    }
+    
+    .info-value.amount {
+        color: #48bb78;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+    
+    .client-avatar-large {
+        width: 80px;
+        height: 80px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 2rem;
+        margin: 0 auto 1.5rem;
+    }
+    
+    .client-info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+    
+    .client-contact-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        background: #f8fafc;
+        border-radius: 10px;
+        font-size: 0.9rem;
+    }
+    
+    .client-contact-item i {
+        color: #667eea;
+        width: 20px;
+    }
+    
+    .client-stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 2px solid #e2e8f0;
+    }
+    
+    .client-stat {
+        text-align: center;
+    }
+    
+    .client-stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #667eea;
+        line-height: 1;
+        margin-bottom: 0.25rem;
+    }
+    
+    .client-stat-label {
+        font-size: 0.8rem;
+        color: #718096;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .articles-table-container {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        margin-bottom: 2rem;
+    }
+    
+    .table-header-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .action-buttons-group {
+        display: flex;
+        gap: 0.75rem;
+    }
+    
+    .action-btn {
+        padding: 0.75rem 1.25rem;
+        border-radius: 10px;
+        font-weight: 500;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: 2px solid;
+    }
+    
+    .action-btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: #667eea;
+    }
+    
+    .action-btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        color: white;
+    }
+    
+    .action-btn-success {
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+        border-color: #48bb78;
+    }
+    
+    .action-btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(72, 187, 120, 0.3);
+        color: white;
+    }
+    
+    .action-btn-warning {
+        background: white;
+        color: #ed8936;
+        border-color: #ed8936;
+    }
+    
+    .action-btn-warning:hover {
+        background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+        color: white;
+        transform: translateY(-2px);
+    }
+    
+    .action-btn-danger {
+        background: white;
+        color: #f56565;
+        border-color: #f56565;
+    }
+    
+    .action-btn-danger:hover {
+        background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+        color: white;
+        transform: translateY(-2px);
+    }
+    
+    .articles-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    .articles-table thead {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .articles-table thead th {
+        color: white;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+        padding: 1.25rem 1.5rem;
+        border: none;
+    }
+    
+    .articles-table tbody tr {
+        transition: all 0.3s ease;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .articles-table tbody tr:hover {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+    }
+    
+    .articles-table tbody td {
+        padding: 1.25rem 1.5rem;
+        vertical-align: middle;
+        color: #4a5568;
+    }
+    
+    .article-image {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #667eea;
+        font-size: 1.25rem;
+        margin-right: 1rem;
+    }
+    
+    .article-info {
+        display: flex;
+        align-items: center;
+    }
+    
+    .article-name {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 2px;
+    }
+    
+    .article-code {
+        font-size: 0.85rem;
+        color: #718096;
+    }
+    
+    .type-badge {
+        display: inline-block;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .type-habit { background: rgba(102, 126, 234, 0.1); color: #667eea; }
+    .type-tissu { background: rgba(72, 187, 120, 0.1); color: #48bb78; }
+    .type-accessoire { background: rgba(237, 137, 54, 0.1); color: #ed8936; }
+    .type-service { background: rgba(66, 153, 225, 0.1); color: #4299e1; }
+    
+    .amount-cell {
+        text-align: right;
+    }
+    
+    .unit-price {
+        color: #718096;
+        font-size: 0.9rem;
+    }
+    
+    .subtotal {
+        font-weight: 700;
+        color: #2d3748;
+        font-size: 1.1rem;
+    }
+    
+    .table-summary {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        padding: 1.5rem;
+    }
+    
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        font-size: 1rem;
+    }
+    
+    .summary-label {
+        color: #718096;
+        font-weight: 500;
+    }
+    
+    .summary-value {
+        color: #2d3748;
+        font-weight: 600;
+    }
+    
+    .summary-row.total {
+        border-top: 2px solid #e2e8f0;
+        margin-top: 0.75rem;
+        padding-top: 1rem;
+        font-size: 1.2rem;
+    }
+    
+    .summary-row.total .summary-label {
+        color: #2d3748;
+        font-weight: 700;
+    }
+    
+    .summary-row.total .summary-value {
+        color: #48bb78;
+        font-weight: 800;
+        font-size: 1.5rem;
+    }
+    
+    .timeline-container {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        margin-top: 2rem;
+    }
+    
+    .timeline {
+        position: relative;
+        padding-left: 2rem;
+        margin-top: 1.5rem;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #e2e8f0;
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 1.5rem;
+        padding-left: 1.5rem;
+    }
+    
+    .timeline-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -9px;
+        top: 0;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: white;
+        border: 3px solid #667eea;
+    }
+    
+    .timeline-date {
+        font-size: 0.85rem;
+        color: #718096;
+        margin-bottom: 0.25rem;
+    }
+    
+    .timeline-content {
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 1rem;
+        border-left: 3px solid #667eea;
+    }
+    
+    .payment-method-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+        border-radius: 20px;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+    
+    .payment-method-badge i {
+        font-size: 1rem;
+    }
+    
+    .related-sales {
+        margin-top: 2rem;
+    }
+    
+    .related-sale-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 0.75rem;
+        transition: all 0.3s ease;
+    }
+    
+    .related-sale-card:hover {
+        border-color: #667eea;
+        transform: translateX(5px);
+    }
+    
+    .related-sale-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .related-sale-id {
+        font-weight: 600;
+        color: #667eea;
+    }
+    
+    .related-sale-amount {
+        font-weight: 600;
+        color: #48bb78;
+    }
+    
+    .related-sale-date {
+        font-size: 0.85rem;
+        color: #718096;
+    }
+    
+    @media (max-width: 768px) {
+        .client-info-grid,
+        .client-stats {
+            grid-template-columns: 1fr;
+        }
+        
+        .table-header-actions {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: stretch;
+        }
+        
+        .action-buttons-group {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .action-btn {
+            flex: 1;
+            justify-content: center;
+            min-width: 120px;
+        }
+        
+        .articles-table {
+            font-size: 0.9rem;
+        }
+        
+        .articles-table thead th,
+        .articles-table tbody td {
+            padding: 1rem 0.75rem;
+        }
+    }
+</style>
 {% endblock %}
 
-{% block page_subtitle %}Détails de la transaction du {{ vente.date_vente|date:"d/m/Y" }}{% endblock %}
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'ventes:vente_list' %}">Ventes</a></li>
+        <li class="breadcrumb-item active">Vente #{{ vente.numero_vente|default:vente.id|stringformat:"06d" }}</li>
+    </ol>
+</nav>
+{% endblock %}
 
-{% block content %}
-<div class="row">
-    <div class="col-lg-4">
-        <div class="card shadow-sm border-0 mb-4">
-            <div class="card-header bg-white py-3">
-                <h5 class="mb-0 fw-bold">Informations</h5>
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <label class="text-muted small d-block">Client</label>
-                    <span class="fw-bold">
-                        {% if vente.client %}
-                        {{ vente.client.prenom }} {{ vente.client.nom }}
-                        {% else %}
-                        Passant
-                        {% endif %}
-                    </span>
-                </div>
-                <div class="mb-3">
-                    <label class="text-muted small d-block">Date et Heure</label>
-                    <span>{{ vente.date_vente|date:"d/m/Y H:i" }}</span>
-                </div>
-                <div class="mb-3">
-                    <label class="text-muted small d-block">Montant Total</label>
-                    <span class="h4 fw-bold text-primary">{{ vente.montant_total }} FCFA</span>
-                </div>
-                {% if vente.note %}
-                <div class="mb-0">
-                    <label class="text-muted small d-block">Note</label>
-                    <p class="mb-0 small">{{ vente.note }}</p>
-                </div>
-                {% endif %}
-                <hr>
-                <div class="d-grid">
-                    <button class="btn btn-outline-secondary" onclick="window.print()">
-                        <i class="fas fa-print me-2"></i>Imprimer le reçu
-                    </button>
-                </div>
+{% block page_title %}
+<div class="sale-detail-header">
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <span class="sale-status-badge completed">
+                <i class="fas fa-check-circle"></i>
+                Vente complétée
+            </span>
+            <h1 class="h2 mb-2">
+                <i class="fas fa-file-invoice-dollar me-2"></i>
+                Vente #{{ vente.numero_vente|default:vente.id|stringformat:"06d" }}
+            </h1>
+            <p class="mb-0 opacity-75">
+                Transaction du {{ vente.date_vente|date:"d F Y" }} à {{ vente.date_vente|date:"H:i" }}
+            </p>
+        </div>
+        <div class="text-end">
+            <div class="h1 text-white mb-2">{{ vente.montant_total|floatformat:0|intcomma }} FCFA</div>
+            <div class="payment-method-badge">
+                <i class="fas fa-{{ vente.get_moyen_paiement_icon|default:'credit-card' }}"></i>
+                {{ vente.get_moyen_paiement_display|default:"Espèce" }}
             </div>
         </div>
     </div>
-    
-    <div class="col-lg-8">
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-white py-3">
-                <h5 class="mb-0 fw-bold">Articles vendus</h5>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Colonne gauche : Informations client et vente -->
+    <div class="col-lg-4">
+        <!-- Informations client -->
+        <div class="info-card mb-4">
+            <div class="card-title">
+                <i class="fas fa-user"></i>
+                Informations client
             </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th class="ps-4">Désignation</th>
-                                <th class="text-center">Type</th>
-                                <th class="text-center">Prix Unitaire</th>
-                                <th class="text-center">Quantité</th>
-                                <th class="text-end pe-4">Sous-total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for ligne in vente.lignes.all %}
-                            <tr>
-                                <td class="ps-4 fw-medium">{{ ligne.article_nom }}</td>
-                                <td class="text-center">
-                                    <span class="badge bg-light text-dark">{{ ligne.article_type|capfirst }}</span>
-                                </td>
-                                <td class="text-center">{{ ligne.prix_unitaire }} FCFA</td>
-                                <td class="text-center">{{ ligne.quantite }}</td>
-                                <td class="text-end pe-4 fw-bold">{{ ligne.sous_total }} FCFA</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                        <tfoot class="table-light">
-                            <tr>
-                                <td colspan="4" class="text-end fw-bold">TOTAL</td>
-                                <td class="text-end pe-4 fw-bold text-primary h5 mb-0">{{ vente.montant_total }} FCFA</td>
-                            </tr>
-                        </tfoot>
-                    </table>
+            
+            {% if vente.client %}
+            <div class="text-center">
+                <div class="client-avatar-large">
+                    {{ vente.client.prenom|first|upper }}{{ vente.client.nom|first|upper }}
+                </div>
+                <h4 class="mb-1">{{ vente.client.prenom }} {{ vente.client.nom }}</h4>
+                {% if vente.client.email %}
+                <p class="text-muted small mb-3">{{ vente.client.email }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="client-info-grid">
+                {% if vente.client.telephone %}
+                <div class="client-contact-item">
+                    <i class="fas fa-phone"></i>
+                    {{ vente.client.telephone }}
+                </div>
+                {% endif %}
+                
+                {% if vente.client.adresse %}
+                <div class="client-contact-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    {{ vente.client.adresse|truncatechars:30 }}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="client-stats">
+                <div class="client-stat">
+                    <div class="client-stat-value">{{ total_achats_client|default:0 }}</div>
+                    <div class="client-stat-label">Achats</div>
+                </div>
+                <div class="client-stat">
+                    <div class="client-stat-value">{{ montant_total_client|floatformat:0|intcomma }} FCFA</div>
+                    <div class="client-stat-label">Total dépensé</div>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <div class="client-avatar-large">
+                    <i class="fas fa-user-slash"></i>
+                </div>
+                <h4 class="mb-1">Client passant</h4>
+                <p class="text-muted small mb-3">Aucune information client disponible</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Informations de vente -->
+        <div class="info-card mb-4">
+            <div class="card-title">
+                <i class="fas fa-info-circle"></i>
+                Détails de la vente
+            </div>
+            
+            <div class="info-item">
+                <div class="info-label">
+                    <i class="fas fa-hashtag"></i>
+                    Référence
+                </div>
+                <div class="info-value">#{{ vente.numero_vente|default:vente.id|stringformat:"06d" }}</div>
+            </div>
+            
+            <div class="info-item">
+                <div class="info-label">
+                    <i class="fas fa-calendar"></i>
+                    Date et heure
+                </div>
+                <div class="info-value">{{ vente.date_vente|date:"d F Y à H:i" }}</div>
+            </div>
+            
+            <div class="info-item">
+                <div class="info-label">
+                    <i class="fas fa-credit-card"></i>
+                    Moyen de paiement
+                </div>
+                <div class="info-value">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-{{ vente.get_moyen_paiement_icon|default:'money-bill-wave' }}"></i>
+                        {{ vente.get_moyen_paiement_display|default:"Espèce" }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="info-item">
+                <div class="info-label">
+                    <i class="fas fa-user-tie"></i>
+                    Vendeur
+                </div>
+                <div class="info-value">{{ vente.vendeur.prenom|default:"TAILOR" }} {{ vente.vendeur.nom|default:"COUTURE" }}</div>
+            </div>
+            
+            <div class="info-item">
+                <div class="info-label">
+                    <i class="fas fa-cash-register"></i>
+                    Point de vente
+                </div>
+                <div class="info-value">{{ vente.point_de_vente|default:"Atelier principal" }}</div>
+            </div>
+            
+            {% if vente.note %}
+            <div class="info-item">
+                <div class="info-label">
+                    <i class="fas fa-sticky-note"></i>
+                    Note
+                </div>
+                <div class="info-value small">{{ vente.note }}</div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Ventes liées -->
+        {% if ventes_similaires %}
+        <div class="info-card">
+            <div class="card-title">
+                <i class="fas fa-exchange-alt"></i>
+                Ventes similaires
+            </div>
+            
+            <div class="related-sales">
+                {% for vente_similaire in ventes_similaires|slice:":3" %}
+                <a href="{% url 'ventes:vente_detail' vente_similaire.id %}" class="related-sale-card text-decoration-none">
+                    <div class="related-sale-info">
+                        <div>
+                            <div class="related-sale-id">#{{ vente_similaire.numero_vente|default:vente_similaire.id|stringformat:"06d" }}</div>
+                            <div class="related-sale-date">{{ vente_similaire.date_vente|date:"d/m/Y" }}</div>
+                        </div>
+                        <div class="related-sale-amount">{{ vente_similaire.montant_total|floatformat:0|intcomma }} FCFA</div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Colonne droite : Articles et actions -->
+    <div class="col-lg-8">
+        <!-- Articles vendus -->
+        <div class="articles-table-container">
+            <div class="table-header-actions">
+                <div>
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-shopping-basket me-2"></i>
+                        Articles vendus
+                    </h5>
+                    <p class="mb-0 text-muted small">{{ vente.lignes.count }} article{{ vente.lignes.count|pluralize:"s" }}</p>
+                </div>
+                
+                <div class="action-buttons-group">
+                    <a href="{% url 'ventes:facture' vente.id %}" class="action-btn action-btn-success" target="_blank">
+                        <i class="fas fa-file-invoice"></i> Facture
+                    </a>
+                    <a href="#" class="action-btn action-btn-primary" onclick="window.print()">
+                        <i class="fas fa-print"></i> Imprimer
+                    </a>
+                    <a href="#" class="action-btn action-btn-warning">
+                        <i class="fas fa-exchange-alt"></i> Retour
+                    </a>
+                    <a href="#" class="action-btn action-btn-danger">
+                        <i class="fas fa-trash"></i> Annuler
+                    </a>
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="articles-table">
+                    <thead>
+                        <tr>
+                            <th class="text-start ps-4">Article</th>
+                            <th class="text-center">Type</th>
+                            <th class="text-center">Prix unitaire</th>
+                            <th class="text-center">Quantité</th>
+                            <th class="text-end pe-4">Sous-total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ligne in vente.lignes.all %}
+                        <tr>
+                            <td class="text-start ps-4">
+                                <div class="article-info">
+                                    <div class="article-image">
+                                        <i class="fas fa-{{ ligne.get_article_icon }}"></i>
+                                    </div>
+                                    <div>
+                                        <div class="article-name">{{ ligne.article_nom }}</div>
+                                        {% if ligne.article_code %}
+                                        <div class="article-code">Ref: {{ ligne.article_code }}</div>
+                                        {% endif %}
+                                        {% if ligne.description %}
+                                        <div class="small text-muted mt-1">{{ ligne.description|truncatechars:60 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <span class="type-badge type-{{ ligne.article_type|lower }}">
+                                    {{ ligne.article_type|capfirst }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <div class="amount-cell">
+                                    <div class="unit-price">{{ ligne.prix_unitaire|floatformat:0|intcomma }} FCFA</div>
+                                    {% if ligne.remise > 0 %}
+                                    <div class="small text-danger">-{{ ligne.remise }}%</div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <span class="fw-bold">{{ ligne.quantite }}</span>
+                                {% if ligne.unite %}
+                                <div class="small text-muted">{{ ligne.unite }}</div>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="subtotal">{{ ligne.sous_total|floatformat:0|intcomma }} FCFA</div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Récapitulatif -->
+            <div class="table-summary">
+                <div class="summary-row">
+                    <span class="summary-label">Sous-total</span>
+                    <span class="summary-value">{{ vente.montant_total|floatformat:0|intcomma }} FCFA</span>
+                </div>
+                
+                {% if vente.remise and vente.remise > 0 %}
+                <div class="summary-row">
+                    <span class="summary-label">Remise</span>
+                    <span class="summary-value text-danger">-{{ vente.remise|floatformat:0|intcomma }} FCFA</span>
+                </div>
+                {% endif %}
+                
+                {% if vente.frais_livraison and vente.frais_livraison > 0 %}
+                <div class="summary-row">
+                    <span class="summary-label">Livraison</span>
+                    <span class="summary-value">+{{ vente.frais_livraison|floatformat:0|intcomma }} FCFA</span>
+                </div>
+                {% endif %}
+                
+                {% if vente.taxe and vente.taxe > 0 %}
+                <div class="summary-row">
+                    <span class="summary-label">TVA ({{ vente.taux_taxe }}%)</span>
+                    <span class="summary-value">+{{ vente.taxe|floatformat:0|intcomma }} FCFA</span>
+                </div>
+                {% endif %}
+                
+                <div class="summary-row total">
+                    <span class="summary-label">Total à payer</span>
+                    <span class="summary-value">{{ vente.montant_total|floatformat:0|intcomma }} FCFA</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Chronologie de la vente -->
+        <div class="timeline-container">
+            <h5 class="fw-bold mb-3">
+                <i class="fas fa-history me-2"></i>
+                Historique de la transaction
+            </h5>
+            
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-date">{{ vente.date_vente|date:"d F Y à H:i" }}</div>
+                    <div class="timeline-content">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">Vente créée</h6>
+                                <p class="mb-0 small text-muted">Transaction initiée par {{ vente.vendeur.prenom|default:"le vendeur" }}</p>
+                            </div>
+                            <div class="text-success">
+                                <i class="fas fa-check-circle fa-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if vente.date_paiement %}
+                <div class="timeline-item">
+                    <div class="timeline-date">{{ vente.date_paiement|date:"d F Y à H:i" }}</div>
+                    <div class="timeline-content">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">Paiement reçu</h6>
+                                <p class="mb-0 small text-muted">
+                                    Paiement {{ vente.get_moyen_paiement_display|lower }}
+                                    {% if vente.reference_paiement %}
+                                    - Ref: {{ vente.reference_paiement }}
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="text-success">
+                                <i class="fas fa-money-check-alt fa-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if vente.date_livraison %}
+                <div class="timeline-item">
+                    <div class="timeline-date">{{ vente.date_livraison|date:"d F Y à H:i" }}</div>
+                    <div class="timeline-content">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">Livraison effectuée</h6>
+                                <p class="mb-0 small text-muted">
+                                    {% if vente.adresse_livraison %}
+                                    Livré à {{ vente.adresse_livraison|truncatechars:40 }}
+                                    {% else %}
+                                    Remis en main propre
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="text-success">
+                                <i class="fas fa-truck fa-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="timeline-item">
+                    <div class="timeline-date">Maintenant</div>
+                    <div class="timeline-content">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">Transaction complétée</h6>
+                                <p class="mb-0 small text-muted">Vente finalisée avec succès</p>
+                            </div>
+                            <div class="text-primary">
+                                <i class="fas fa-flag-checkered fa-lg"></i>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animation des cartes
+    const cards = document.querySelectorAll('.info-card, .articles-table-container, .timeline-container');
+    cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+        card.classList.add('animate__animated', 'animate__fadeInUp');
+    });
+    
+    // Gestion de l'impression
+    const printBtn = document.querySelector('.action-btn-primary');
+    if (printBtn) {
+        printBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.print();
+        });
+    }
+    
+    // Confirmation pour l'annulation
+    const cancelBtn = document.querySelector('.action-btn-danger');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (confirm('Êtes-vous sûr de vouloir annuler cette vente ? Cette action est irréversible.')) {
+                window.location.href = this.href;
+            }
+        });
+    }
+    
+    // Copie de la référence de vente
+    const saleRef = document.querySelector('.info-value:first-child');
+    if (saleRef) {
+        saleRef.style.cursor = 'pointer';
+        saleRef.title = 'Cliquer pour copier';
+        saleRef.addEventListener('click', function() {
+            const text = this.textContent.trim();
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Référence copiée !', 'success');
+            });
+        });
+    }
+});
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    const bsToast = new bootstrap.Toast(toast, {
+        autohide: true,
+        delay: 3000
+    });
+    bsToast.show();
+    
+    toast.addEventListener('hidden.bs.toast', function () {
+        toast.remove();
+    });
+}
+
+// Raccourci clavier pour l'impression
+document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+        e.preventDefault();
+        window.print();
+    }
+});
+</script>
+
+<!-- Animation CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+
+<!-- Styles pour l'impression -->
+<style>
+    @media print {
+        .sales-header,
+        .action-buttons-group,
+        .timeline-container,
+        .related-sales,
+        .breadcrumb,
+        .navbar {
+            display: none !important;
+        }
+        
+        body {
+            background: white !important;
+            color: black !important;
+            font-size: 12pt !important;
+        }
+        
+        .info-card,
+        .articles-table-container {
+            box-shadow: none !important;
+            border: 1px solid #ddd !important;
+            page-break-inside: avoid;
+        }
+        
+        .articles-table {
+            font-size: 10pt !important;
+        }
+        
+        .articles-table thead th {
+            background: #666 !important;
+            -webkit-print-color-adjust: exact;
+        }
+        
+        .summary-row.total .summary-value {
+            color: black !important;
+            -webkit-print-color-adjust: exact;
+        }
+        
+        @page {
+            margin: 0.5cm;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            page-break-after: avoid;
+        }
+        
+        table {
+            page-break-inside: avoid;
+        }
+    }
+</style>
 {% endblock %}

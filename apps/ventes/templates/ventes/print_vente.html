@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reçu Vente #{{ vente.id }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+            line-height: 1.6;
+            background: white;
+        }
+        
+        .receipt-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: white;
+        }
+        
+        .receipt-header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+        }
+        
+        .receipt-title {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+        
+        .receipt-subtitle {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .receipt-number {
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        
+        .receipt-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+            font-size: 13px;
+        }
+        
+        .receipt-info-block h5 {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #666;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+        
+        .receipt-info-block p {
+            margin: 4px 0;
+        }
+        
+        .receipt-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 30px 0;
+            font-size: 13px;
+        }
+        
+        .receipt-table thead {
+            background: #f5f5f5;
+            border-top: 1px solid #333;
+            border-bottom: 1px solid #333;
+        }
+        
+        .receipt-table thead th {
+            padding: 10px 8px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .receipt-table tbody td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .receipt-table tbody tr:last-child td {
+            border-bottom: 1px solid #333;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .receipt-totals {
+            margin: 30px 0;
+            display: flex;
+            justify-content: flex-end;
+            width: 100%;
+        }
+        
+        .totals-section {
+            width: 300px;
+            font-size: 13px;
+        }
+        
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 8px 0;
+        }
+        
+        .total-row.grand-total {
+            border-top: 2px solid #333;
+            border-bottom: 2px solid #333;
+            font-size: 16px;
+            font-weight: 800;
+            padding: 12px 0;
+            margin-top: 15px;
+        }
+        
+        .receipt-notes {
+            margin: 30px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .receipt-notes strong {
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        .receipt-footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        @media print {
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            .receipt-container {
+                padding: 0;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt-container">
+        <div class="receipt-header">
+            <div class="receipt-title">ATELIER TAILOR</div>
+            <div class="receipt-subtitle">Tailleur - Confection Textile</div>
+            <div class="receipt-number">REÇU DE VENTE #{{ vente.id }}</div>
+        </div>
+        
+        <div class="receipt-info">
+            <div class="receipt-info-block">
+                <h5>Vendeur</h5>
+                <p>ATELIER TAILOR</p>
+                <p>Tailleur Professionnel</p>
+            </div>
+            
+            <div class="receipt-info-block">
+                <h5>Client</h5>
+                <p><strong>
+                    {% if vente.client %}
+                        {{ vente.client.prenom }} {{ vente.client.nom }}
+                    {% else %}
+                        Passant
+                    {% endif %}
+                </strong></p>
+                {% if vente.client and vente.client.telephone %}
+                <p>{{ vente.client.telephone }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="receipt-info">
+            <div class="receipt-info-block">
+                <h5>Date/Heure</h5>
+                <p>{{ vente.date_vente|date:"d/m/Y H:i" }}</p>
+            </div>
+            
+            <div class="receipt-info-block">
+                <h5>Numéro de Reçu</h5>
+                <p>{{ vente.id }}</p>
+            </div>
+        </div>
+        
+        <table class="receipt-table">
+            <thead>
+                <tr>
+                    <th style="width: 40%;">Désignation</th>
+                    <th style="width: 15%;" class="text-center">Type</th>
+                    <th style="width: 15%;" class="text-right">Prix Unit.</th>
+                    <th style="width: 15%;" class="text-center">Qté</th>
+                    <th style="width: 15%;" class="text-right">Montant</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ligne in vente.lignes.all %}
+                <tr>
+                    <td>{{ ligne.article_nom }}</td>
+                    <td class="text-center">
+                        <span class="badge">{{ ligne.article_type|capfirst }}</span>
+                    </td>
+                    <td class="text-right">{{ ligne.prix_unitaire }}</td>
+                    <td class="text-center">{{ ligne.quantite }}</td>
+                    <td class="text-right"><strong>{{ ligne.sous_total }}</strong></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div class="receipt-totals">
+            <div class="totals-section">
+                <div class="total-row">
+                    <span>Sous-total:</span>
+                    <span>{{ vente.montant_total }} FCFA</span>
+                </div>
+                <div class="total-row grand-total">
+                    <span>TOTAL:</span>
+                    <span>{{ vente.montant_total }} FCFA</span>
+                </div>
+            </div>
+        </div>
+        
+        {% if vente.note %}
+        <div class="receipt-notes">
+            <strong>Remarques:</strong>
+            {{ vente.note }}
+        </div>
+        {% endif %}
+        
+        <div class="receipt-footer">
+            <p>Merci de votre achat!</p>
+            <p>Date d'impression: {{ now|date:"d/m/Y H:i" }}</p>
+        </div>
+    </div>
+    
+    <script>
+        window.addEventListener('load', function() {
+            window.print();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,338 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Facture #{{ vente.id }} - TAILOR{% endblock %}
+
+{% block extra_css %}
+<style>
+    .facture-container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    .facture-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .facture-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 200%;
+        background: rgba(255,255,255,0.1);
+        transform: rotate(30deg);
+        pointer-events: none;
+    }
+    
+    .facture-header-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .facture-logo {
+        font-size: 1.8rem;
+        font-weight: 800;
+        margin-bottom: 2rem;
+    }
+    
+    .facture-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin: 0 0 0.5rem 0;
+    }
+    
+    .facture-number {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin: 0;
+    }
+    
+    .facture-body {
+        padding: 3rem 2rem;
+    }
+    
+    .facture-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 3rem;
+        margin-bottom: 3rem;
+    }
+    
+    .facture-section h6 {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        color: #718096;
+        font-weight: 700;
+        letter-spacing: 1px;
+        margin-bottom: 1rem;
+    }
+    
+    .facture-section p {
+        margin: 0.25rem 0;
+        color: #2d3748;
+    }
+    
+    .facture-table {
+        width: 100%;
+        margin: 2rem 0;
+        border-collapse: collapse;
+    }
+    
+    .facture-table thead {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-top: 2px solid #e2e8f0;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .facture-table thead th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: #2d3748;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .facture-table tbody td {
+        padding: 1rem;
+        border-bottom: 1px solid #e2e8f0;
+        color: #4a5568;
+    }
+    
+    .facture-table tbody tr:last-child td {
+        border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .text-right {
+        text-align: right;
+    }
+    
+    .facture-totals {
+        display: grid;
+        grid-template-columns: 1fr 300px;
+        gap: 2rem;
+        margin: 3rem 0;
+    }
+    
+    .totals-box {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 2rem;
+    }
+    
+    .total-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        font-size: 0.95rem;
+    }
+    
+    .total-row.grand-total {
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: #667eea;
+        padding-top: 1rem;
+        border-top: 2px solid #e2e8f0;
+        margin-top: 1rem;
+    }
+    
+    .facture-footer {
+        background: #f8fafc;
+        padding: 2rem;
+        border-top: 1px solid #e2e8f0;
+        text-align: center;
+        color: #718096;
+        font-size: 0.9rem;
+    }
+    
+    .facture-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding: 2rem;
+        background: white;
+        border-top: 1px solid #e2e8f0;
+    }
+    
+    .btn-print {
+        flex: 1;
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-print:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(102, 126, 234, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-back {
+        flex: 1;
+        padding: 0.75rem 1.5rem;
+        background: white;
+        color: #667eea;
+        border: 2px solid #667eea;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-back:hover {
+        background: #667eea;
+        color: white;
+        text-decoration: none;
+    }
+    
+    @media print {
+        .facture-actions {
+            display: none;
+        }
+        .facture-container {
+            box-shadow: none;
+            border-radius: 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="facture-container">
+    <div class="facture-header">
+        <div class="facture-header-content">
+            <div class="facture-logo">
+                <i class="fas fa-scissors" style="margin-right: 0.5rem;"></i>TAILOR
+            </div>
+            <h1 class="facture-title">FACTURE</h1>
+            <p class="facture-number">Facture #{{ vente.id }}</p>
+        </div>
+    </div>
+    
+    <div class="facture-body">
+        <div class="facture-row">
+            <div class="facture-section">
+                <h6><i class="fas fa-building me-2"></i>De</h6>
+                <p><strong>ATELIER TAILOR</strong></p>
+                <p>Tailleur - Confection Textile</p>
+            </div>
+            
+            <div class="facture-section">
+                <h6><i class="fas fa-user me-2"></i>Facturation À</h6>
+                <p><strong>
+                    {% if vente.client %}
+                        {{ vente.client.prenom }} {{ vente.client.nom }}
+                    {% else %}
+                        Client Passant
+                    {% endif %}
+                </strong></p>
+                {% if vente.client %}
+                <p>{{ vente.client.telephone|default:"" }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="facture-row">
+            <div class="facture-section">
+                <h6><i class="fas fa-calendar me-2"></i>Dates</h6>
+                <p><strong>Date de facture:</strong> {{ vente.date_vente|date:"d/m/Y H:i" }}</p>
+            </div>
+            
+            <div class="facture-section">
+                <h6><i class="fas fa-file-invoice me-2"></i>Informations</h6>
+                <p><strong>Numéro de facture:</strong> {{ vente.id }}</p>
+            </div>
+        </div>
+        
+        <table class="facture-table">
+            <thead>
+                <tr>
+                    <th>Désignation</th>
+                    <th class="text-center" style="width: 100px;">Type</th>
+                    <th class="text-right" style="width: 120px;">Prix Unitaire</th>
+                    <th class="text-center" style="width: 80px;">Quantité</th>
+                    <th class="text-right" style="width: 120px;">Montant</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ligne in vente.lignes.all %}
+                <tr>
+                    <td>{{ ligne.article_nom }}</td>
+                    <td class="text-center">
+                        <span class="badge bg-light text-dark" style="font-size: 0.8rem;">
+                            {{ ligne.article_type|capfirst }}
+                        </span>
+                    </td>
+                    <td class="text-right">{{ ligne.prix_unitaire }} FCFA</td>
+                    <td class="text-center">{{ ligne.quantite }}</td>
+                    <td class="text-right"><strong>{{ ligne.sous_total }} FCFA</strong></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div class="facture-totals">
+            <div></div>
+            <div class="totals-box">
+                <div class="total-row">
+                    <span>Sous-total:</span>
+                    <span>{{ vente.montant_total }} FCFA</span>
+                </div>
+                <div class="total-row grand-total">
+                    <span>TOTAL:</span>
+                    <span>{{ vente.montant_total }} FCFA</span>
+                </div>
+            </div>
+        </div>
+        
+        {% if vente.note %}
+        <div class="facture-section" style="background: #fffbeb; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #f59e0b;">
+            <h6><i class="fas fa-sticky-note me-2" style="color: #f59e0b;"></i>Remarques</h6>
+            <p>{{ vente.note }}</p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="facture-footer">
+        <p>Merci pour votre achat! Veuillez conserver cette facture pour vos dossiers.</p>
+        <p style="margin: 0;">{{ vente.date_vente|date:"d F Y" }}</p>
+    </div>
+    
+    <div class="facture-actions">
+        <button class="btn-print" onclick="window.print()">
+            <i class="fas fa-print"></i> Imprimer la facture
+        </button>
+        <a href="{% url 'ventes:vente_list' %}" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Retour
+        </a>
+    </div>
+</div>
+{% endblock %}

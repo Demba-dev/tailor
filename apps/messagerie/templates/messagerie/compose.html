@@ -1,0 +1,1096 @@
+{% extends 'base.html' %}
+{% load static widget_tweaks %}
+
+{% block title %}Nouveau message | {{ site_settings.nom_atelier }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .message-compose-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    /* Header avec statistiques */
+    .compose-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .compose-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+    }
+    
+    .header-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .header-title {
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .header-subtitle {
+        font-size: 1rem;
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+    
+    .header-stats {
+        display: flex;
+        gap: 2rem;
+        margin-top: 1.5rem;
+    }
+    
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+    }
+    
+    .stat-info {
+        color: white;
+    }
+    
+    .stat-label {
+        font-size: 0.85rem;
+        opacity: 0.8;
+        margin-bottom: 0.25rem;
+    }
+    
+    .stat-value {
+        font-size: 1.2rem;
+        font-weight: 700;
+    }
+    
+    /* Interface de composition */
+    .compose-card {
+        background: white;
+        border-radius: 20px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+    
+    .compose-toolbar {
+        display: flex;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .toolbar-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .toolbar-btn {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+        color: #475569;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+    }
+    
+    .toolbar-btn:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+        color: #1e293b;
+    }
+    
+    .toolbar-btn.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: #667eea;
+    }
+    
+    .compose-body {
+        padding: 2rem;
+    }
+    
+    /* Champs du formulaire */
+    .form-section {
+        margin-bottom: 2rem;
+        position: relative;
+    }
+    
+    .form-section:last-child {
+        margin-bottom: 0;
+    }
+    
+    .form-label-enhanced {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        color: #475569;
+        margin-bottom: 0.75rem;
+        font-size: 0.95rem;
+    }
+    
+    .form-label-enhanced i {
+        color: #667eea;
+        width: 20px;
+    }
+    
+    .recipient-selector {
+        position: relative;
+    }
+    
+    .recipient-input-wrapper {
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 0.5rem;
+        background: white;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+        min-height: 48px;
+    }
+    
+    .recipient-input-wrapper:focus-within {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .recipient-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.375rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .recipient-tag button {
+        background: none;
+        border: none;
+        color: white;
+        opacity: 0.7;
+        cursor: pointer;
+        padding: 0;
+        width: 16px;
+        height: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .recipient-tag button:hover {
+        opacity: 1;
+    }
+    
+    .recipient-input {
+        border: none;
+        outline: none;
+        padding: 0.5rem;
+        flex: 1;
+        min-width: 150px;
+        font-size: 0.95rem;
+        background: transparent;
+    }
+    
+    .recipient-suggestions {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        margin-top: 0.5rem;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        max-height: 300px;
+        overflow-y: auto;
+        display: none;
+    }
+    
+    .recipient-suggestion {
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .recipient-suggestion:hover {
+        background: #f8fafc;
+    }
+    
+    .suggestion-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #0369a1;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    
+    .suggestion-info {
+        flex: 1;
+    }
+    
+    .suggestion-name {
+        font-weight: 500;
+        color: #1e293b;
+    }
+    
+    .suggestion-email {
+        font-size: 0.8rem;
+        color: #64748b;
+    }
+    
+    /* Champ sujet */
+    .subject-input {
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 0.875rem 1rem;
+        font-size: 1rem;
+        width: 100%;
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    .subject-input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    /* Éditeur de texte riche */
+    .editor-toolbar {
+        display: flex;
+        gap: 0.5rem;
+        padding: 1rem;
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        border-radius: 12px 12px 0 0;
+    }
+    
+    .editor-btn {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #475569;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .editor-btn:hover {
+        background: #f1f5f9;
+        color: #1e293b;
+    }
+    
+    .editor-btn.active {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+    
+    .editor-content {
+        min-height: 300px;
+        border: 2px solid #e2e8f0;
+        border-radius: 0 0 12px 12px;
+        padding: 1.5rem;
+        font-size: 1rem;
+        line-height: 1.6;
+        background: white;
+        transition: all 0.3s ease;
+    }
+    
+    .editor-content:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        outline: none;
+    }
+    
+    .editor-content[contenteditable="true"]:empty:before {
+        content: "Composez votre message ici...";
+        color: #94a3b8;
+        font-style: italic;
+    }
+    
+    /* Pied de page */
+    .compose-footer {
+        padding: 1.5rem 2rem;
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .attachment-section {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .attachments-list {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .attachment-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: white;
+        border: 1px solid #e2e8f0;
+        padding: 0.375rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        color: #475569;
+    }
+    
+    .attachment-tag button {
+        background: none;
+        border: none;
+        color: #94a3b8;
+        cursor: pointer;
+        padding: 0;
+        width: 16px;
+        height: 16px;
+    }
+    
+    .btn-attach {
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        color: #475569;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-attach:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+        color: #1e293b;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .btn-cancel {
+        background: white;
+        color: #64748b;
+        border: 2px solid #e2e8f0;
+        padding: 0.75rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .btn-cancel:hover {
+        background: #f8fafc;
+        color: #475569;
+        border-color: #cbd5e1;
+    }
+    
+    .btn-send {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn-send:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-send::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: 0.5s;
+    }
+    
+    .btn-send:hover::before {
+        left: 100%;
+    }
+    
+    /* Modal d'aperçu */
+    .preview-modal .modal-content {
+        border-radius: 20px;
+        overflow: hidden;
+        border: none;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    }
+    
+    .preview-modal .modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 1.5rem 2rem;
+    }
+    
+    .preview-modal .modal-body {
+        padding: 2rem;
+    }
+    
+    /* Animations */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .compose-card {
+        animation: fadeIn 0.5s ease forwards;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .compose-header {
+            padding: 1.5rem;
+        }
+        
+        .header-title {
+            font-size: 1.5rem;
+        }
+        
+        .header-stats {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .compose-body {
+            padding: 1.5rem;
+        }
+        
+        .compose-footer {
+            flex-direction: column;
+            gap: 1.5rem;
+            padding: 1.5rem;
+        }
+        
+        .attachment-section {
+            width: 100%;
+            justify-content: space-between;
+        }
+        
+        .action-buttons {
+            width: 100%;
+        }
+        
+        .btn-cancel, .btn-send {
+            flex: 1;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="message-compose-container">
+    <!-- En-tête avec statistiques -->
+    <div class="compose-header animate__animated animate__fadeIn">
+        <div class="header-content">
+            <h1 class="header-title">
+                <i class="fas fa-paper-plane"></i>
+                Nouveau Message
+            </h1>
+            <p class="header-subtitle">
+                Rédigez et envoyez un message à vos clients ou collaborateurs
+            </p>
+            
+            <div class="header-stats">
+                <div class="stat-item">
+                    <div class="stat-icon">
+                        <i class="fas fa-inbox"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-label">Messages reçus</div>
+                        <div class="stat-value">{{ unread_messages|default:"0" }}</div>
+                    </div>
+                </div>
+                
+                <div class="stat-item">
+                    <div class="stat-icon">
+                        <i class="fas fa-paper-plane"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-label">Messages envoyés</div>
+                        <div class="stat-value">{{ sent_messages|default:"0" }}</div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+    <!-- Interface de composition -->
+    <div class="compose-card">
+        <!-- Barre d'outils -->
+        <div class="compose-toolbar">
+            <div class="toolbar-buttons">
+                <button type="button" class="toolbar-btn active" onclick="formatText('bold')">
+                    <i class="fas fa-bold"></i>
+                </button>
+                <button type="button" class="toolbar-btn" onclick="formatText('italic')">
+                    <i class="fas fa-italic"></i>
+                </button>
+                <button type="button" class="toolbar-btn" onclick="formatText('underline')">
+                    <i class="fas fa-underline"></i>
+                </button>
+                <div class="divider mx-2" style="border-left: 1px solid #e2e8f0; height: 24px;"></div>
+                <button type="button" class="toolbar-btn" onclick="insertList('ul')">
+                    <i class="fas fa-list-ul"></i>
+                </button>
+                <button type="button" class="toolbar-btn" onclick="insertList('ol')">
+                    <i class="fas fa-list-ol"></i>
+                </button>
+                <button type="button" class="toolbar-btn" onclick="insertLink()">
+                    <i class="fas fa-link"></i>
+                </button>
+            </div>
+        </div>
+
+        <form method="post" id="messageForm" enctype="multipart/form-data" class="compose-body">
+            {% csrf_token %}
+            
+            <!-- Destinataire -->
+            <div class="form-section">
+                <label class="form-label-enhanced">
+                    <i class="fas fa-user-friends"></i>
+                    Destinataire
+                </label>
+                
+                <div class="recipient-selector">
+                    {% render_field form.recipient class="form-select form-select-lg" style="border: 2px solid #e2e8f0; border-radius: 12px; padding: 0.875rem 1rem;" %}
+                </div>
+                
+                {% if form.recipient.errors %}
+                <div class="alert alert-danger small mt-2">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    {{ form.recipient.errors }}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Sujet -->
+            <div class="form-section">
+                <label class="form-label-enhanced">
+                    <i class="fas fa-tag"></i>
+                    Sujet
+                </label>
+                
+                <input type="text" 
+                       name="subject" 
+                       id="subjectInput"
+                       class="subject-input" 
+                       placeholder="Objet du message..."
+                       value="{{ form.subject.value|default:'' }}"
+                       required>
+                
+                {% if form.subject.errors %}
+                <div class="alert alert-danger small mt-2">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    {{ form.subject.errors }}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Corps du message -->
+            <div class="form-section">
+                <label class="form-label-enhanced">
+                    <i class="fas fa-edit"></i>
+                    Message
+                </label>
+                
+                <!-- Barre d'outils de l'éditeur -->
+                <div class="editor-toolbar">
+                    <button type="button" class="editor-btn" onclick="execCommand('bold')" title="Gras">
+                        <i class="fas fa-bold"></i>
+                    </button>
+                    <button type="button" class="editor-btn" onclick="execCommand('italic')" title="Italique">
+                        <i class="fas fa-italic"></i>
+                    </button>
+                    <button type="button" class="editor-btn" onclick="execCommand('underline')" title="Souligné">
+                        <i class="fas fa-underline"></i>
+                    </button>
+                    <div class="divider mx-2" style="border-left: 1px solid #e2e8f0; height: 24px;"></div>
+                    <button type="button" class="editor-btn" onclick="execCommand('insertUnorderedList')" title="Liste à puces">
+                        <i class="fas fa-list-ul"></i>
+                    </button>
+                    <button type="button" class="editor-btn" onclick="execCommand('insertOrderedList')" title="Liste numérotée">
+                        <i class="fas fa-list-ol"></i>
+                    </button>
+                    <button type="button" class="editor-btn" onclick="insertLinkModal()" title="Insérer un lien">
+                        <i class="fas fa-link"></i>
+                    </button>
+                    <div class="divider mx-2" style="border-left: 1px solid #e2e8f0; height: 24px;"></div>
+                    <button type="button" class="editor-btn" onclick="execCommand('justifyLeft')" title="Alignement gauche">
+                        <i class="fas fa-align-left"></i>
+                    </button>
+                    <button type="button" class="editor-btn" onclick="execCommand('justifyCenter')" title="Alignement centre">
+                        <i class="fas fa-align-center"></i>
+                    </button>
+                    <button type="button" class="editor-btn" onclick="execCommand('justifyRight')" title="Alignement droit">
+                        <i class="fas fa-align-right"></i>
+                    </button>
+                </div>
+                
+                <!-- Éditeur de contenu -->
+                <div class="editor-content" 
+                     id="messageEditor" 
+                     contenteditable="true"
+                     data-placeholder="Composez votre message ici...">
+                    {{ form.body.value|default:''|safe }}
+                </div>
+                
+                <!-- Champ caché pour le formulaire -->
+                <textarea name="body" id="bodyInput" style="display: none;"></textarea>
+                
+                {% if form.body.errors %}
+                <div class="alert alert-danger small mt-2">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    {{ form.body.errors }}
+                </div>
+                {% endif %}
+            </div>
+        </form>
+
+        <!-- Pied de page avec pièces jointes -->
+        <div class="compose-footer">
+            <div class="attachment-section">
+                <button type="button" class="btn-attach" onclick="document.getElementById('fileInput').click()">
+                    <i class="fas fa-paperclip"></i>
+                    Joindre un fichier
+                </button>
+                <input type="file" id="fileInput" multiple style="display: none;" onchange="handleFiles(event)">
+                
+                <div class="attachments-list" id="attachmentsList">
+                    <!-- Les pièces jointes apparaîtront ici -->
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                <a href="{% url 'messagerie:inbox' %}" class="btn-cancel">
+                    <i class="fas fa-times"></i>
+                    Annuler
+                </a>
+                <button type="button" class="btn-cancel" onclick="previewMessage()">
+                    <i class="fas fa-eye"></i>
+                    Aperçu
+                </button>
+                <button type="submit" form="messageForm" class="btn-send" id="sendButton">
+                    <i class="fas fa-paper-plane"></i>
+                    Envoyer le message
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal d'aperçu -->
+<div class="modal fade preview-modal" id="previewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-eye me-2"></i>
+                    Aperçu du message
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-4">
+                    <h6 class="text-muted small mb-2">Destinataires :</h6>
+                    <div id="previewRecipients" class="d-flex flex-wrap gap-2 mb-3"></div>
+                </div>
+                
+                <div class="mb-4">
+                    <h6 class="text-muted small mb-2">Sujet :</h6>
+                    <h5 id="previewSubject" class="fw-bold"></h5>
+                </div>
+                
+                <div>
+                    <h6 class="text-muted small mb-2">Message :</h6>
+                    <div id="previewBody" class="border rounded p-3 bg-light"></div>
+                </div>
+                
+                <div class="mt-4" id="previewAttachments"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Retour à l'édition</button>
+                <button type="button" class="btn btn-primary" onclick="sendMessage()">Envoyer maintenant</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour insérer un lien -->
+<div class="modal fade" id="linkModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-link me-2"></i>
+                    Insérer un lien
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">URL du lien</label>
+                    <input type="url" id="linkUrl" class="form-control" placeholder="https://example.com">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Texte à afficher</label>
+                    <input type="text" id="linkText" class="form-control" placeholder="Texte du lien">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" onclick="insertLinkFromModal()">Insérer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let attachments = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeEditor();
+    initializeForm();
+    
+    // Focus sur le champ sujet si vide
+    const subjectInput = document.getElementById('subjectInput');
+    if (subjectInput && !subjectInput.value.trim()) {
+        setTimeout(() => {
+            subjectInput.focus();
+        }, 300);
+    }
+});
+
+function initializeEditor() {
+    const editor = document.getElementById('messageEditor');
+    const bodyInput = document.getElementById('bodyInput');
+    
+    if (!editor) return;
+    
+    // Sauvegarder le contenu dans le champ caché
+    editor.addEventListener('input', function() {
+        bodyInput.value = this.innerHTML;
+    });
+    
+    // Initialiser le contenu
+    if (bodyInput.value) {
+        editor.innerHTML = bodyInput.value;
+    }
+}
+
+function execCommand(command, value = null) {
+    document.execCommand(command, false, value);
+    document.getElementById('messageEditor').focus();
+}
+
+function insertLinkModal() {
+    const selection = window.getSelection();
+    const selectedText = selection.toString();
+    
+    if (selectedText) {
+        document.getElementById('linkText').value = selectedText;
+    }
+    
+    const modal = new bootstrap.Modal(document.getElementById('linkModal'));
+    modal.show();
+}
+
+function insertLinkFromModal() {
+    const url = document.getElementById('linkUrl').value;
+    const text = document.getElementById('linkText').value;
+    
+    if (!url) {
+        showNotification('Veuillez saisir une URL', 'error');
+        return;
+    }
+    
+    const linkText = text || url;
+    document.execCommand('createLink', false, url);
+    
+    // Récupérer le lien créé et mettre à jour le texte
+    const selection = window.getSelection();
+    if (selection.anchorNode) {
+        const link = selection.anchorNode.parentElement.closest('a');
+        if (link && linkText !== url) {
+            link.textContent = linkText;
+        }
+    }
+    
+    const modal = bootstrap.Modal.getInstance(document.getElementById('linkModal'));
+    modal.hide();
+    
+    // Réinitialiser les champs
+    document.getElementById('linkUrl').value = '';
+    document.getElementById('linkText').value = '';
+}
+
+function handleFiles(event) {
+    const files = event.target.files;
+    
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        // Vérifier la taille (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            showNotification(`Le fichier ${file.name} dépasse 5MB`, 'error');
+            continue;
+        }
+        
+        attachments.push({
+            id: Date.now() + i,
+            name: file.name,
+            size: formatFileSize(file.size),
+            file: file
+        });
+    }
+    
+    updateAttachmentsList();
+    event.target.value = '';
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function removeAttachment(id) {
+    attachments = attachments.filter(a => a.id !== id);
+    updateAttachmentsList();
+}
+
+function updateAttachmentsList() {
+    const list = document.getElementById('attachmentsList');
+    
+    if (attachments.length === 0) {
+        list.innerHTML = '';
+        return;
+    }
+    
+    list.innerHTML = attachments.map(attachment => `
+        <span class="attachment-tag">
+            <i class="fas fa-paperclip"></i>
+            ${attachment.name} (${attachment.size})
+            <button type="button" onclick="removeAttachment(${attachment.id})">
+                <i class="fas fa-times"></i>
+            </button>
+        </span>
+    `).join('');
+}
+
+function previewMessage() {
+    // Mettre à jour l'aperçu des destinataires
+    const previewRecipients = document.getElementById('previewRecipients');
+    const recipientSelect = document.querySelector('select[name="recipient"]');
+    const selectedOption = recipientSelect.options[recipientSelect.selectedIndex];
+    const recipientName = selectedOption.value ? selectedOption.text : '(Non sélectionné)';
+    
+    previewRecipients.innerHTML = `
+        <span class="badge bg-primary bg-opacity-10 text-primary py-2 px-3">
+            <i class="fas fa-user me-1"></i>
+            ${recipientName}
+        </span>
+    `;
+    
+    // Mettre à jour l'aperçu du sujet
+    const subject = document.getElementById('subjectInput').value;
+    document.getElementById('previewSubject').textContent = subject || '(Sans objet)';
+    
+    // Mettre à jour l'aperçu du corps
+    const body = document.getElementById('messageEditor').innerHTML;
+    document.getElementById('previewBody').innerHTML = body || '<em class="text-muted">Aucun contenu</em>';
+    
+    // Mettre à jour l'aperçu des pièces jointes
+    const previewAttachments = document.getElementById('previewAttachments');
+    if (attachments.length > 0) {
+        previewAttachments.innerHTML = `
+            <h6 class="text-muted small mb-2">Pièces jointes :</h6>
+            <div class="d-flex flex-wrap gap-2">
+                ${attachments.map(attachment => `
+                    <span class="badge bg-secondary bg-opacity-10 text-secondary py-2 px-3">
+                        <i class="fas fa-paperclip me-1"></i>
+                        ${attachment.name}
+                    </span>
+                `).join('')}
+            </div>
+        `;
+    } else {
+        previewAttachments.innerHTML = '';
+    }
+    
+    // Afficher le modal
+    const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+    modal.show();
+}
+
+function sendMessage() {
+    const form = document.getElementById('messageForm');
+    const sendButton = document.getElementById('sendButton');
+    const recipientSelect = document.querySelector('select[name="recipient"]');
+    
+    if (!recipientSelect.value) {
+        showNotification('Veuillez sélectionner un destinataire', 'error');
+        return;
+    }
+    
+    // Mettre à jour le champ body avec le contenu de l'éditeur
+    const bodyInput = document.getElementById('bodyInput');
+    bodyInput.value = document.getElementById('messageEditor').innerHTML;
+    
+    // Afficher l'état de chargement
+    sendButton.innerHTML = `
+        <i class="fas fa-spinner fa-spin"></i>
+        <span>Envoi en cours...</span>
+    `;
+    sendButton.disabled = true;
+    
+    form.submit();
+}
+
+function initializeForm() {
+    const form = document.getElementById('messageForm');
+    
+    form.addEventListener('submit', function(e) {
+        const recipientSelect = document.querySelector('select[name="recipient"]');
+        if (!recipientSelect.value) {
+            e.preventDefault();
+            showNotification('Veuillez sélectionner un destinataire', 'error');
+            return;
+        }
+        
+        // Mettre à jour le champ body
+        const bodyInput = document.getElementById('bodyInput');
+        bodyInput.value = document.getElementById('messageEditor').innerHTML;
+    });
+}
+
+function showNotification(message, type = 'info') {
+    // Créer une notification
+    const notification = document.createElement('div');
+    notification.className = `position-fixed top-0 end-0 m-3 p-3 rounded shadow-lg animate__animated animate__fadeInRight`;
+    notification.style.cssText = `
+        background: ${type === 'error' ? '#fef2f2' : type === 'warning' ? '#fffbeb' : '#f0f9ff'};
+        border: 1px solid ${type === 'error' ? '#fecaca' : type === 'warning' ? '#fde68a' : '#bae6fd'};
+        color: ${type === 'error' ? '#dc2626' : type === 'warning' ? '#d97706' : '#0369a1'};
+        z-index: 9999;
+    `;
+    
+    notification.innerHTML = `
+        <div class="d-flex align-items-center gap-2">
+            <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : type === 'warning' ? 'exclamation-circle' : 'info-circle'}"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Supprimer après 3 secondes
+    setTimeout(() => {
+        notification.classList.add('animate__fadeOutRight');
+        setTimeout(() => notification.remove(), 500);
+    }, 3000);
+}
+
+// Raccourcis clavier
+document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + Entrée pour envoyer
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        sendMessage();
+    }
+    
+    // Ctrl/Cmd + K pour se concentrer sur les destinataires
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        const recipientSelect = document.querySelector('select[name="recipient"]');
+        if (recipientSelect) recipientSelect.focus();
+    }
+});
+</script>
+{% endblock %}

@@ -3,18 +3,21 @@ from .models import TypeHabit
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
 from .forms import TypeHabitForm
 
 
-
+@login_required
 def catalogue_list(request):
     habits = TypeHabit.objects.all()
     return render(request, 'catalogue/catalogue_list.html', {'habits': habits})
 
+@login_required
 def catalogue_detail(request, pk):
     habit = get_object_or_404(TypeHabit, pk=pk)
     return render(request, 'catalogue/catalogue_detail.html', {'habit': habit})
 
+@login_required
 def catalogue_create(request):
     if request.method == 'POST':
         form = TypeHabitForm(request.POST, request.FILES)
@@ -28,6 +31,7 @@ def catalogue_create(request):
     return render(request, 'catalogue/catalogue_form.html', {'form': form, 'title': 'Créer un type d\'habit'})
 
 
+@login_required
 def catalogue_update(request, pk):
     habit = get_object_or_404(TypeHabit, pk=pk)
     if request.method == 'POST':
@@ -41,6 +45,7 @@ def catalogue_update(request, pk):
     
     return render(request, 'catalogue/catalogue_form.html', {'form': form, 'title': 'Modifier type d\'habit'})
 
+@login_required
 def catalogue_import(request):
     if request.method == 'POST' and request.FILES.get('file'):
         csv_file = request.FILES['file']
@@ -60,6 +65,7 @@ def catalogue_import(request):
     
     return render(request, 'catalogue/catalogue_import.html')
 
+@login_required
 @require_POST
 def add_to_favorites(request, pk):
     habit = get_object_or_404(TypeHabit, pk=pk)

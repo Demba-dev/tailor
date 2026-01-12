@@ -1,6 +1,8 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 class Personnel(models.Model):
+    user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='personnel_profile')
     ROLE_CHOICES = (
         ('couturier', 'Couturier'),
         ('apprenti', 'Apprenti'),

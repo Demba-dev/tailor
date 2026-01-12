@@ -5,13 +5,16 @@ from apps.panier.cart import Cart
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
+from django.contrib.auth.decorators import login_required
 
+@login_required
 def commande_list(request):
     commandes = Commande.objects.all()
     return render(request, 'commandes/commande_list.html', {'commandes': commandes})
 
 
 
+@login_required
 def commande_create(request):
     if request.method == 'POST':
         form = CommandeForm(request.POST)
@@ -47,6 +50,7 @@ def commande_create(request):
 
 
 
+@login_required
 def commande_update(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
     if request.method == 'POST':
@@ -58,22 +62,26 @@ def commande_update(request, pk):
         form = CommandeForm(instance=commande)
     return render(request, 'commandes/commande_form.html', {'form': form, 'title': 'Modifier commande'})
 
+@login_required
 def commande_detail(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
     return render(request, 'commandes/commande_detail.html', {'commande': commande})
 
 
 
+@login_required
 def commande_delete(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
     commande.delete()
     return redirect('commandes:commande_list')
 
 
+@login_required
 def commande_print(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
     return render(request, 'commandes/commande_print.html', {'commande': commande})
 
+@login_required
 def commande_duplicate(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
     commande.pk = None
@@ -81,6 +89,7 @@ def commande_duplicate(request, pk):
     messages.success(request, 'Commande dupliquée avec succès')
     return redirect('commandes:commande_list')
 
+@login_required
 @require_GET
 def get_commande_details(request, pk):
     try:

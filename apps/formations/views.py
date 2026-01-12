@@ -1,10 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from .models import Formation
 from .forms import FormationForm
 from apps.personnel.models import Personnel
 
+@login_required
 def formation_list(request):
     formations = Formation.objects.all()
     context = {
@@ -17,6 +19,7 @@ def formation_list(request):
     return render(request, 'formations/formation_list.html', context)
 
 
+@login_required
 def formation_create(request):
     if request.method == 'POST':
         form = FormationForm(request.POST)
@@ -28,6 +31,7 @@ def formation_create(request):
     return render(request, 'formations/formation_form.html', {'form': form, 'title': 'Nouvelle formation'})
 
 
+@login_required
 def formation_update(request, pk):
     formation = get_object_or_404(Formation, pk=pk)
     if request.method == 'POST':
@@ -40,12 +44,14 @@ def formation_update(request, pk):
     return render(request, 'formations/formation_form.html', {'form': form, 'title': 'Modifier formation'})
 
 
+@login_required
 def formation_delete(request, pk):
     formation = get_object_or_404(Formation, pk=pk)
     formation.delete()
     return redirect('formations:formation_list')
 
 
+@login_required
 def formation_detail(request, pk):
     formation = get_object_or_404(Formation, pk=pk)
     participants = formation.participants.all()
@@ -58,6 +64,7 @@ def formation_detail(request, pk):
     return render(request, 'formations/formation_detail.html', context)
 
 
+@login_required
 def formation_participants(request, pk):
     formation = get_object_or_404(Formation, pk=pk)
     
@@ -88,6 +95,7 @@ def formation_participants(request, pk):
     return render(request, 'formations/formation_participants.html', context)
 
 
+@login_required
 def formation_bulk_create(request):
     if request.method == 'POST':
         titles = request.POST.getlist('titre[]')
@@ -110,6 +118,7 @@ def formation_bulk_create(request):
     return render(request, 'formations/formation_bulk_create.html')
 
 
+@login_required
 def formation_template(request):
     if request.method == 'POST':
         template_name = request.POST.get('template_name')

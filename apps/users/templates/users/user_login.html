@@ -1,0 +1,867 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion | {{ site_settings.nom_atelier|default:"TAILOR" }}</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    
+    <style>
+        :root {
+            --atelier-primary: #3b82f6;
+            --atelier-secondary: #8b5cf6;
+            --atelier-dark: #1e293b;
+            --atelier-light: #f8fafc;
+            --atelier-success: #10b981;
+            --atelier-warning: #f59e0b;
+            --gradient-primary: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            --gradient-dark: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            --gradient-light: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            --shadow-subtle: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-medium: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-large: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gradient-light);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Background pattern */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.1) 0px, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.1) 0px, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.05) 0px, transparent 50%);
+            background-size: 600px 600px;
+            z-index: -1;
+        }
+        
+        /* Floating elements */
+        .floating-element {
+            position: fixed;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+            filter: blur(40px);
+            z-index: -1;
+        }
+        
+        .floating-element:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            top: -150px;
+            right: -150px;
+        }
+        
+        .floating-element:nth-child(2) {
+            width: 200px;
+            height: 200px;
+            bottom: -100px;
+            left: -100px;
+        }
+        
+        .login-container {
+            width: 100%;
+            max-width: 1200px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 700px;
+            border-radius: 32px;
+            overflow: hidden;
+            box-shadow: var(--shadow-xl);
+            background: white;
+            position: relative;
+        }
+        
+        /* Hero Section */
+        .login-hero {
+            background: var(--gradient-dark);
+            padding: 4rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 30% 70%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+        }
+        
+        .hero-header {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+        
+        .logo-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--atelier-dark);
+            font-size: 1.5rem;
+            box-shadow: var(--shadow-medium);
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .logo-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            background: linear-gradient(135deg, #fff, #f1f5f9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hero-content {
+            margin-top: 4rem;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .hero-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #fff 30%, #f1f5f9 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+            max-width: 400px;
+        }
+        
+        .hero-features {
+            list-style: none;
+            padding: 0;
+            margin: 2rem 0;
+        }
+        
+        .hero-features li {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+            opacity: 0.9;
+        }
+        
+        .hero-features li i {
+            color: var(--atelier-success);
+            font-size: 1.2rem;
+        }
+        
+        .hero-footer {
+            font-size: 0.85rem;
+            opacity: 0.7;
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* Login Form Section */
+        .login-form-section {
+            padding: 4rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: white;
+            position: relative;
+        }
+        
+        .form-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .form-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--atelier-dark);
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-subtitle {
+            color: #64748b;
+            font-size: 1rem;
+        }
+        
+        /* Form Styles */
+        .form-card {
+            background: white;
+            border-radius: 20px;
+            padding: 0;
+            max-width: 400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+        
+        .form-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            color: var(--atelier-dark);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .form-label i {
+            color: var(--atelier-primary);
+            width: 20px;
+        }
+        
+        .input-group-enhanced {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow-subtle);
+            transition: all 0.3s ease;
+            border: 2px solid #e2e8f0;
+        }
+        
+        .input-group-enhanced:focus-within {
+            border-color: var(--atelier-primary);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .input-group-text-enhanced {
+            background: #f8fafc;
+            border: none;
+            padding: 0.875rem 1.25rem;
+            color: #64748b;
+        }
+        
+        .form-control-enhanced {
+            border: none;
+            padding: 0.875rem 1.25rem;
+            font-size: 1rem;
+            background: white;
+            color: var(--atelier-dark);
+        }
+        
+        .form-control-enhanced:focus {
+            box-shadow: none;
+            background: white;
+        }
+        
+        .form-control-enhanced::placeholder {
+            color: #94a3b8;
+        }
+        
+        /* Password Toggle */
+        .password-toggle {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            z-index: 10;
+            transition: color 0.3s ease;
+        }
+        
+        .password-toggle:hover {
+            color: var(--atelier-primary);
+        }
+        
+        /* Error Message */
+        .error-message {
+            background: linear-gradient(135deg, #fef2f2, #fee2e2);
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.9rem;
+            animation: shake 0.5s ease;
+        }
+        
+        /* Login Button */
+        .btn-login {
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 1rem;
+            font-weight: 600;
+            font-size: 1rem;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+        
+        .btn-login::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+        }
+        
+        .btn-login:hover::before {
+            left: 100%;
+        }
+        
+        .btn-login:active {
+            transform: translateY(0);
+        }
+        
+        /* Additional Options */
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+        }
+        
+        .form-check {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .form-check-input {
+            width: 18px;
+            height: 18px;
+            border-radius: 6px;
+            border: 2px solid #cbd5e1;
+            cursor: pointer;
+        }
+        
+        .form-check-input:checked {
+            background-color: var(--atelier-primary);
+            border-color: var(--atelier-primary);
+        }
+        
+        .form-check-label {
+            color: #64748b;
+            cursor: pointer;
+        }
+        
+        .forgot-password {
+            color: var(--atelier-primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .forgot-password:hover {
+            color: var(--atelier-secondary);
+            text-decoration: underline;
+        }
+        
+        /* Divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 2rem 0;
+            color: #94a3b8;
+            font-size: 0.85rem;
+        }
+        
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e2e8f0;
+        }
+        
+        .divider span {
+            padding: 0 1rem;
+        }
+        
+        /* Footer */
+        .login-footer {
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e2e8f0;
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+        
+        .version-info {
+            background: #f1f5f9;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        /* Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .login-container {
+                grid-template-columns: 1fr;
+                max-width: 500px;
+                min-height: auto;
+            }
+            
+            .login-hero {
+                padding: 3rem 2rem;
+                display: none; /* Cache le hero sur mobile pour plus de simplicité */
+            }
+            
+            .login-form-section {
+                padding: 3rem 2rem;
+            }
+            
+            .hero-title {
+                font-size: 2.5rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .login-form-section {
+                padding: 2rem 1.5rem;
+            }
+            
+            .form-title {
+                font-size: 1.8rem;
+            }
+            
+            .form-options {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+        }
+        
+        /* Dark Mode Support */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --atelier-light: #0f172a;
+                --gradient-light: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            }
+            
+            body {
+                background: var(--gradient-light);
+            }
+            
+            .login-form-section {
+                background: #1e293b;
+            }
+            
+            .form-title {
+                color: #f1f5f9;
+            }
+            
+            .form-subtitle {
+                color: #94a3b8;
+            }
+            
+            .input-group-enhanced {
+                border-color: #334155;
+                background: #0f172a;
+            }
+            
+            .input-group-text-enhanced {
+                background: #0f172a;
+                color: #94a3b8;
+            }
+            
+            .form-control-enhanced {
+                background: #0f172a;
+                color: #f1f5f9;
+            }
+            
+            .form-control-enhanced::placeholder {
+                color: #64748b;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating background elements -->
+    <div class="floating-element"></div>
+    <div class="floating-element"></div>
+
+    <div class="login-container animate__animated animate__fadeIn">
+        <!-- Hero Section -->
+        <div class="login-hero">
+            <div class="hero-header">
+                <div class="logo-container">
+                    <div class="logo-icon">
+                        {% if site_settings.logo %}
+                            <img src="{{ site_settings.logo.url }}" alt="Logo" style="height: 40px; width: auto; border-radius: 8px;">
+                        {% else %}
+                            <i class="fas fa-scissors"></i>
+                        {% endif %}
+                    </div>
+                    <div class="logo-text">{{ site_settings.nom_atelier|default:"TAILOR" }}</div>
+                </div>
+            </div>
+            
+            <div class="hero-content">
+                <h1 class="hero-title">L'art de la couture à votre portée</h1>
+                <p class="hero-subtitle">
+                    Générez facilement les factures, suivez les paiements, gérez les fournisseurs 
+                    et optimisez la gestion de votre atelier de couture.
+                </p>
+                
+                <ul class="hero-features">
+                    <li><i class="fas fa-check-circle"></i> Gestion complète des commandes</li>
+                    <li><i class="fas fa-check-circle"></i> Suivi des paiements en temps réel</li>
+                    <li><i class="fas fa-check-circle"></i> Catalogue de modèles et tissus</li>
+                    <li><i class="fas fa-check-circle"></i> Rapports financiers détaillés</li>
+                </ul>
+            </div>
+            
+            <div class="hero-footer">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Sécurité garantie</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>Sauvegarde automatique</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Login Form Section -->
+        <div class="login-form-section">
+            <div class="form-header">
+                <h2 class="form-title">Bienvenue</h2>
+                <p class="form-subtitle">Connectez-vous pour gérer votre atelier</p>
+            </div>
+            
+            <div class="form-card">
+                {% if form.errors %}
+                <div class="error-message animate__animated animate__shakeX">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div>
+                        <strong>Identifiants incorrects</strong>
+                        <div class="small">Veuillez vérifier votre nom d'utilisateur et mot de passe</div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <form method="post" id="loginForm">
+                    {% csrf_token %}
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-user"></i>
+                            Nom d'utilisateur
+                        </label>
+                        <div class="input-group-enhanced">
+                            <span class="input-group-text-enhanced">
+                                <i class="fas fa-user text-muted"></i>
+                            </span>
+                            <input type="text" 
+                                   name="username" 
+                                   class="form-control-enhanced" 
+                                   placeholder="Entrez votre nom d'utilisateur"
+                                   required
+                                   autocomplete="username"
+                                   autofocus>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-lock"></i>
+                            Mot de passe
+                        </label>
+                        <div class="input-group-enhanced">
+                            <span class="input-group-text-enhanced">
+                                <i class="fas fa-lock text-muted"></i>
+                            </span>
+                            <input type="password" 
+                                   name="password" 
+                                   id="passwordInput"
+                                   class="form-control-enhanced" 
+                                   placeholder="••••••••"
+                                   required
+                                   autocomplete="current-password">
+                            <button type="button" class="password-toggle" id="togglePassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-options">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="rememberMe" name="remember_me">
+                            <label class="form-check-label" for="rememberMe">
+                                Se souvenir de moi
+                            </label>
+                        </div>
+                        <a href="#" class="forgot-password">
+                            Mot de passe oublié ?
+                        </a>
+                    </div>
+                    
+                    <button type="submit" class="btn-login" id="loginButton">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span>Se connecter</span>
+                    </button>
+                    
+                    <div class="divider">
+                        <span>Ou</span>
+                    </div>
+                    
+                    <div class="text-center">
+                        <p class="small text-muted mb-2">Vous n'avez pas de compte ?</p>
+                        <a href="#" class="btn btn-outline-primary" style="width: 100%; border-radius: 12px; padding: 0.875rem;">
+                            <i class="fas fa-user-plus me-2"></i>Demander un accès
+                        </a>
+                    </div>
+                </form>
+                
+                <div class="login-footer">
+                    <p class="mb-2">
+                        © 2026 {{ site_settings.nom_atelier|default:"TAILOR ERP" }}. Tous droits réservés.
+                    </p>
+                    <div class="version-info">
+                        <i class="fas fa-code-branch"></i>
+                        <span>Version 2.5.1</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Password toggle functionality
+            const togglePassword = document.getElementById('togglePassword');
+            const passwordInput = document.getElementById('passwordInput');
+            
+            if (togglePassword && passwordInput) {
+                togglePassword.addEventListener('click', function() {
+                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordInput.setAttribute('type', type);
+                    
+                    // Toggle icon
+                    const icon = this.querySelector('i');
+                    if (type === 'text') {
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                    } else {
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-eye');
+                    }
+                });
+            }
+            
+            // Form submission animation
+            const loginForm = document.getElementById('loginForm');
+            const loginButton = document.getElementById('loginButton');
+            
+            if (loginForm) {
+                loginForm.addEventListener('submit', function(e) {
+                    // Add loading state to button
+                    if (loginButton) {
+                        const originalContent = loginButton.innerHTML;
+                        loginButton.innerHTML = `
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>Connexion en cours...</span>
+                        `;
+                        loginButton.disabled = true;
+                        
+                        // Reset button after 5 seconds if something goes wrong
+                        setTimeout(() => {
+                            loginButton.innerHTML = originalContent;
+                            loginButton.disabled = false;
+                        }, 5000);
+                    }
+                });
+            }
+            
+            // Input focus effects
+            const inputs = document.querySelectorAll('.form-control-enhanced');
+            inputs.forEach(input => {
+                input.addEventListener('focus', function() {
+                    this.parentElement.classList.add('focused');
+                });
+                
+                input.addEventListener('blur', function() {
+                    this.parentElement.classList.remove('focused');
+                });
+            });
+            
+            // Add animation to form elements
+            const formGroups = document.querySelectorAll('.form-group');
+            formGroups.forEach((group, index) => {
+                group.style.animationDelay = `${index * 0.1}s`;
+                group.classList.add('animate__animated', 'animate__fadeInUp');
+            });
+            
+            // Auto-focus username field if empty
+            const usernameInput = document.querySelector('input[name="username"]');
+            if (usernameInput && !usernameInput.value.trim()) {
+                setTimeout(() => {
+                    usernameInput.focus();
+                }, 500);
+            }
+            
+            // Check if there are any form errors
+            const errorMessage = document.querySelector('.error-message');
+            if (errorMessage) {
+                // Add shake animation to error message
+                errorMessage.classList.add('animate__animated', 'animate__shakeX');
+                
+                // Focus on username field if there's an error
+                if (usernameInput) {
+                    usernameInput.focus();
+                }
+            }
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // Ctrl+Enter to submit form
+                if (e.ctrlKey && e.key === 'Enter') {
+                    if (loginForm) {
+                        loginForm.submit();
+                    }
+                }
+                
+                // Escape to clear form
+                if (e.key === 'Escape') {
+                    if (loginForm) {
+                        loginForm.reset();
+                    }
+                }
+            });
+            
+            // Browser autofill detection
+            setTimeout(() => {
+                const inputs = document.querySelectorAll('input');
+                inputs.forEach(input => {
+                    if (input.value) {
+                        input.parentElement.classList.add('has-value');
+                    }
+                });
+            }, 100);
+        });
+        
+        // Detect prefers-color-scheme
+        const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+        
+        function updateTheme() {
+            if (prefersDarkScheme.matches) {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+        }
+        
+        prefersDarkScheme.addListener(updateTheme);
+        updateTheme();
+    </script>
+</body>
+</html>

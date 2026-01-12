@@ -7,6 +7,7 @@ from .views.client_views import (
     client_delete,
     send_message
 )
+from . import views
 
 app_name = 'clients'
 
@@ -17,4 +18,5 @@ urlpatterns = [
     path('<int:pk>/edit/', client_update, name='client_update'),
     path('<int:pk>/delete/', client_delete, name='client_delete'),
     path('<int:pk>/send-message/', send_message, name='send_message'),
+    path('api/search/', views.search_clients, name='search_clients'),
 ]

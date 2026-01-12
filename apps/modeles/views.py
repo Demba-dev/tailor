@@ -3,8 +3,10 @@ from .models import Modele
 from .forms import ModeleForm
 from apps.catalogue.models import TypeHabit
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 
 
+@login_required
 def modele_list(request):
     modeles = Modele.objects.filter(actif=True)
     type_filter = request.GET.get('type')
@@ -26,12 +28,14 @@ def modele_list(request):
     return render(request, 'modeles/modele_list.html', context)
 
 
+@login_required
 def modele_detail(request, pk):
     modele = get_object_or_404(Modele, pk=pk)
     context = {'modele': modele}
     return render(request, 'modeles/modele_detail.html', context)
 
 
+@login_required
 def modele_create(request):
     if request.method == 'POST':
         form = ModeleForm(request.POST, request.FILES)
@@ -49,6 +53,7 @@ def modele_create(request):
     return render(request, 'modeles/modele_form.html', context)
 
 
+@login_required
 def modele_update(request, pk):
     modele = get_object_or_404(Modele, pk=pk)
     
@@ -69,6 +74,7 @@ def modele_update(request, pk):
     return render(request, 'modeles/modele_form.html', context)
 
 
+@login_required
 def modele_delete(request, pk):
     modele = get_object_or_404(Modele, pk=pk)
     modele.delete()

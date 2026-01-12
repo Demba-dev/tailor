@@ -20,7 +20,7 @@ class TypeHabitForm(forms.ModelForm):
                 'class': 'form-control',
                 'step': '0.01',
                 'min': '0',
-                'placeholder': 'Prix standard en euros'
+                'placeholder': 'Prix standard en cfa'
             }),
             'image': forms.FileInput(attrs={
                 'class': 'form-control',

@@ -1,12 +1,13 @@
 from django.shortcuts import render
 
-# Create your views here.
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
 from .models import Personnel
 from .forms import PersonnelForm
 
 from apps.commandes.models import Commande
 
+@login_required
 def personnel_list(request):
     personnels = Personnel.objects.all()
     couturiers_count = personnels.filter(role='couturier').count()
@@ -30,6 +31,7 @@ def personnel_list(request):
 
 
 
+@login_required
 def personnel_create(request):
     if request.method == 'POST':
         form = PersonnelForm(request.POST, request.FILES)
@@ -42,6 +44,7 @@ def personnel_create(request):
 
 
 
+@login_required
 def personnel_update(request, pk):
     personnel = get_object_or_404(Personnel, pk=pk)
     if request.method == 'POST':
@@ -55,17 +58,20 @@ def personnel_update(request, pk):
 
 
 
+@login_required
 def personnel_delete(request, pk):
     personnel = get_object_or_404(Personnel, pk=pk)
     personnel.delete()
     return redirect('personnel:personnel_list')
 
 
+@login_required
 def personnel_detail(request, pk):
     personnel = get_object_or_404(Personnel, pk=pk)
     return render(request, 'personnel/personnel_detail.html', {'personnel': personnel})
 
 
+@login_required
 def personnel_assign(request, pk):
     personnel = get_object_or_404(Personnel, pk=pk)
     if request.method == 'POST':
@@ -83,6 +89,7 @@ def personnel_assign(request, pk):
     })
 
 
+@login_required
 def personnel_schedule(request, pk):
     personnel = get_object_or_404(Personnel, pk=pk)
     if request.method == 'POST':
@@ -99,6 +106,7 @@ def personnel_schedule(request, pk):
     })
 
 
+@login_required
 def personnel_bulk_assign(request):
     if request.method == 'POST':
         personnel_ids = request.POST.getlist('personnel_ids')
@@ -123,6 +131,7 @@ def personnel_bulk_assign(request):
     })
 
 
+@login_required
 def personnel_report(request):
     personnels = Personnel.objects.all()
     total_personnels = personnels.count()
