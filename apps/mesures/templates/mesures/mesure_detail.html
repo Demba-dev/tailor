@@ -919,7 +919,7 @@
             
             <div class="history-timeline">
                 <div class="history-item">
-                    <div class="history-date">{{ mesure.date_prise|date:"d F Y à H:i" }}</div>
+                    <div class="history-date">{{ mesure.date_prise|date:"d F Y" }}</div>
                     <div class="history-content">
                         <strong>Mesures initiales</strong>
                         <p class="mb-0 small">Fiche de mesures créée par {{ mesure.pris_par.prenom|default:"l'équipe" }}</p>
@@ -928,7 +928,7 @@
                 
                 {% if mesure.date_modification and mesure.date_modification != mesure.date_prise %}
                 <div class="history-item">
-                    <div class="history-date">{{ mesure.updated_at|date:"d F Y à H:i" }}</div>
+                    <div class="history-date">{{ mesure.date_modification|date:"d F Y" }}</div>
                     <div class="history-content">
                         <strong>Dernière mise à jour</strong>
                         <p class="mb-0 small">Mesures mises à jour par {{ mesure.modifie_par.prenom|default:"l'équipe" }}</p>
