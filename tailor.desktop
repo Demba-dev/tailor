@@ -1,8 +1,51 @@
 [Desktop Entry]
-Name=Tailor App
-Comment=Gestion de couture
-Exec=/home/demba/dev/django/tailor/launcher.sh
-Icon=/home/demba/dev/django/tailor/static/img/icons/tailor.jpg
-Terminal=false
+Version=1.0
 Type=Application
-Categories=Development;
+
+# Identifiant unique de l'application
+Name=TAILOR - Atelier de Couture
+Comment=Système de gestion d'atelier de couture professionnel
+GenericName=Gestion Atelier
+
+# Icone et type
+Icon=/home/demba/dev/django/tailor/static/img/icons/tailor.jpg
+Categories=Development;Utility;Business;
+
+# Script de lancement
+Exec=/home/demba/dev/django/tailor/launcher.sh
+
+# Paramètres de démarrage
+Terminal=false
+StartupNotify=true
+StartupWMClass=Google-chrome
+
+# Informations supplémentaires
+Keywords=couture;atelier;gestion;management;textile;
+
+# Chemins et répertoires
+Path=/home/demba/dev/django/tailor
+X-GNOME-Autostart-enabled=false
+
+# MimeType
+MimeType=text/html;text/xml;application/xhtml+xml;
+
+# Pour gérer plusieurs instances
+SingleMainWindow=false
+
+# Actions (pour le menu clic-droit)
+Actions=OpenLogin;OpenAdmin;OpenDashboard;
+
+# Action 1: Ouvrir la page de login
+[Desktop Action OpenLogin]
+Name=Connexion
+Exec=/home/demba/dev/django/tailor/launcher.sh
+
+# Action 2: Ouvrir l'admin Django
+[Desktop Action OpenAdmin]
+Name=Administration
+Exec=bash -c "cd /home/demba/dev/django/tailor && source venv/bin/activate && python -m webbrowser http://127.0.0.1:8000/admin/ &"
+
+# Action 3: Ouvrir le dashboard
+[Desktop Action OpenDashboard]
+Name=Tableau de Bord
+Exec=bash -c "cd /home/demba/dev/django/tailor && source venv/bin/activate && python -m webbrowser http://127.0.0.1:8000/dashboard/ &"

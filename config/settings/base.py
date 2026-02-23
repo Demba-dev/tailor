@@ -28,7 +28,15 @@ SECRET_KEY = 'django-insecure-#-66&wbvm)(edu0s1%_c@1bunh3cuqwnj1-(_5!gdh^y(p)!-r
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    '127.0.0.1',
+    'localhost',
+    'tailor.local',
+    'tailor.local:8000',
+    '0.0.0.0',
+    '192.168.*',
+    '*',
+]
 
 
 # Application definition
