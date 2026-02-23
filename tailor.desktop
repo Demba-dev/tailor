@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Tailor App
+Comment=Gestion de couture
+Exec=/home/demba/dev/django/tailor/launcher.sh
+Icon=/home/demba/dev/django/tailor/static/img/icons/tailor.jpg
+Terminal=false
+Type=Application
+Categories=Development;
